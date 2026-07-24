@@ -1,4 +1,5 @@
 From CRIS.common Require Import CRIS.
+From CRIS.lib Require Import BiEnrichedProset.
 From CRIS.cancellation Require Import Cancel.
 From CRIS.filter Require Import CallFilter.
 From CRIS.imp_system.mem Require Import MemHeader MemI MemA MemIAproof.
@@ -52,94 +53,133 @@ Section KnotAux.
     iIntros "[HKnot HMem]".
     iApply ctxr_refines.
     rewrite /mod_src /mod_tgt !SMod.to_mod_add.
+    jIntros (ctx_refines_BiProset) "(MAIN & KNOT & MEM & APC)".
 
     (* abstraction of Mem *)
-    iApply ctxr_trans. iSplitL "HMem".
-    { do 3 ctxr_rotate. do 3 ctxr_drop. iApply MemIA.ctxr. iFrame. }
+    iPoseProof (MemIA.ctxr ∅ genv with "HMem") as "REF".
+    jPoseProof "REF" with "MEM" as "MEM".
+
     (* abstraction of APCI to APCA *)
-    iApply ctxr_trans. iSplitR "HKnot".
-    { ctxr_rotate. do 3 ctxr_drop. iApply APCIA.ctxr. }
+    iPoseProof (APCIA.ctxr sp sp_pure) as "-#REF".
+    jPoseProof "REF" with "APC" as "APC".
+
     (* abstraction of Knot *)
-    iApply ctxr_trans. iSplitL "HKnot".
-    { ctxr_drop.
-      iApply (KnotIA.ctxr genv sp sp_rec sp_fun sp_pure); eauto.
-      { eapply genv_wf. }
-      { unfold genv. eapply incl_appl; refl. }
-      { split; et.
-        repeat try eapply insert_subseteq_l; last apply map_empty_subseteq; mod_tac.
-      }
-      { split; et. apply map_union_subseteq_l. }
-      { split; et. apply map_union_least; repeat try eapply insert_subseteq_l; try apply map_empty_subseteq; mod_tac.
-      }
+    iPoseProof
+      (KnotIA.ctxr genv sp sp_rec sp_fun sp_pure with "HKnot")
+      as "REF"; eauto.
+    { eapply genv_wf. }
+    { unfold genv. eapply incl_appl; refl. }
+    { split; et.
+      repeat try eapply insert_subseteq_l;
+        last apply map_empty_subseteq; mod_tac.
     }
+    { split; et. apply map_union_subseteq_l. }
+    { split; et. apply map_union_least;
+        repeat try eapply insert_subseteq_l;
+        try apply map_empty_subseteq; mod_tac.
+    }
+    jPoseProof "REF" with "[KNOT MEM APC]" as "(KNOT & MEM & APC)".
+    { jSplitL "KNOT"; [jApply "KNOT"|].
+      jSplitL "MEM"; [jApply "MEM"|jApply "APC"].
+    }
+
     (* abstraction of KnotMain *)
-    iApply ctxr_trans. iSplitR.
-    { ctxr_norm. iApply (KnotMainIA.ctxr genv sp sp_rec sp_fun sp_pure); eauto.
-      { eapply genv_wf. }
-      { unfold genv. eapply incl_appr; refl. }
-      { split; et.
-        repeat try eapply insert_subseteq_l; last apply map_empty_subseteq; mod_tac.
-      }
-      { split; et.
-        repeat try eapply insert_subseteq_l; last apply map_empty_subseteq; mod_tac.
-      }
-      { split; et.
-        apply map_union_subseteq_r.
-        rewrite /KnotMainA.main_fun_sp /KnotA.knot_rec_sp.
-        apply map_disjoint_insert_l_2; simpl_map; auto with map_disjoint.
-      }
-      { split; et.
-        apply map_union_least; repeat try eapply insert_subseteq_l; try apply map_empty_subseteq; mod_tac.
-      }
+    iPoseProof
+      (KnotMainIA.ctxr genv sp sp_rec sp_fun sp_pure)
+      as "-#REF"; eauto.
+    { eapply genv_wf. }
+    { unfold genv. eapply incl_appr; refl. }
+    { split; et.
+      repeat try eapply insert_subseteq_l;
+        last apply map_empty_subseteq; mod_tac.
     }
+    { split; et.
+      repeat try eapply insert_subseteq_l;
+        last apply map_empty_subseteq; mod_tac.
+    }
+    { split; et.
+      apply map_union_subseteq_r.
+      rewrite /KnotMainA.main_fun_sp /KnotA.knot_rec_sp.
+      apply map_disjoint_insert_l_2;
+        simpl_map; auto with map_disjoint.
+    }
+    { split; et.
+      apply map_union_least;
+        repeat try eapply insert_subseteq_l;
+        try apply map_empty_subseteq; mod_tac.
+    }
+    jPoseProof "REF" with "[MAIN KNOT MEM APC]"
+      as "(MAIN & KNOT & MEM & APC)".
+    { jSplitL "MAIN"; [jApply "MAIN"|].
+      jSplitL "KNOT"; [jApply "KNOT"|].
+      jSplitL "MEM"; [jApply "MEM"|jApply "APC"].
+    }
+
     (* abstraction of APCA to APCC *)
-    iApply ctxr_trans. iSplitR.
-    { do 2 ctxr_rotate. ctxr_drop.
-      iApply APCAC.ctxr.
-      { split; et.
-        repeat try eapply insert_subseteq_l; last apply map_empty_subseteq; mod_tac.
-      }
-      { split; et.
-        apply map_union_least; repeat try eapply insert_subseteq_l; try apply map_empty_subseteq; mod_tac.
-      }
-      { rewrite /sp_pure /KnotMainA.main_fun_sp /KnotA.knot_rec_sp.
-        intros ? ? [?H|?H]%lookup_union_Some;
-          try rewrite lookup_singleton_Some in H; des; clarify.
-        { rewrite /find_body; simpl_map. esplits; eauto. }
-        { rewrite /find_body; simpl_map; esplits; eauto. }
-        clear H0. apply map_disjoint_insert_l_2; simpl_map; auto with map_disjoint.
-      }
+    iPoseProof
+      (APCAC.ctxr
+        (KnotMainA.t genv sp_rec true sp
+          ★ KnotA.t genv sp_rec sp_fun sp)
+        sp sp sp_pure) as "-#REF".
+    { split; et.
+      repeat try eapply insert_subseteq_l;
+        last apply map_empty_subseteq; mod_tac.
     }
+    { split; et.
+      apply map_union_least;
+        repeat try eapply insert_subseteq_l;
+        try apply map_empty_subseteq; mod_tac.
+    }
+    { rewrite /sp_pure /KnotMainA.main_fun_sp /KnotA.knot_rec_sp.
+      intros ? ? [?H|?H]%lookup_union_Some;
+        try rewrite lookup_singleton_Some in H; des; clarify.
+      { rewrite /find_body; simpl_map. esplits; eauto. }
+      { rewrite /find_body; simpl_map; esplits; eauto. }
+      clear H0. apply map_disjoint_insert_l_2;
+        simpl_map; auto with map_disjoint.
+    }
+    jPoseProof "REF" with "[MAIN KNOT APC]"
+      as "(APC & MAIN & KNOT)".
+    { jSplitL "APC"; [jApply "APC"|].
+      jSplitL "MAIN"; [jApply "MAIN"|jApply "KNOT"].
+    }
+
     (* elimination of pure cCall *)
-    iApply ctxr_trans. iSplitR.
-    { do 3 ctxr_rotate. do 2 ctxr_drop. ctxr_rotate.
-      iApply (KnotMainIA.ctxr_close genv sp sp_rec sp_fun sp_pure); eauto.
-      { eapply genv_wf. }
-      { unfold genv. eapply incl_appr; refl. }
-      { split; et.
-        repeat try eapply insert_subseteq_l; last apply map_empty_subseteq; mod_tac.
-      }
-      { split; et.
-        repeat try eapply insert_subseteq_l; last apply map_empty_subseteq; mod_tac.
-      }
-      { split; et.
-        apply map_union_subseteq_r.
-        rewrite /KnotMainA.main_fun_sp /KnotA.knot_rec_sp.
-        apply map_disjoint_insert_l_2; simpl_map; auto with map_disjoint.
-      }
-      { split; et.
-        apply map_union_least; repeat try eapply insert_subseteq_l; try apply map_empty_subseteq; mod_tac.
-      }
+    iPoseProof
+      (KnotMainIA.ctxr_close genv sp sp_rec sp_fun sp_pure)
+      as "-#REF"; eauto.
+    { eapply genv_wf. }
+    { unfold genv. eapply incl_appr; refl. }
+    { split; et.
+      repeat try eapply insert_subseteq_l;
+        last apply map_empty_subseteq; mod_tac.
     }
+    { split; et.
+      repeat try eapply insert_subseteq_l;
+        last apply map_empty_subseteq; mod_tac.
+    }
+    { split; et.
+      apply map_union_subseteq_r.
+      rewrite /KnotMainA.main_fun_sp /KnotA.knot_rec_sp.
+      apply map_disjoint_insert_l_2;
+        simpl_map; auto with map_disjoint.
+    }
+    { split; et.
+      apply map_union_least;
+        repeat try eapply insert_subseteq_l;
+        try apply map_empty_subseteq; mod_tac.
+    }
+    jPoseProof "REF" with "[MAIN APC]" as "(MAIN & APC)".
+    { jSplitL "MAIN"; [jApply "MAIN"|jApply "APC"]. }
+
     (* elimination of mem *)
-    iApply ctxr_trans. iSplitR.
-    { do 2 ctxr_rotate. do 3 ctxr_drop. iApply elim_module. }
-    rewrite right_id.
+    iPoseProof (elim_module (MemA.t ∅)) as "-#REF".
+    jPoseProof "REF" with "MEM" as "MEM".
 
-    iApply ctxr_trans. iSplitR.
-    { ctxr_swap. ctxr_rotate. ctxr_refl. }
-
-    ctxr_refl.
+    jSplitL "MAIN"; [jApply "MAIN"|].
+    jSplitL "KNOT"; [jApply "KNOT"|].
+    jApply (biproset_tensor_left_unit ctx_refines_BiProset).
+    jSplitL "MEM"; [jApply "MEM"|jApply "APC"].
   (*SLOW*)Qed.
 
   Lemma top_tgt :

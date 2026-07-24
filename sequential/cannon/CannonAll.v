@@ -1,5 +1,6 @@
 From CRIS.common Require Import CRIS.
 From CRIS.cancellation Require Import Cancel.
+From CRIS.lib Require Import BiEnrichedProset.
 From CRIS.imp_system.imp Require Import ImpPrelude.
 From CRIS.cannon Require Import CannonHeader CannonI CannonMainI.
 From CRIS.cannon Require Import CannonA CannonMainA.
@@ -34,15 +35,22 @@ Section CannonAux.
   Lemma src_tgt :
     Ready ⊢ refines mod_tgt mod_src.
   Proof.
-    iIntros "H".
+    iIntros "READY".
     iApply ctxr_refines.
     rewrite /mod_src /mod_tgt /smod_src SMod.to_mod_add.
-    iApply ctxr_compose_hor. iSplitL.
-    - iApply CannonIA.ctxr; et.
-    - iApply CannonMainIA.ctxr.
-      split; et.
+    jIntros (ctx_refines_BiProset) "(CANNON & MAIN)".
+
+    iPoseProof (CannonIA.ctxr with "READY") as "REF".
+    jPoseProof "REF" with "CANNON" as "CANNON".
+
+    iPoseProof (CannonMainIA.ctxr sp) as "REF".
+    { split; et.
       repeat try eapply insert_subseteq_l; last apply map_empty_subseteq.
       mod_tac.
+    }
+    jPoseProof "REF" with "MAIN" as "MAIN".
+
+    jSplitL "CANNON"; [jApply "CANNON"|jApply "MAIN"].
   (*SLOW*)Qed.
 
   Lemma top_tgt :

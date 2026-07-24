@@ -1,5 +1,6 @@
 From CRIS.common Require Import CRIS.
 From CRIS.cancellation Require Import Cancel.
+From CRIS.lib Require Import BiEnrichedProset.
 From CRIS.imp_system.imp Require Import ImpPrelude.
 From CRIS.celliocb Require Import MainHeader CellioHeader CellioA CellioI MainA
   MainI CtxHeader CellioIAproof MainIAproof.
@@ -61,18 +62,32 @@ Section CellioAux.
       refines mod_src mod_top.
   Proof.
     iIntros "[Hcell Hinit]".
-    iApply refines_trans. iSplitR "Hcell Hinit".
-    { iApply ctxr_refines. ctxr_drop.
-      iApply SFilter.smod_filter_intro. }
-    iApply refines_trans. iSplitR "Hcell Hinit".
-    { iApply ctxr_refines. ctxr_rotate. ctxr_drop.
-      iApply Cancel.prepare; et; clarify.
-    }
+    iApply (refines_trans mod_src
+      (SMod.to_mod_cancel sp MainA.smod ★
+        SMod.to_mod_cancel sp Ctx_filtered) mod_top).
+    iSplitR "Hcell Hinit".
+    {
+      iApply ctxr_refines.
+      rewrite /mod_src.
+      jIntros (ctx_refines_BiProset) "(MAIN & CTX)".
+      jPoseProof SFilter.smod_filter_intro with "CTX" as "CTX".
 
-    iApply refines_trans. iSplitR "Hcell Hinit".
-    { iApply ctxr_refines. ctxr_rotate. ctxr_drop.
+      assert (REF_MAIN :
+        ⊢ ctx_refines
+            (SMod.to_mod sp MainA.smod)
+            (SMod.to_mod_cancel sp MainA.smod)).
+      { iApply Cancel.prepare; et; clarify. }
+      jPoseProof REF_MAIN with "MAIN" as "MAIN".
+
+      assert (REF_CTX :
+        ⊢ ctx_refines
+            (SMod.to_mod ∅ Ctx_filtered)
+            (SMod.to_mod_cancel sp Ctx_filtered)).
+      {
       iApply (Cancel.prepare _ sp _); et; i; cycle 1.
-      { eapply SFilter.filter_masked; et. }
+      { unfold Ctx_filtered in H0.
+        eapply SFilter.filter_masked; et.
+      }
 
       ltac2:(renames H into Lfn, Lsp).
       rewrite lookup_empty in Lsp. apply not_eq_sym, not_eq_None_Some in Lsp.
@@ -84,6 +99,9 @@ Section CellioAux.
       - eapply SMod.sp_core_from_lookup in Lsp; des.
         rewrite lookup_insert_Some in Lsp; des; ss. 
         rewrite lookup_singleton_Some in Lsp1. set_solver.
+      }
+      jPoseProof REF_CTX with "CTX" as "CTX".
+      jSplitL "MAIN"; [jApply "MAIN"|jApply "CTX"].
     }
 
     rewrite -SMod.to_mod_cancel_add.
@@ -115,31 +133,20 @@ Section CellioAux.
     iIntros "Hinit".
     iApply ctxr_refines.
     rewrite /init_cond /mod_src /mod_tgt.
-    
-    (* solve by transitivity:
-      MainI ★ CellioI ⊆ MainI ★ CellioA ⊆ MainA ★ CellioA 
-    *)
-    iApply ctxr_trans. iSplitL "Hinit".
-    { (* CellioI ⊆ctx CellioA *)
-      ctxr_drop. ctxr_rotate. ctxr_drop.
-      iApply main_adequacy.
-      { apply CellioIA.sim. }
-      iFrame.
-    }
 
-    iApply ctxr_trans. iSplitR.
-    { (* MainI ★ CellioA ⊆ MainA *)
-      ctxr_rotate. ctxr_drop. ctxr_rotate.
-      iApply main_adequacy.
-      { apply MainIA.sim; eauto using sp_foo, sp_cb. }
-      iEmpIntro.
-    }
+    jIntros (ctx_refines_BiProset) "(MAIN & CELLIO & CTX)".
 
-    iApply ctxr_trans. iSplitR.
-    { (* reorder *)
-      ctxr_rotate. ctxr_drop. ctxr_refl.
-    }
-    ctxr_refl.
+    iPoseProof (main_adequacy with "Hinit") as "REF".
+    { apply CellioIA.sim. }
+    jPoseProof "REF" with "CELLIO" as "CELLIO".
+
+    iPoseProof (main_adequacy with "[]") as "REF".
+    { apply MainIA.sim; eauto using sp_foo, sp_cb. }
+    { iEmpIntro. }
+    jPoseProof "REF" with "[MAIN CELLIO]" as "MAIN".
+    { jSplitL "MAIN"; [jApply "MAIN"|jApply "CELLIO"]. }
+
+    jSplitL "MAIN"; [jApply "MAIN"|jApply "CTX"].
   (*SLOW*)Qed.
 
   Lemma top_tgt :

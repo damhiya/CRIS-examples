@@ -1,4 +1,5 @@
 Require Import CRIS.common.CRIS CRIS.cancellation.Cancel.
+From CRIS.lib Require Import BiEnrichedProset.
 From CRIS.imp_system Require Import imp.ImpPrelude.
 From CRIS.scheduler Require Import SchI SchA SchIAproof.
 From CRIS.scheduler Require Import RRS.RRSI RRS.RRSA RRS.RRSIAproof.
@@ -150,86 +151,90 @@ Section SCHMainAux.
   (* Refinement between spec/impl of whole program (linked module) *)
   Lemma src_tgt : init_cond ⊢ refines mod_tgt mod_src.
   Proof.
-    iIntros "(HSCH & HRRS & HNDS & HHYB & HMEM)".
+    iIntros "(HSCH_INIT & HRRS_INIT & HNDS_INIT & HHYB_INIT & HMEM_INIT)".
     iApply ctxr_refines.
-    rewrite /mod_src /mod_tgt /smod_src.
+    rewrite /mod_src /mod_tgt /smod_src !SMod.to_mod_add.
+    rewrite /SCHMainA.t /SchA.t /RRSA.t /NDSA.t.
+    rewrite /RRSNodeA.t /NDSNodeA.t.
+    jIntros (ctx_refines_BiProset)
+      "(MAIN & SCH & RRS & NDS & RRSNODE & NDSNODE & MEM & HYB)".
 
-    iApply ctxr_trans. iSplitR.
-    { ctxr_rotate. do 7 ctxr_drop. iApply SCHMainIAproof.ctxr.
-      { eapply spsch_in_sp. }
-      { eapply sch_in_sp. }
-      { eapply rrs_in_spsch. }
-      { eapply nds_in_spsch. }
-      { eapply rrsnode_in_sprrs. }
-      { eapply ndsnode_in_sprrs. }
+    iPoseProof SCHMainIAproof.ctxr as "-#REF".
+    { eapply spsch_in_sp. }
+    { eapply sch_in_sp. }
+    { eapply rrs_in_spsch. }
+    { eapply nds_in_spsch. }
+    { eapply rrsnode_in_sprrs. }
+    { eapply ndsnode_in_sprrs. }
+    jPoseProof "REF" with "MAIN" as "MAIN".
+
+    iPoseProof (SchIA.ctxr with "HSCH_INIT") as "REF".
+    { eapply sch_in_sp. }
+    { eapply spsch_in_sp. }
+    { et. }
+    jPoseProof "REF" with "SCH" as "SCH".
+
+    iPoseProof (RRSIA.ctxr with "HRRS_INIT") as "REF".
+    { eapply yield_in_sp. }
+    { etrans; [eapply rrs_in_spsch|eapply spsch_in_sp]. }
+    { eapply sprrs_in_sp. }
+    { eapply yield_spec_cond. }
+    { et. }
+    jPoseProof "REF" with "RRS" as "RRS".
+
+    iPoseProof (NDSIA.ctxr with "HNDS_INIT") as "REF".
+    { eapply yield_in_sp. }
+    { etrans; [eapply nds_in_spsch|eapply spsch_in_sp]. }
+    { eapply spnds_in_sp. }
+    { eapply yield_spec_cond. }
+    { et. }
+    jPoseProof "REF" with "NDS" as "NDS".
+
+    iPoseProof (MemIA.ctxr sp genv with "HMEM_INIT") as "REF".
+    jPoseProof "REF" with "MEM" as "MEM".
+
+    iPoseProof (MemDH.ctxr with "HHYB_INIT") as "REF".
+    jPoseProof "REF" with "HYB" as "HYB".
+
+    iPoseProof (RRSNodeIAproof.ctxr with "[]") as "RRS_REF".
+    { eapply sprrs_in_sp. }
+    { etrans; [eapply rrs_in_spsch|eapply spsch_in_sp]. }
+    { eapply rrsnode_in_sprrs. }
+    { done. }
+    jPoseProof "RRS_REF" with "[RRSNODE MEM RRS]"
+      as "(RRSNODE & MEM & RRS)".
+    { jSplitL "RRSNODE"; [jApply "RRSNODE"|].
+      jSplitL "MEM"; [jApply "MEM"|].
+      jApply "RRS".
     }
 
-    iApply ctxr_trans. iSplitL "HSCH".
-    { ctxr_rotate. do 7 ctxr_drop. iApply SchIA.ctxr.
-      { eapply sch_in_sp. }
-      { eapply spsch_in_sp. }
-      { et. }
-      { iExact "HSCH". }
-    }
+    iPoseProof (NDSNodeIAproof.ctxr with "[]") as "NDS_REF".
+    { eapply spnds_in_sp. }
+    { etrans; [eapply nds_in_spsch|eapply spsch_in_sp]. }
+    { eapply ndsnode_in_sprrs. }
+    { done. }
+    jPoseProof "NDS_REF" with "[NDSNODE HYB]" as "(NDSNODE & HYB)".
+    { jSplitL "NDSNODE"; [jApply "NDSNODE"|jApply "HYB"]. }
 
-    iApply ctxr_trans. iSplitL "HRRS".
-    { ctxr_rotate. do 7 ctxr_drop. iApply RRSIA.ctxr.
-      { eapply yield_in_sp. }
-      { etrans; [eapply rrs_in_spsch| eapply spsch_in_sp]. }
-      { eapply sprrs_in_sp. }
-      { eapply yield_spec_cond. }
-      { et. }
-      { iExact "HRRS". }
-    }
+    jPoseProof elim_module with "MEM" as "MEM".
+    jPoseProof elim_module with "HYB" as "HYB".
+    jPoseProof
+      (biproset_tensor_left_unit
+        ctx_refines_BiProset (SCHMainA.t sp)) with
+      "[MEM MAIN]" as "MAIN".
+    { jSplitL "MEM"; [jApply "MEM"|jApply "MAIN"]. }
+    jPoseProof
+      (biproset_tensor_left_unit
+        ctx_refines_BiProset (SCHMainA.t sp)) with
+      "[HYB MAIN]" as "MAIN".
+    { jSplitL "HYB"; [jApply "HYB"|jApply "MAIN"]. }
 
-    iApply ctxr_trans. iSplitL "HNDS".
-    { ctxr_rotate. do 7 ctxr_drop. iApply NDSIA.ctxr.
-      { eapply yield_in_sp. }
-      { etrans; [eapply nds_in_spsch| eapply spsch_in_sp]. }
-      { eapply spnds_in_sp. }
-      { eapply yield_spec_cond. }
-      { et. }
-      { iExact "HNDS". }
-    }
-
-    iApply ctxr_trans. iSplitL "HMEM".
-    { do 3 ctxr_rotate. do 7 ctxr_drop. iApply MemIA.ctxr. iExact "HMEM". }
-
-    iApply ctxr_trans. iSplitL "HHYB".
-    { ctxr_rotate. do 7 ctxr_drop. iApply MemDH.ctxr. iExact "HHYB". }
-    
-    iApply ctxr_trans. iSplitR.
-    { do 2 ctxr_drop. do 3 (ctxr_rotate; ctxr_drop). ctxr_rotate. iApply RRSNodeIAproof.ctxr.
-      { eapply sprrs_in_sp. }
-      { etrans; [eapply rrs_in_spsch|eapply spsch_in_sp]. }
-      { eapply rrsnode_in_sprrs. }
-      { done. }
-    }
-
-    iApply ctxr_trans. iSplitR.
-    { do 3 ctxr_drop. do 2 ctxr_rotate. do 3 ctxr_drop. iApply NDSNodeIAproof.ctxr.
-      { eapply spnds_in_sp. }
-      { etrans; [eapply nds_in_spsch|eapply spsch_in_sp]. }
-      { eapply ndsnode_in_sprrs. }
-      { done. }
-    }
-
-    iApply ctxr_trans. iSplitR.
-    { do 4 ctxr_drop. ctxr_rotate. do 3 ctxr_drop. iApply elim_module. }
-    rewrite !mod_add_empty_r.
-
-    iApply ctxr_trans. iSplitR.
-    { do 6 ctxr_drop. iApply elim_module. }
-
-    rewrite !mod_add_empty_r.
-
-    iApply ctxr_trans. iSplitR.
-    { do 2 ctxr_drop. do 2 ctxr_rotate. ctxr_drop. ctxr_rotate. ctxr_refl. }
-
-    rewrite !SMod.to_mod_add.
-    rewrite /SCHMainA.t /SchA.t /RRSA.t /NDSA.t /RRSNodeA.t /NDSNodeA.t.
-
-    iApply ctxr_refl.
+    jSplitL "MAIN"; [jApply "MAIN"|].
+    jSplitL "SCH"; [jApply "SCH"|].
+    jSplitL "RRS"; [jApply "RRS"|].
+    jSplitL "NDS"; [jApply "NDS"|].
+    jSplitL "RRSNODE"; [jApply "RRSNODE"|].
+    jApply "NDSNODE".
   (*SLOW*)Qed.
 
   Lemma top_tgt :

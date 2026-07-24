@@ -1,4 +1,5 @@
 From CRIS.common Require Import CRIS.
+From CRIS.lib Require Import BiEnrichedProset.
 From CRIS.cancellation Require Import Cancel.
 From CRIS.mutsum Require Import MutHeader MutFA MutGA MutMainA.
 From CRIS.mutsum Require Import MutFI MutGI MutMainI.
@@ -68,69 +69,89 @@ Section MutAll.
   Proof.
     iApply ctxr_refines.
     rewrite /mod_src /mod_tgt !SMod.to_mod_add.
+    jIntros (ctx_refines_BiProset) "(MAIN & MUTF & MUTG & APC)".
 
     (* abstraction of APCI to APCA *)
-    iApply ctxr_trans. iSplitR.
-    { do 3 ctxr_drop. iApply APCIA.ctxr. }
+    iPoseProof (APCIA.ctxr sp sp_pure) as "-#REF".
+    jPoseProof "REF" with "APC" as "APC".
 
     (* abstraction of MutF *)
-    iApply ctxr_trans. iSplitR.
-    { ctxr_drop. ctxr_rotate. ctxr_drop. ctxr_rotate.
-      iApply (MutFIA.ctxr (Sp:=sp) (SpPure:=sp_pure)).
-      { eapply apc_in_sp. }
-      { eapply mutg_in_pure. }
-      { eapply pure_in_sp. }
-      iEmpIntro.
+    iPoseProof
+      (MutFIA.ctxr (Sp:=sp) (SpPure:=sp_pure) with "[]")
+      as "-#REF".
+    { eapply apc_in_sp. }
+    { eapply mutg_in_pure. }
+    { eapply pure_in_sp. }
+    { iEmpIntro. }
+    jPoseProof "REF" with "[MUTF APC]" as "(MUTF & APC)".
+    { jSplitL "MUTF"; [jApply "MUTF"|jApply "APC"].
     }
 
     (* abstraction of MutG *)
-    iApply ctxr_trans. iSplitR.
-    { ctxr_drop. ctxr_rotate. ctxr_drop. ctxr_rotate.
-      iApply (MutGIA.ctxr (Sp:=sp) (SpPure:=sp_pure)).
-      { eapply apc_in_sp. }
-      { eapply mutf_in_pure. }
-      { eapply pure_in_sp. }
-      iEmpIntro.
+    iPoseProof
+      (MutGIA.ctxr (Sp:=sp) (SpPure:=sp_pure) with "[]")
+      as "-#REF".
+    { eapply apc_in_sp. }
+    { eapply mutf_in_pure. }
+    { eapply pure_in_sp. }
+    { iEmpIntro. }
+    jPoseProof "REF" with "[MUTG APC]" as "(MUTG & APC)".
+    { jSplitL "MUTG"; [jApply "MUTG"|jApply "APC"].
     }
 
     (* abstraction of MutMain *)
-    iApply ctxr_trans. iSplitR.
-    { ctxr_rotate. do 2 ctxr_drop. ctxr_rotate.
-      iApply (MutMainIA.ctxr (Sp:=sp) (SpPure:=sp_pure)).
-      { eapply apc_in_sp. }
-      { eapply mutf_in_pure. }
-      { eapply pure_in_sp. }
+    iPoseProof (MutMainIA.ctxr (Sp:=sp) (SpPure:=sp_pure))
+      as "-#REF".
+    { eapply apc_in_sp. }
+    { eapply mutf_in_pure. }
+    { eapply pure_in_sp. }
+    jPoseProof "REF" with "[MAIN APC]" as "(MAIN & APC)".
+    { jSplitL "MAIN"; [jApply "MAIN"|jApply "APC"].
     }
-    
+
     (* abstraction of APCA to APCC *)
-    iApply ctxr_trans. iSplitR.
-    { do 2 ctxr_rotate. ctxr_drop. iApply APCAC.ctxr.
-      { eapply apc_in_sp. }
-      { eapply pure_in_sp. }
-      { i; ss.
-        rewrite /sp_pure lookup_union in H.
-        destruct (String.eq_dec fn MutHdr.mutf.1).
-        { subst. rewrite lookup_insert lookup_insert_ne // lookup_empty in H. inv H. esplits; eauto. }
-        destruct (String.eq_dec fn MutHdr.mutg.1).
-        { subst. rewrite lookup_insert lookup_insert_ne // lookup_empty in H. inv H. esplits; eauto. }
-        rewrite !lookup_insert_ne // in H; ii; inv H.
+    iPoseProof
+      (APCAC.ctxr
+        (MutMainA.t true sp ★ MutFA.t sp ★ MutGA.t sp)
+        sp sp sp_pure) as "-#REF".
+    { eapply apc_in_sp. }
+    { eapply pure_in_sp. }
+    { i; ss.
+      rewrite /sp_pure lookup_union in H.
+      destruct (String.eq_dec fn MutHdr.mutf.1).
+      { subst.
+        rewrite lookup_insert lookup_insert_ne // lookup_empty in H.
+        inv H. esplits; eauto.
       }
+      destruct (String.eq_dec fn MutHdr.mutg.1).
+      { subst.
+        rewrite lookup_insert lookup_insert_ne // lookup_empty in H.
+        inv H. esplits; eauto.
+      }
+      rewrite !lookup_insert_ne // in H; ii; inv H.
+    }
+    jPoseProof "REF" with "[MAIN MUTF MUTG APC]"
+      as "(APC & MAIN & MUTF & MUTG)".
+    { jSplitL "APC"; [jApply "APC"|].
+      jSplitL "MAIN"; [jApply "MAIN"|].
+      jSplitL "MUTF"; [jApply "MUTF"|jApply "MUTG"].
     }
 
     (* elimination of pure cCall *)
-    iApply ctxr_trans. iSplitR.
-    { do 2 ctxr_rotate. do 2 ctxr_drop.
-      iApply (MutMainIA.ctxr_close (Sp:=sp) (SpPure:=sp_pure)).
-      { eapply apc_in_sp. }
-      { eapply mutf_in_pure. }
-      { eapply pure_in_sp. }
+    iPoseProof
+      (MutMainIA.ctxr_close (Sp:=sp) (SpPure:=sp_pure))
+      as "-#REF".
+    { eapply apc_in_sp. }
+    { eapply mutf_in_pure. }
+    { eapply pure_in_sp. }
+    jPoseProof "REF" with "[MAIN APC]" as "(MAIN & APC)".
+    { jSplitL "MAIN"; [jApply "MAIN"|jApply "APC"].
     }
 
-    iApply ctxr_trans. iSplitR.
-    { do 2 ctxr_rotate. ctxr_swap. ctxr_rotate. ctxr_refl. }
-
     rewrite /MutMainA.t /MutFA.t /MutGA.t /APCC.t.
-    ctxr_refl.
+    jSplitL "MAIN"; [jApply "MAIN"|].
+    jSplitL "MUTF"; [jApply "MUTF"|].
+    jSplitL "MUTG"; [jApply "MUTG"|jApply "APC"].
   (*SLOW*)Qed.
 
   Lemma top_tgt :

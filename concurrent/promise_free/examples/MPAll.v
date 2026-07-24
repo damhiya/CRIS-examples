@@ -1,4 +1,5 @@
 Require Import CRIS.common.CRIS CRIS.cancellation.Cancel.
+From CRIS.lib Require Import BiEnrichedProset.
 From CRIS.promise_free.pfmem Require Import PFMemHeader PFMemA.
 From CRIS.promise_free.gpfsl Require Import base.
 From CRIS.promise_free.algebra Require Import HistoryRA AtomicRA.
@@ -64,27 +65,28 @@ Section MPAux.
   (* Refinement between spec/impl of whole program (linked module) *)
   Lemma src_tgt : init_cond ⊢ refines mod_tgt mod_src.
   Proof.
-    iIntros "[MEM SYS]".
+    iIntros "[MEM_INIT SYS_INIT]".
     iApply ctxr_refines.
     rewrite /mod_src /mod_tgt /smod_src !SMod.to_mod_add.
-    (* abstraction of Mem *)
-    iApply ctxr_trans. iSplitL "MEM".
-    { do 2 ctxr_drop.
-      iApply PFMemIA.ctxr. iExact "MEM".
-    }
-    (* abstraction of Sch *)
-    iApply ctxr_trans. iSplitL "SYS".
-    { ctxr_drop.
-      iApply SystemIA.ctxr.
-      - apply UserInSp.
-      - apply SchInSp.
-      - et.
-      - iExact "SYS".
-    }
-    (* abstraction of MP *)
-    ctxr_norm. iApply MPIA.ctxr.
-    - apply SchInSp.
-    - apply MainInSp.
+    jIntros (ctx_refines_BiProset) "(MP & SYS & MEM)".
+
+    iPoseProof (PFMemIA.ctxr sp with "MEM_INIT") as "REF".
+    jPoseProof "REF" with "MEM" as "MEM".
+
+    iPoseProof (SystemIA.ctxr with "SYS_INIT") as "REF".
+    { apply UserInSp. }
+    { apply SchInSp. }
+    { et. }
+    jPoseProof "REF" with "[SYS MEM]" as "(SYS & MEM)".
+    { jSplitL "SYS"; [jApply "SYS"|jApply "MEM"]. }
+
+    iPoseProof MPIA.ctxr as "-#REF".
+    { apply SchInSp. }
+    { apply MainInSp. }
+    jApply "REF".
+    jSplitL "MP"; [jApply "MP"|].
+    jSplitL "SYS"; [jApply "SYS"|].
+    jApply "MEM".
   (*SLOW*)Qed.
 
   Lemma top_tgt :

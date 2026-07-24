@@ -1,4 +1,5 @@
 Require Import CRIS.common.CRIS.
+From CRIS.lib Require Import BiEnrichedProset.
 From CRIS.spinlock Require Import LockHeader LockI LockA LockIA MainI MainA.
 From CRIS.spinlock Require Import MainIA.
 From CRIS.imp_system Require Import imp.ImpPrelude mem.MemI mem.MemA.
@@ -68,61 +69,61 @@ Section MainAux.
   (* Refinement between smod_src and mod_tgt *)
   Lemma src_tgt : init_cond ⊢ refines mod_tgt mod_src.
   Proof.
-    iIntros "[HMEM HSCH]".
+    iIntros "[HMEM_INIT HSCH_INIT]".
     iApply ctxr_refines.
     rewrite /mod_src /smod_src /mod_tgt.
+    jIntros (ctx_refines_BiProset) "(MAIN & LOCK & MEM & SCH)".
 
-    (* abstraction of Sch *)
-    iApply ctxr_trans. iSplitL "HSCH".
-    { do 3 ctxr_drop.
-      iApply SchIA.ctxr.
-      - apply SchInSp.
-      - apply UserInSp.
-      - et.
-      - iExact "HSCH".
+    iPoseProof
+      (SchIA.ctxr sp sp_user with "HSCH_INIT") as "REF".
+    { apply SchInSp. }
+    { apply UserInSp. }
+    { et. }
+    jPoseProof "REF" with "SCH" as "SCH".
+
+    iPoseProof (MemIA.ctxr sp genv with "HMEM_INIT") as "REF".
+    jPoseProof "REF" with "MEM" as "MEM".
+
+    assert (LOCK_NS : ↑LockA.N_SpinLockA ⊆ (↑nroot : coPset)).
+    { rewrite nclose_nroot. set_solver. }
+    assert (LOCK_SP : SchA.sp sp_user (↑nroot) ⊆ sp).
+    { rewrite nclose_nroot. apply SchInSp. }
+    iPoseProof
+      (LockIA.ctxr (↑nroot) LOCK_NS sp_user sp LOCK_SP)
+      as "-#LOCK_REF".
+    jPoseProof "LOCK_REF" with "[LOCK MEM]" as "(LOCK & MEM)".
+    { jSplitL "LOCK"; [jApply "LOCK"|jApply "MEM"]. }
+
+    iPoseProof
+      (MainIA.ctxr nroot sp sp sp_user sp_user) as "-#MAIN_REF".
+    { rewrite nclose_nroot. apply SchInSp. }
+    { rewrite nclose_nroot. apply SchInSp. }
+    { rewrite nclose_nroot. apply MainInSp. }
+    jPoseProof "MAIN_REF" with "[MAIN LOCK MEM]"
+      as "(MAIN & LOCK & MEM)".
+    { jSplitL "MAIN"; [jApply "MAIN"|].
+      jSplitL "LOCK"; [jApply "LOCK"|jApply "MEM"].
     }
 
-    (* abstraction of Mem *)
-    iApply ctxr_trans. iSplitL "HMEM".
-    { do 3 ctxr_rotate. do 3 ctxr_drop.
-      iApply MemIA.ctxr.
-      iExact "HMEM".
-    }
+    iPoseProof (elim_module (MemA.t sp)) as "-#MEM_ELIM".
+    jPoseProof "MEM_ELIM" with "MEM" as "MEM_UNIT".
 
-    (* abstraction of SpinLock *)
-    iApply ctxr_trans. iSplitR.
-    { do 2 ctxr_drop.
-      iApply LockIA.ctxr; cycle 1.
-      - apply SchInSp.
-      - set_solver.
-    }
-
-    (* abstraction of SpinLockMain *)
-    iApply ctxr_trans. iSplitR.
-    { ctxr_drop.
-      rewrite -nclose_nroot.
-      iApply MainIA.ctxr; rewrite ?nclose_nroot.
-      - apply SchInSp.
-      - apply SchInSp.
-      - apply MainInSp.
-    }
-
-    (* elimination of Mem *)
-    iApply ctxr_trans. iSplitR.
-    { do 3 ctxr_drop. iApply elim_module. }
-    rewrite right_id.
-
-    (* elimination of SpinLock *)
-    iApply ctxr_trans. iSplitR.
-    { do 2 ctxr_drop. iApply elim_module. }
-    rewrite right_id.
-
-    iApply ctxr_trans. iSplitR.
-    { ctxr_rotate. ctxr_refl. }
+    iPoseProof (elim_module (LockA.t (↑nroot) sp)) as "-#LOCK_ELIM".
+    jPoseProof "LOCK_ELIM" with "LOCK" as "LOCK_UNIT".
 
     rewrite /MainA.t /SchA.t. unseal CRIS.
     rewrite SMod.to_mod_add.
-    iApply ctxr_refl.
+    replace
+      (SMod.to_mod sp (MainA.smod nroot) ★
+        SMod.to_mod sp (SchA.smod sp_user ⊤))
+      with
+      (⌽ ★ ⌽ ★
+        (SMod.to_mod sp (MainA.smod nroot) ★
+          SMod.to_mod sp (SchA.smod sp_user ⊤))).
+    2:{ rewrite !mod_add_empty_l. done. }
+    jSplitL "LOCK_UNIT"; [jApply "LOCK_UNIT"|].
+    jSplitL "MEM_UNIT"; [jApply "MEM_UNIT"|].
+    jSplitL "MAIN"; [jApply "MAIN"|jApply "SCH"].
   (*SLOW*)Qed.
 
   (* source Mod ⊆ source SMod ⊆ cancelled Mod *)
