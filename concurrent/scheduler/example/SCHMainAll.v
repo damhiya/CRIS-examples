@@ -216,18 +216,8 @@ Section SCHMainAux.
     jPoseProof "NDS_REF" with "[NDSNODE HYB]" as "(NDSNODE & HYB)".
     { jSplitL "NDSNODE"; [jApply "NDSNODE"|jApply "HYB"]. }
 
-    jPoseProof elim_module with "MEM" as "MEM".
-    jPoseProof elim_module with "HYB" as "HYB".
-    jPoseProof
-      (biproset_tensor_left_unit
-        ctx_refines_BiProset (SCHMainA.t sp)) with
-      "[MEM MAIN]" as "MAIN".
-    { jSplitL "MEM"; [jApply "MEM"|jApply "MAIN"]. }
-    jPoseProof
-      (biproset_tensor_left_unit
-        ctx_refines_BiProset (SCHMainA.t sp)) with
-      "[HYB MAIN]" as "MAIN".
-    { jSplitL "HYB"; [jApply "HYB"|jApply "MAIN"]. }
+    jPoseProof elim_module with "MEM" as "_".
+    jPoseProof elim_module with "HYB" as "_".
 
     jSplitL "MAIN"; [jApply "MAIN"|].
     jSplitL "SCH"; [jApply "SCH"|].

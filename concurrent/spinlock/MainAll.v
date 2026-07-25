@@ -105,24 +105,10 @@ Section MainAux.
       jSplitL "LOCK"; [jApply "LOCK"|jApply "MEM"].
     }
 
-    iPoseProof (elim_module (MemA.t sp)) as "-#MEM_ELIM".
-    jPoseProof "MEM_ELIM" with "MEM" as "MEM_UNIT".
+    jPoseProof elim_module with "MEM" as "_".
+    jPoseProof elim_module with "LOCK" as "_".
 
-    iPoseProof (elim_module (LockA.t (↑nroot) sp)) as "-#LOCK_ELIM".
-    jPoseProof "LOCK_ELIM" with "LOCK" as "LOCK_UNIT".
-
-    rewrite /MainA.t /SchA.t. unseal CRIS.
-    rewrite SMod.to_mod_add.
-    replace
-      (SMod.to_mod sp (MainA.smod nroot) ★
-        SMod.to_mod sp (SchA.smod sp_user ⊤))
-      with
-      (⌽ ★ ⌽ ★
-        (SMod.to_mod sp (MainA.smod nroot) ★
-          SMod.to_mod sp (SchA.smod sp_user ⊤))).
-    2:{ rewrite !mod_add_empty_l. done. }
-    jSplitL "LOCK_UNIT"; [jApply "LOCK_UNIT"|].
-    jSplitL "MEM_UNIT"; [jApply "MEM_UNIT"|].
+    rewrite /MainA.t /SchA.t SMod.to_mod_add.
     jSplitL "MAIN"; [jApply "MAIN"|jApply "SCH"].
   (*SLOW*)Qed.
 

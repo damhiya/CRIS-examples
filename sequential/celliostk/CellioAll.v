@@ -162,12 +162,7 @@ Section CellioAux.
     jPoseProof "REF" with "[MAIN CELLIO]" as "MAIN".
     { jSplitL "MAIN"; [jApply "MAIN"|jApply "CELLIO"]. }
 
-    jPoseProof elim_module with "MEM" as "MEM".
-    jPoseProof
-      (biproset_tensor_left_unit
-        ctx_refines_BiProset (MainIAproof.MainIA.MainA sp)) with
-      "[MEM MAIN]" as "MAIN".
-    { jSplitL "MEM"; [jApply "MEM"|jApply "MAIN"]. }
+    jPoseProof elim_module with "MEM" as "_".
 
     jSplitL "MAIN"; [jApply "MAIN"|jApply "CTX"].
   (*SLOW*)Qed.

@@ -173,13 +173,11 @@ Section KnotAux.
     { jSplitL "MAIN"; [jApply "MAIN"|jApply "APC"]. }
 
     (* elimination of mem *)
-    iPoseProof (elim_module (MemA.t ∅)) as "-#REF".
-    jPoseProof "REF" with "MEM" as "MEM".
+    jPoseProof elim_module with "MEM" as "_".
 
     jSplitL "MAIN"; [jApply "MAIN"|].
     jSplitL "KNOT"; [jApply "KNOT"|].
-    jApply (biproset_tensor_left_unit ctx_refines_BiProset).
-    jSplitL "MEM"; [jApply "MEM"|jApply "APC"].
+    jApply "APC".
   (*SLOW*)Qed.
 
   Lemma top_tgt :
