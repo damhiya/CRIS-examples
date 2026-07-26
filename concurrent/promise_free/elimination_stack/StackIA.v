@@ -1,4 +1,5 @@
 Require Import CRIS.common.CRIS.
+From CRIS.lib Require Import BiEnrichedProset.
 From CRIS.scheduler Require Import SchHeader SchI SchA SchTactics.
 From CRIS.promise_free.algebra Require Import HistoryRA AtomicRA.
 From CRIS.promise_free.system
@@ -75,47 +76,47 @@ Module StackIA. Section StackIA.
     { iIntros (mn) "HE". rewrite !CFilter.filter_app.
       (* intermediate refinement with helping facilities *)
       rewrite comm assoc (comm _ (HelpingDummy.t mn)).
-      iApply ctxr_trans. iSplitL "HE".
-      { rewrite !assoc.
-        iApply (main_adequacy _ _ (hinv_ownE ⊤)
+      jIntros (ctx_refines_BiProset)
+        "((STACK & DUMMY) & SYS & SCH)".
+      iPoseProof
+        (main_adequacy _ _ (hinv_ownE ⊤)
           (IstProd (IstSB [mn] (IstHelp IstTrue ⊤)) IstEq)
-          (StackIM.sim mn sp_user sp Hsys)).
-        iExact "HE".
+          (StackIM.sim mn sp_user sp Hsys) with "HE")
+        as "REF".
+      iEval
+        (rewrite /StackIM.MI /StackIM.MA
+          /StackIM.SysF /StackIM.SchF) in "REF".
+      jPoseProof "REF" with "[STACK DUMMY SYS SCH]"
+        as "(((STACK & HELP) & SYS) & SCH)".
+      { jSplitR "SCH".
+        - jSplitR "SYS".
+          + jSplitL "STACK";
+              [jApply "STACK"|jApply "DUMMY"].
+          + jApply "SYS".
+        - jApply "SCH".
       }
-      rewrite -!assoc. iApply ctxr_trans. iSplitR.
-      { ctxr_rotate. ctxr_swap. do 2 ctxr_rotate. ctxr_swap.
-        ctxr_rotate. ctxr_swap. do 3 ctxr_rotate. ctxr_refl. }
-      rewrite (comm Mod.add
-        (HelpingOn.t mn StackM.jobCode)
-        (CFilter.filter (Helping.exports mn) SchI.t)).
-      rewrite (assoc Mod.add
-        (CFilter.filter (Helping.exports mn)
-          (SystemA.t sp_user (↑stackN) sp))
-        (StackM.t mn (SystemA.sp sp_user (↑stackN)))
-        (CFilter.filter (Helping.exports mn) SchI.t ★
-          HelpingOn.t mn StackM.jobCode)).
-      rewrite (comm Mod.add
-        (CFilter.filter (Helping.exports mn)
-          (SystemA.t sp_user (↑stackN) sp))
-        (StackM.t mn (SystemA.sp sp_user (↑stackN)))).
-      rewrite -(assoc Mod.add
-        (StackM.t mn (SystemA.sp sp_user (↑stackN)))
-        (CFilter.filter (Helping.exports mn)
-          (SystemA.t sp_user (↑stackN) sp))
-        (CFilter.filter (Helping.exports mn) SchI.t ★
-          HelpingOn.t mn StackM.jobCode)).
-      ctxr_refl.
+      jSplitL "STACK"; [jApply "STACK"|].
+      jSplitR "HELP".
+      { jSplitL "SYS"; [jApply "SYS"|jApply "SCH"]. }
+      jApply "HELP".
     }
 
     iIntros (mn). rewrite !CFilter.filter_app.
-    iApply ctxr_trans. iSplitR.
-    { do 3 ctxr_rotate. ctxr_swap. ctxr_refl. }
-
-    rewrite
-      (assoc _
-        (StackM.t mn (SystemA.sp sp_user (↑stackN)))).
-
-    iApply (main_adequacy _ _ emp%I
+    jIntros (ctx_refines_BiProset)
+      "(STACK & ((SYS & SCH) & HELP))".
+    iAssert
+      (ctx_refines
+        ((StackM.t mn (SystemA.sp sp_user (↑stackN)) ★
+            HelpingOff.t mn StackM.jobCode) ★
+          CFilter.filter (Helping.exports mn)
+            (SystemA.t sp_user (↑stackN) sp) ★
+          CFilter.filter (Helping.exports mn) SchI.t)
+        (StackA.t (SystemA.sp sp_user (↑stackN)) ★
+          CFilter.filter (Helping.exports mn)
+            (SystemA.t sp_user (↑stackN) sp) ★
+          CFilter.filter (Helping.exports mn) SchI.t))%I
+      as "REF".
+    { iApply (main_adequacy _ _ emp%I
       (IstProd
         (IstSB
           (Mod.scopes (StackA.t (SystemA.sp sp_user (↑stackN))) ++ [mn])
@@ -202,5 +203,10 @@ Module StackIA. Section StackIA.
     }
     { iIntros "_"; repeat iExists _; repeat iSplit; eauto. }
     iEmpIntro.
+    }
+    jApply "REF".
+    jSplitL "STACK HELP".
+    { jSplitL "STACK"; [jApply "STACK"|jApply "HELP"]. }
+    jSplitL "SYS"; [jApply "SYS"|jApply "SCH"].
   Qed.
 End StackIA. End StackIA.

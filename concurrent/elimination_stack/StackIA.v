@@ -1,4 +1,5 @@
 Require Import CRIS.common.CRIS.
+From CRIS.lib Require Import BiEnrichedProset.
 From CRIS.imp_system Require Import imp.ImpPrelude.
 From CRIS.imp_system Require Import mem.MemTactics mem.MemA.
 From CRIS.scheduler Require Import SchHeader SchI SchA SchTactics.
@@ -51,24 +52,36 @@ Module StackIA. Section StackIA.
     { iIntros (mn) "HE". rewrite !CFilter.filter_app.
       (* intermediate refinement with helping facilities *)
       rewrite comm assoc (comm _ (HelpingDummy.t mn)).
-      iApply ctxr_trans. iSplitL "HE".
-      { iApply main_adequacy.
-        - apply StackIM.sim.
-        - iExact "HE".
+      jIntros (ctx_refines_BiProset)
+        "((STACK & DUMMY) & MEM & SCH)".
+      jPoseProof
+        (main_adequacy _ _ _ _ (StackIM.sim mn sp))
+        with "[HE]" "[STACK DUMMY MEM SCH]"
+        as "((STACK & HELP) & MEM & SCH)".
+      { iExact "HE". }
+      { jSplitL "STACK DUMMY".
+        - jSplitL "STACK"; [jApply "STACK"|jApply "DUMMY"].
+        - jSplitL "MEM"; [jApply "MEM"|jApply "SCH"].
       }
-      rewrite -!assoc. iApply ctxr_trans. iSplitR.
-      { ctxr_rotate. ctxr_swap. do 2 ctxr_rotate. ctxr_swap. ctxr_rotate. ctxr_swap.
-        do 3 ctxr_rotate. ctxr_refl.
-      }
-      ctxr_refl.
+      jSplitL "STACK"; [jApply "STACK"|].
+      jSplitR "HELP".
+      { jSplitL "MEM"; [jApply "MEM"|jApply "SCH"]. }
+      jApply "HELP".
     }
 
     iIntros (mn). rewrite !CFilter.filter_app.
-    iApply ctxr_trans. iSplitR.
-    { do 3 ctxr_rotate. ctxr_swap. ctxr_refl. }
-    rewrite (assoc _ (StackM.t mn)).
-
-    iApply (main_adequacy _ _ emp%I
+    jIntros (ctx_refines_BiProset)
+      "(STACK & ((MEM & SCH) & HELP))".
+    iAssert
+      (ctx_refines
+        ((StackM.t mn ★ HelpingOff.t mn StackM.jobCode) ★
+          CFilter.filter (Helping.exports mn) (MemA.t sp) ★
+          CFilter.filter (Helping.exports mn) SchI.t)
+        (StackA.t ★
+          CFilter.filter (Helping.exports mn) (MemA.t sp) ★
+          CFilter.filter (Helping.exports mn) SchI.t))%I
+      as "REF".
+    { iApply (main_adequacy _ _ emp%I
       (IstProd (IstSB (Mod.scopes StackA.t ++ [mn]) IstTrue) IstEq)).
     cStartModSim.
     { cStartFunSim. rewrite /StackM.new_stack /StackA.new_stack. cStepsS; cStepsT.
@@ -103,5 +116,10 @@ Module StackIA. Section StackIA.
     }
     { iIntros "_"; repeat iExists _; repeat iSplit; eauto. }
     iEmpIntro.
+    }
+    jApply "REF".
+    jSplitL "STACK HELP".
+    { jSplitL "STACK"; [jApply "STACK"|jApply "HELP"]. }
+    jSplitL "MEM"; [jApply "MEM"|jApply "SCH"].
   Qed.
 End StackIA. End StackIA.

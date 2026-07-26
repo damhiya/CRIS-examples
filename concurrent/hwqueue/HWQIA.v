@@ -1,4 +1,5 @@
 Require Export CRIS.common.CRIS.
+From CRIS.lib Require Import BiEnrichedProset.
 From CRIS.imp_system Require Export imp.ImpPrelude.
 From CRIS.hwqueue Require Export HWQHeader.
 Require Export CRIS.scheduler.SchHeader.
@@ -128,22 +129,44 @@ Module HWQIA. Section HWQIA.
         try (rewrite -!assoc; et);
         eauto using Mod.real_mod_add, HWQP.real_mod, MemI.real, SchI.real.
       iSplitR "MEM PROPH HELP FREE".
-      { iApply ctxr_refines. rewrite !CFilter.filter_app.
+      { iApply ctxr_refines.
+        rewrite !CFilter.filter_app.
         rewrite HWQI.filter_prophecy MemI.filter_prophecy.
-        rewrite -!assoc.
-        rewrite (assoc _ (MemI.t genv) (ProphecyI.t (mname_long sz)) _).
-        rewrite (comm _ (MemI.t genv) (ProphecyI.t (mname_long sz))).
-        rewrite -(assoc _ (ProphecyI.t (mname_long sz)) (MemI.t genv) _).
-        rewrite !assoc. do 3 iApply ctxr_frameR.
-        iApply HWQIP.ctxr.
+        set (schflt := CFilter.filter
+          (Prophecy.exports (mname_long sz)) SchI.t).
+        set (ctxflt := CFilter.filter
+          (Prophecy.exports (mname_long sz)) ctx).
+        jIntros (ctx_refines_BiProset)
+          "((HWQI & MEMI) & PROPHI & SCH & CTX)".
+        jPoseProof (HWQIP.ctxr (mname_long sz))
+          with "[HWQI PROPHI]" as "(HWQP & PROPHI)".
+        { jSplitL "HWQI"; [jApply "HWQI"|jApply "PROPHI"]. }
+        jSplitL "HWQP"; [jApply "HWQP"|].
+        jSplitL "MEMI"; [jApply "MEMI"|].
+        jSplitL "PROPHI"; [jApply "PROPHI"|].
+        jSplitL "SCH"; [jApply "SCH"|jApply "CTX"].
       }
       iSplitL "PROPH"; first iExact "PROPH".
       iApply refines_trans. iSplitL "MEM".
-      { iApply ctxr_refines. do 2 ctxr_rotate. do 3 ctxr_drop.
-        iApply MemIA.ctxr. iExact "MEM". }
+      { instantiate (1 :=
+          (HWQP.t (mname_long sz)
+             ★ MemA.t sp_mem
+             ★ ProphecyA.t (mname_long sz) ∅)
+            ★ CFilter.filter
+                (Prophecy.exports (mname_long sz)) (SchI.t ★ ctx)).
+        iApply ctxr_refines.
+        jIntros (ctx_refines_BiProset)
+          "(HWQP & MEMI & PROPHA & FLT)".
+        iPoseProof (MemIA.ctxr sp_mem genv with "MEM") as "MEM_REF".
+        jPoseProof "MEM_REF" with "MEMI" as "MEMA".
+        jSplitL "HWQP MEMA PROPHA".
+        { jSplitL "HWQP"; [jApply "HWQP"|].
+          jSplitL "MEMA"; [jApply "MEMA"|jApply "PROPHA"].
+        }
+        jApply "FLT".
+      }
       iApply refines_trans. iSplitL "HELP FREE".
-      { rewrite comm -assoc comm.
-        iApply (helping_main_filtered _
+      { iApply (helping_main_filtered _
           (λ mnh,
             HWQM.t mnh ★ MemA.t sp_mem ★ ProphecyA.t (mname_long sz) ∅)
           (HWQA.t ★ MemA.t sp_mem) _ _ HWQM.jobCode with "HELP [FREE]").
@@ -154,58 +177,77 @@ Module HWQIA. Section HWQIA.
           do 5 rewrite Mod.dom_fnsems_add maxlen_get_fids_union in IN2. nia.
         - iIntros (mnh) "HE".
           do 2 rewrite CFilter.filter_app.
-          rewrite HWQP.filter_helping MemA.filter_helping ProphecyA.filter_helping.
-          match goal with
-          | |- context[MemA.t ?sp] => is_evar sp; unify sp sp_mem
-          end.
-          set (hqp := HWQP.t (mname_long sz)).
-          set (hqm := HWQM.t mnh).
-          set (hma := MemA.t sp_mem).
-          set (hpa := ProphecyA.t (mname_long sz) ∅).
+          rewrite HWQP.filter_helping MemA.filter_helping
+            ProphecyA.filter_helping.
           set (hflt := CFilter.filter
             (Helping.exports mnh ∪ Prophecy.exports (mname_long sz))
             (SchI.t ★ ctx)).
-          set (hdummy := HelpingDummy.t mnh).
-          set (hon := HelpingOn.t mnh HWQM.jobCode).
-          match goal with
-          | |- context[ctx_refines ?ms ?mt] =>
-              replace ms with (((hqp ★ hdummy) ★ (hma ★ hpa)) ★ hflt)
-                by mod_eq_solver;
-              replace mt with (((hqm ★ hon) ★ (hma ★ hpa)) ★ hflt)
-                by mod_eq_solver
-          end.
-          iApply ctxr_frameR.
-          iApply (HWQPM.ctxr mnh (mname_long sz) sp_mem). iFrame "HE FREE".
+          jIntros (ctx_refines_BiProset)
+            "((HWQP & MEMA & PROPHA) & FLT & DUMMY)".
+          iPoseProof
+            (HWQPM.ctxr mnh (mname_long sz) sp_mem
+              with "[$HE $FREE]") as "HWQ_REF".
+          jPoseProof "HWQ_REF" with "[HWQP DUMMY MEMA PROPHA]"
+            as "((HWQM & ON) & MEMA & PROPHA)".
+          { jSplitL "HWQP DUMMY".
+            { jSplitL "HWQP"; [jApply "HWQP"|jApply "DUMMY"]. }
+            jSplitL "MEMA"; [jApply "MEMA"|jApply "PROPHA"].
+          }
+          jSplitL "HWQM MEMA PROPHA".
+          { jSplitL "HWQM"; [jApply "HWQM"|].
+            jSplitL "MEMA"; [jApply "MEMA"|jApply "PROPHA"].
+          }
+          jSplitL "FLT"; [jApply "FLT"|jApply "ON"].
         - iIntros (mnh).
-          set (hqm' := HWQM.t mnh).
-          set (hqa := HWQA.t).
-          set (hma' := MemA.t sp_mem).
-          set (hpa' := ProphecyA.t (mname_long sz) ∅).
           set (hflt' := CFilter.filter
             (Helping.exports mnh ∪ Prophecy.exports (mname_long sz))
             (SchI.t ★ ctx)).
-          set (hoff := HelpingOff.t mnh HWQM.jobCode).
-          match goal with
-          | |- context[ctx_refines ?ms ?mt] =>
-              replace ms with
-                ((hqm' ★ (hpa' ★ hoff)) ★ (hma' ★ hflt'))
-                by mod_eq_solver;
-              replace mt with (hqa ★ (hma' ★ hflt'))
-                by mod_eq_solver
-          end.
-          iApply ctxr_frameR.
-          iApply (HWQMA.ctxr (mname_long sz) mnh).
+          jIntros (ctx_refines_BiProset)
+            "((HWQM & MEMA & PROPHA) & FLT & OFF)".
+          jPoseProof (HWQMA.ctxr (mname_long sz) mnh)
+            with "[HWQM PROPHA OFF]" as "HWQA".
+          { jSplitL "HWQM"; [jApply "HWQM"|].
+            jSplitL "PROPHA"; [jApply "PROPHA"|jApply "OFF"].
+          }
+          jSplitL "HWQA MEMA".
+          { jSplitL "HWQA"; [jApply "HWQA"|jApply "MEMA"]. }
+          jApply "FLT".
       }
       iApply refines_trans. iSplitR.
-      { iApply ctxr_refines. do 2 ctxr_drop.
-        iApply (CFilter.intro_filter
-          (Prophecy.exports (mname_long sz)) ctx).
+      { instantiate (1 :=
+          (HWQA.t ★ MemA.t sp_mem)
+            ★ SchI.t
+            ★ CFilter.filter
+                (Prophecy.exports (mname_long sz)) ctx).
+        iApply ctxr_refines.
+        jIntros (ctx_refines_BiProset)
+          "((HWQA & MEMA) & SCH & CTX)".
+        jPoseProof
+          (CFilter.intro_filter
+            (Prophecy.exports (mname_long sz)) ctx)
+          with "CTX" as "CTX".
+        jSplitL "HWQA MEMA".
+        { jSplitL "HWQA"; [jApply "HWQA"|jApply "MEMA"]. }
+        jSplitL "SCH"; [jApply "SCH"|jApply "CTX"].
       }
       rewrite CFilter.filter_app !assoc.
       iApply ctxr_refines.
-      iApply ctxr_frameR. iApply ctxr_frameL.
-      iApply (CFilter.intro_filter
+      set (schflt := CFilter.filter
         (Prophecy.exports (mname_long sz)) SchI.t).
+      set (ctxflt := CFilter.filter
+        (Prophecy.exports (mname_long sz)) ctx).
+      jIntros (ctx_refines_BiProset)
+        "(((HWQA & MEMA) & SCH) & CTX)".
+      jPoseProof
+        (CFilter.intro_filter
+          (Prophecy.exports (mname_long sz)) SchI.t)
+        with "SCH" as "SCH".
+      jSplitL "HWQA MEMA SCH".
+      { jSplitL "HWQA MEMA".
+        { jSplitL "HWQA"; [jApply "HWQA"|jApply "MEMA"]. }
+        jApply "SCH".
+      }
+      jApply "CTX".
     }
     rewrite -!assoc.
     iApply refines_refl.
