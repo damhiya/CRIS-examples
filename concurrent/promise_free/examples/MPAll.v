@@ -70,23 +70,19 @@ Section MPAux.
     rewrite /mod_src /mod_tgt /smod_src !SMod.to_mod_add.
     jIntros (ctx_refines_BiProset) "(MP & SYS & MEM)".
 
-    iPoseProof (PFMemIA.ctxr sp with "MEM_INIT") as "REF".
-    jPoseProof "REF" with "MEM" as "MEM".
+    jPoseProof (PFMemIA.ctxr sp) with "MEM_INIT" "MEM" as "MEM".
 
-    iPoseProof (SystemIA.ctxr with "SYS_INIT") as "REF".
+    jPoseProof SystemIA.ctxr with "SYS_INIT" "[SYS MEM]" as "(SYS & MEM)".
     { apply UserInSp. }
     { apply SchInSp. }
     { et. }
-    jPoseProof "REF" with "[SYS MEM]" as "(SYS & MEM)".
-    { jSplitL "SYS"; [jApply "SYS"|jApply "MEM"]. }
+    { jFrame "SYS MEM". }
 
-    iPoseProof MPIA.ctxr as "-#REF".
+    jPoseProof (MPIA.ctxr sp sp_user_s) with "[MP SYS MEM]" as "SRC".
     { apply SchInSp. }
     { apply MainInSp. }
-    jApply "REF".
-    jSplitL "MP"; [jApply "MP"|].
-    jSplitL "SYS"; [jApply "SYS"|].
-    jApply "MEM".
+    { jFrame "MP SYS MEM". }
+    jFrame "SRC".
   (*SLOW*)Qed.
 
   Lemma top_tgt :

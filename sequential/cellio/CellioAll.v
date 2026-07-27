@@ -88,38 +88,39 @@ Section CellioAux.
       jPoseProof (CFilter.smod_filter_intro {[MainAS.main]})
         with "CTX" as "CTX".
 
-      assert (REF_MAIN :
-        ⊢ ctx_refines
-            (SMod.to_mod sp MainA.smod)
-            (SMod.to_mod_cancel sp MainA.smod)).
-      { iApply Cancel.prepare; et; clarify. }
-      jPoseProof REF_MAIN with "MAIN" as "MAIN".
+      jPoseProof (Cancel.prepare sp sp MainA.smod)
+        with "MAIN" as "MAIN".
+      { et; clarify. }
+      { et. }
+      { et; clarify. }
 
-      assert (REF_CTX :
-        ⊢ ctx_refines
-            (SMod.to_mod ∅ Ctx_filtered)
-            (SMod.to_mod_cancel sp Ctx_filtered)).
+      jPoseProof (Cancel.prepare ∅ sp Ctx_filtered)
+        with "CTX" as "CTX".
       {
-      iApply (Cancel.prepare _ sp _); et; i; cycle 1.
-      { rewrite /Ctx_filtered SFilter.cfilter_comm in H0.
+        i.
+        ltac2:(renames H into Lfn, Lsp).
+        eapply CFilter.filter_masked; et.
+        rewrite lookup_empty in Lsp.
+        apply not_eq_sym, not_eq_None_Some in Lsp.
+        destruct Lsp as [? Lsp].
+        eapply SMod.sp_core_from_add_lookup in Lsp.
+        destruct Lsp as [Lsp|Lsp]; des; cycle 1.
+        - eapply SMod.sp_core_from_lookup in Lsp0; des.
+          rewrite !lookup_fmap in Lsp0.
+          destruct (SMod.fnsems Ctx !! _)
+            as [[[? []]|]|] eqn:Lctx_fc; ss; subst.
+          eapply ctx_real in Lctx_fc; subst; ss.
+        - eapply SMod.sp_core_from_lookup in Lsp; des.
+          rewrite lookup_insert_Some in Lsp; des; ss.
+          rewrite lookup_singleton_Some in Lsp1. set_solver.
+      }
+      { et. }
+      {
+        i.
+        rewrite /Ctx_filtered SFilter.cfilter_comm in H0.
         eapply SFilter.filter_masked; et.
       }
-      
-      ltac2:(renames H into Lfn, Lsp).
-      eapply CFilter.filter_masked; et.
-      rewrite lookup_empty in Lsp. apply not_eq_sym, not_eq_None_Some in Lsp.
-      destruct Lsp as [? Lsp]. eapply SMod.sp_core_from_add_lookup in Lsp.
-      destruct Lsp as [Lsp|Lsp]; des; cycle 1.
-      - eapply SMod.sp_core_from_lookup in Lsp0; des.
-        rewrite !lookup_fmap in Lsp0.
-        destruct (SMod.fnsems Ctx !! _) as [[[? []]|]|] eqn: Lctx_fc; ss; subst.
-        eapply ctx_real in Lctx_fc; subst; ss.
-      - eapply SMod.sp_core_from_lookup in Lsp; des.
-        rewrite lookup_insert_Some in Lsp; des; ss. 
-        rewrite lookup_singleton_Some in Lsp1. set_solver.
-      }
-      jPoseProof REF_CTX with "CTX" as "CTX".
-      jSplitL "MAIN"; [jApply "MAIN"|jApply "CTX"].
+      jFrame.
     }
 
     rewrite -SMod.to_mod_cancel_add.
@@ -154,17 +155,15 @@ Section CellioAux.
 
     jIntros (ctx_refines_BiProset) "(MAIN & CELLIO & CTX)".
 
-    iPoseProof (main_adequacy with "Hinit") as "REF".
+    jPoseProof main_adequacy with "Hinit" "CELLIO" as "CELLIO".
     { apply CellioIA.sim. }
-    jPoseProof "REF" with "CELLIO" as "CELLIO".
 
-    iPoseProof (main_adequacy with "[]") as "REF".
+    jPoseProof main_adequacy with "[MAIN CELLIO]" as "MAIN".
     { apply MainIA.sim; eauto using sp_input, sp_foo, sp_main. }
     { iEmpIntro. }
-    jPoseProof "REF" with "[MAIN CELLIO]" as "MAIN".
-    { jSplitL "MAIN"; [jApply "MAIN"|jApply "CELLIO"]. }
+    { jFrame. }
 
-    jSplitL "MAIN"; [jApply "MAIN"|jApply "CTX"].
+    jFrame.
   (*SLOW*)Qed.
 
   Lemma top_tgt :

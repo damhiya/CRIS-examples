@@ -13,16 +13,15 @@ Module MapIA. Section MapIA.
         (MapI.t ★ MemA.t sp_mem)
         (MapA.t sp_s ★ MemA.t sp_mem).
   Proof.
-    assert (MapMInSpMap : MapM.sp ⊆ MapM.sp) by reflexivity.
     iIntros "H".
-    iPoseProof
-      (MapIM.ctxr MapM.sp sp_mem MapMInSpMap) as "REF".
-    iPoseProof
-      (MapMA.ctxr sp_s MapM.sp MapInSpMap MapMInSpMap with "H")
-      as "MAP_REF".
     jIntros (ctx_refines_BiProset) "SRC".
-    jPoseProof "REF" with "SRC" as "(MAP & MEM)".
-    jPoseProof "MAP_REF" with "MAP" as "MAP".
-    jSplitL "MAP"; [jApply "MAP"|jApply "MEM"].
+    jPoseProof (MapIM.ctxr MapM.sp sp_mem)
+      with "SRC" as "(MAP & MEM)".
+    { reflexivity. }
+    jPoseProof (MapMA.ctxr sp_s MapM.sp)
+      with "H" "MAP" as "MAP".
+    { apply MapInSpMap. }
+    { reflexivity. }
+    jFrame.
   Qed.
 End MapIA. End MapIA.

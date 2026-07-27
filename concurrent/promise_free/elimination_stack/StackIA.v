@@ -76,29 +76,13 @@ Module StackIA. Section StackIA.
     { iIntros (mn) "HE". rewrite !CFilter.filter_app.
       (* intermediate refinement with helping facilities *)
       rewrite comm assoc (comm _ (HelpingDummy.t mn)).
-      jIntros (ctx_refines_BiProset)
-        "((STACK & DUMMY) & SYS & SCH)".
-      iPoseProof
-        (main_adequacy _ _ (hinv_ownE ⊤)
-          (IstProd (IstSB [mn] (IstHelp IstTrue ⊤)) IstEq)
-          (StackIM.sim mn sp_user sp Hsys) with "HE")
-        as "REF".
-      iEval
-        (rewrite /StackIM.MI /StackIM.MA
-          /StackIM.SysF /StackIM.SchF) in "REF".
-      jPoseProof "REF" with "[STACK DUMMY SYS SCH]"
-        as "(((STACK & HELP) & SYS) & SCH)".
-      { jSplitR "SCH".
-        - jSplitR "SYS".
-          + jSplitL "STACK";
-              [jApply "STACK"|jApply "DUMMY"].
-          + jApply "SYS".
-        - jApply "SCH".
-      }
-      jSplitL "STACK"; [jApply "STACK"|].
-      jSplitR "HELP".
-      { jSplitL "SYS"; [jApply "SYS"|jApply "SCH"]. }
-      jApply "HELP".
+      jIntros (ctx_refines_BiProset) "((STACK & DUMMY) & SYS & SCH)".
+      jPoseProof main_adequacy with "HE" "[STACK DUMMY SYS SCH]" as "M".
+      { eapply (StackIM.sim mn sp_user sp); et. } 
+      { jFrame. }
+      rewrite /StackIM.MA.
+      jDestruct "M" as "[[[STACK HELP] SYS] SCH]".
+      jFrame.
     }
 
     iIntros (mn). rewrite !CFilter.filter_app.
@@ -205,8 +189,6 @@ Module StackIA. Section StackIA.
     iEmpIntro.
     }
     jApply "REF".
-    jSplitL "STACK HELP".
-    { jSplitL "STACK"; [jApply "STACK"|jApply "HELP"]. }
-    jSplitL "SYS"; [jApply "SYS"|jApply "SCH"].
+    jFrame "STACK HELP SYS SCH".
   Qed.
 End StackIA. End StackIA.

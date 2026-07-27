@@ -40,17 +40,15 @@ Section CannonAux.
     rewrite /mod_src /mod_tgt /smod_src SMod.to_mod_add.
     jIntros (ctx_refines_BiProset) "(CANNON & MAIN)".
 
-    iPoseProof (CannonIA.ctxr with "READY") as "REF".
-    jPoseProof "REF" with "CANNON" as "CANNON".
+    jPoseProof (CannonIA.ctxr sp) with "READY" "CANNON" as "CANNON".
 
-    iPoseProof (CannonMainIA.ctxr sp) as "REF".
+    jPoseProof (CannonMainIA.ctxr sp) with "MAIN" as "MAIN".
     { split; et.
       repeat try eapply insert_subseteq_l; last apply map_empty_subseteq.
       mod_tac.
     }
-    jPoseProof "REF" with "MAIN" as "MAIN".
 
-    jSplitL "CANNON"; [jApply "CANNON"|jApply "MAIN"].
+    jFrame.
   (*SLOW*)Qed.
 
   Lemma top_tgt :

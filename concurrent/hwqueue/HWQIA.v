@@ -140,11 +140,8 @@ Module HWQIA. Section HWQIA.
           "((HWQI & MEMI) & PROPHI & SCH & CTX)".
         jPoseProof (HWQIP.ctxr (mname_long sz))
           with "[HWQI PROPHI]" as "(HWQP & PROPHI)".
-        { jSplitL "HWQI"; [jApply "HWQI"|jApply "PROPHI"]. }
-        jSplitL "HWQP"; [jApply "HWQP"|].
-        jSplitL "MEMI"; [jApply "MEMI"|].
-        jSplitL "PROPHI"; [jApply "PROPHI"|].
-        jSplitL "SCH"; [jApply "SCH"|jApply "CTX"].
+        { jFrame. }
+        jFrame.
       }
       iSplitL "PROPH"; first iExact "PROPH".
       iApply refines_trans. iSplitL "MEM".
@@ -157,19 +154,19 @@ Module HWQIA. Section HWQIA.
         iApply ctxr_refines.
         jIntros (ctx_refines_BiProset)
           "(HWQP & MEMI & PROPHA & FLT)".
-        iPoseProof (MemIA.ctxr sp_mem genv with "MEM") as "MEM_REF".
-        jPoseProof "MEM_REF" with "MEMI" as "MEMA".
-        jSplitL "HWQP MEMA PROPHA".
-        { jSplitL "HWQP"; [jApply "HWQP"|].
-          jSplitL "MEMA"; [jApply "MEMA"|jApply "PROPHA"].
-        }
-        jApply "FLT".
+        jPoseProof (MemIA.ctxr sp_mem genv)
+          with "MEM" "MEMI" as "MEMA".
+        jFrame.
       }
       iApply refines_trans. iSplitL "HELP FREE".
-      { iApply (helping_main_filtered _
+      { iApply (helping_main_filtered
+          (Prophecy.exports (mname_long sz))
           (λ mnh,
             HWQM.t mnh ★ MemA.t sp_mem ★ ProphecyA.t (mname_long sz) ∅)
-          (HWQA.t ★ MemA.t sp_mem) _ _ HWQM.jobCode with "HELP [FREE]").
+          (HWQA.t ★ MemA.t sp_mem)
+          (HWQP.t (mname_long sz) ★
+            MemA.t sp_mem ★ ProphecyA.t (mname_long sz) ∅)
+          ctx HWQM.jobCode with "HELP [FREE]").
         - intros fn IN1 IN2. subst sz allmds.
           rewrite -elem_of_elements in IN1. eapply elem_of_maxlen in IN1.
           eapply prophecy_exports_long in IN2. rewrite mname_long_length in IN2.
@@ -184,20 +181,12 @@ Module HWQIA. Section HWQIA.
             (SchI.t ★ ctx)).
           jIntros (ctx_refines_BiProset)
             "((HWQP & MEMA & PROPHA) & FLT & DUMMY)".
-          iPoseProof
-            (HWQPM.ctxr mnh (mname_long sz) sp_mem
-              with "[$HE $FREE]") as "HWQ_REF".
-          jPoseProof "HWQ_REF" with "[HWQP DUMMY MEMA PROPHA]"
+          jPoseProof (HWQPM.ctxr mnh (mname_long sz) sp_mem)
+            with "[HE FREE]" "[HWQP DUMMY MEMA PROPHA]"
             as "((HWQM & ON) & MEMA & PROPHA)".
-          { jSplitL "HWQP DUMMY".
-            { jSplitL "HWQP"; [jApply "HWQP"|jApply "DUMMY"]. }
-            jSplitL "MEMA"; [jApply "MEMA"|jApply "PROPHA"].
-          }
-          jSplitL "HWQM MEMA PROPHA".
-          { jSplitL "HWQM"; [jApply "HWQM"|].
-            jSplitL "MEMA"; [jApply "MEMA"|jApply "PROPHA"].
-          }
-          jSplitL "FLT"; [jApply "FLT"|jApply "ON"].
+          { iFrame. }
+          { jFrame. }
+          jFrame.
         - iIntros (mnh).
           set (hflt' := CFilter.filter
             (Helping.exports mnh ∪ Prophecy.exports (mname_long sz))
@@ -206,12 +195,8 @@ Module HWQIA. Section HWQIA.
             "((HWQM & MEMA & PROPHA) & FLT & OFF)".
           jPoseProof (HWQMA.ctxr (mname_long sz) mnh)
             with "[HWQM PROPHA OFF]" as "HWQA".
-          { jSplitL "HWQM"; [jApply "HWQM"|].
-            jSplitL "PROPHA"; [jApply "PROPHA"|jApply "OFF"].
-          }
-          jSplitL "HWQA MEMA".
-          { jSplitL "HWQA"; [jApply "HWQA"|jApply "MEMA"]. }
-          jApply "FLT".
+          { jFrame. }
+          jFrame.
       }
       iApply refines_trans. iSplitR.
       { instantiate (1 :=
@@ -226,9 +211,7 @@ Module HWQIA. Section HWQIA.
           (CFilter.intro_filter
             (Prophecy.exports (mname_long sz)) ctx)
           with "CTX" as "CTX".
-        jSplitL "HWQA MEMA".
-        { jSplitL "HWQA"; [jApply "HWQA"|jApply "MEMA"]. }
-        jSplitL "SCH"; [jApply "SCH"|jApply "CTX"].
+        jFrame.
       }
       rewrite CFilter.filter_app !assoc.
       iApply ctxr_refines.
@@ -242,12 +225,7 @@ Module HWQIA. Section HWQIA.
         (CFilter.intro_filter
           (Prophecy.exports (mname_long sz)) SchI.t)
         with "SCH" as "SCH".
-      jSplitL "HWQA MEMA SCH".
-      { jSplitL "HWQA MEMA".
-        { jSplitL "HWQA"; [jApply "HWQA"|jApply "MEMA"]. }
-        jApply "SCH".
-      }
-      jApply "CTX".
+      jFrame.
     }
     rewrite -!assoc.
     iApply refines_refl.

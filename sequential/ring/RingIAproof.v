@@ -23,36 +23,24 @@ Module RingIA. Section RingIA.
         ctx_refines (CellIG 0 n) (CtrlIA.CellG spt 0 n)).
     { intros n. induction n as [|n IH].
       + iIntros "_". rewrite /CellIG /CtrlIA.CellG /CtrlIA.CellGS /=.
-        jIntros (ctx_refines_BiProset) "CELLS".
-        jApply "CELLS".
+        iApply ctxr_refl.
       + rewrite /CellIG /CtrlIA.CellG /CtrlIA.CellGS.
         rewrite !seq_S !map_app !mod_addL_app big_sepL_app.
         iIntros "[HCs HC]".
         rewrite /= !right_id length_seq.
         jIntros (ctx_refines_BiProset) "(CELLS & CELL)".
-        iPoseProof (IH with "HCs") as "REF".
-        jPoseProof "REF" with "CELLS" as "CELLS".
-        iPoseProof (main_adequacy with "HC") as "REF".
-        { eapply CellIA.sim. }
-        jPoseProof "REF" with "CELL" as "CELL".
-        jSplitL "CELLS"; [jApply "CELLS"|jApply "CELL"].
+        jPoseProof IH with "HCs" "CELLS" as "CELLS".
+        jPoseProof main_adequacy with "HC" "CELL" as "CELL".
+        { eapply (CellIA.sim spt). }
+        jFrame.
     }
     iIntros "[HR HC]".
     jIntros (ctx_refines_BiProset) "(CTRL & CELLS)".
-    iPoseProof (Hcells max_size with "HC") as "REF".
-    jPoseProof "REF" with "CELLS" as "CELLS".
-    iPoseProof
-      (main_adequacy _ _ _ _
-        (CtrlIA.sim max_size spt sps) with "HR") as "REF".
-    iEval
-      (unfold CtrlIAproof.CtrlIA.RingIMod,
-        CtrlIAproof.CtrlIA.RingAMod,
-        CtrlIAproof.CtrlIA.CtrlI,
-        CtrlIAproof.CtrlIA.RingA,
-        CtrlIA.CellGS) in "REF".
-    jPoseProof "REF" with "[CTRL CELLS]" as "(RING & CELLS)".
-    { jSplitL "CTRL"; [jApply "CTRL"|jApply "CELLS"]. }
-    jSplitL "RING"; [jApply "RING"|jApply "CELLS"].
+    jPoseProof (Hcells max_size) with "HC" "CELLS" as "CELLS".
+    jPoseProof main_adequacy with "HR" "[CTRL CELLS]" as "M".
+    { eapply (CtrlIA.sim max_size spt sps). }
+    { jFrame. }
+    jFrame.
   Qed.
 
 End RingIA. End RingIA.

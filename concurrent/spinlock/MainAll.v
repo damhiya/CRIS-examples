@@ -74,42 +74,30 @@ Section MainAux.
     rewrite /mod_src /smod_src /mod_tgt.
     jIntros (ctx_refines_BiProset) "(MAIN & LOCK & MEM & SCH)".
 
-    iPoseProof
-      (SchIA.ctxr sp sp_user with "HSCH_INIT") as "REF".
+    jPoseProof (SchIA.ctxr sp sp_user) with "HSCH_INIT" "SCH" as "SCH".
     { apply SchInSp. }
     { apply UserInSp. }
     { et. }
-    jPoseProof "REF" with "SCH" as "SCH".
 
-    iPoseProof (MemIA.ctxr sp genv with "HMEM_INIT") as "REF".
-    jPoseProof "REF" with "MEM" as "MEM".
+    jPoseProof (MemIA.ctxr sp genv) with "HMEM_INIT" "MEM" as "MEM".
 
-    assert (LOCK_NS : ↑LockA.N_SpinLockA ⊆ (↑nroot : coPset)).
+    jPoseProof (LockIA.ctxr (↑nroot)) with "[LOCK MEM]" as "(LOCK & MEM)".
     { rewrite nclose_nroot. set_solver. }
-    assert (LOCK_SP : SchA.sp sp_user (↑nroot) ⊆ sp).
     { rewrite nclose_nroot. apply SchInSp. }
-    iPoseProof
-      (LockIA.ctxr (↑nroot) LOCK_NS sp_user sp LOCK_SP)
-      as "-#LOCK_REF".
-    jPoseProof "LOCK_REF" with "[LOCK MEM]" as "(LOCK & MEM)".
-    { jSplitL "LOCK"; [jApply "LOCK"|jApply "MEM"]. }
+    { jFrame "LOCK MEM". }
 
-    iPoseProof
-      (MainIA.ctxr nroot sp sp sp_user sp_user) as "-#MAIN_REF".
+    jPoseProof (MainIA.ctxr nroot sp sp sp_user sp_user)
+      with "[MAIN LOCK MEM]" as "(MAIN & LOCK & MEM)".
     { rewrite nclose_nroot. apply SchInSp. }
     { rewrite nclose_nroot. apply SchInSp. }
     { rewrite nclose_nroot. apply MainInSp. }
-    jPoseProof "MAIN_REF" with "[MAIN LOCK MEM]"
-      as "(MAIN & LOCK & MEM)".
-    { jSplitL "MAIN"; [jApply "MAIN"|].
-      jSplitL "LOCK"; [jApply "LOCK"|jApply "MEM"].
-    }
+    { jFrame. }
 
     jPoseProof elim_module with "MEM" as "_".
     jPoseProof elim_module with "LOCK" as "_".
 
-    rewrite /MainA.t /SchA.t SMod.to_mod_add.
-    jSplitL "MAIN"; [jApply "MAIN"|jApply "SCH"].
+    rewrite SMod.to_mod_add.
+    jFrame.
   (*SLOW*)Qed.
 
   (* source Mod ⊆ source SMod ⊆ cancelled Mod *)

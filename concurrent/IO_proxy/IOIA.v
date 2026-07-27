@@ -410,17 +410,12 @@ Module IOIA_ctxr. Section IOIA_ctxr.
     { (* IOIM.sim — helping-on intermediate refinement *)
       rewrite !CFilter.filter_app.
       rewrite comm assoc (comm _ (HelpingDummy.t mn)).
-      iPoseProof (main_adequacy with "HE") as "REF".
-      { apply (IOIM.sim mn); try exact sp. }
       jIntros (ctx_refines_BiProset) "SRC".
-      jPoseProof "REF" with "SRC"
+      jPoseProof main_adequacy with "HE" "SRC" as "DST".
+      { apply (IOIM.sim mn); exact sp. }
+      jDestruct "DST"
         as "(((IO & PROXY) & HELP) & ((PQ & MEM) & SCH))".
-      jSplitL "IO PROXY".
-      { jSplitL "IO"; [jApply "IO"|jApply "PROXY"]. }
-      jSplitR "HELP"; last jApply "HELP".
-      jSplitL "PQ MEM".
-      { jSplitL "PQ"; [jApply "PQ"|jApply "MEM"]. }
-      jApply "SCH".
+      jFrame.
     }
     iIntros (mn).
     { do 2 rewrite CFilter.filter_app.

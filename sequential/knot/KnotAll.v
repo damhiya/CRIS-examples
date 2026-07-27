@@ -56,19 +56,19 @@ Section KnotAux.
     jIntros (ctx_refines_BiProset) "(MAIN & KNOT & MEM & APC)".
 
     (* abstraction of Mem *)
-    iPoseProof (MemIA.ctxr ∅ genv with "HMem") as "REF".
-    jPoseProof "REF" with "MEM" as "MEM".
+    jPoseProof (MemIA.ctxr ∅ genv) with "HMem" "MEM" as "MEM".
 
     (* abstraction of APCI to APCA *)
-    iPoseProof (APCIA.ctxr sp sp_pure) as "-#REF".
-    jPoseProof "REF" with "APC" as "APC".
+    jPoseProof (APCIA.ctxr sp sp_pure) with "APC" as "APC".
 
     (* abstraction of Knot *)
-    iPoseProof
-      (KnotIA.ctxr genv sp sp_rec sp_fun sp_pure with "HKnot")
-      as "REF"; eauto.
+    jPoseProof
+      (KnotIA.ctxr genv sp sp_rec sp_fun sp_pure)
+      with "HKnot" "[KNOT MEM APC]"
+      as "(KNOT & MEM & APC)".
     { eapply genv_wf. }
     { unfold genv. eapply incl_appl; refl. }
+    { unfold sp_rec. refl. }
     { split; et.
       repeat try eapply insert_subseteq_l;
         last apply map_empty_subseteq; mod_tac.
@@ -78,17 +78,16 @@ Section KnotAux.
         repeat try eapply insert_subseteq_l;
         try apply map_empty_subseteq; mod_tac.
     }
-    jPoseProof "REF" with "[KNOT MEM APC]" as "(KNOT & MEM & APC)".
-    { jSplitL "KNOT"; [jApply "KNOT"|].
-      jSplitL "MEM"; [jApply "MEM"|jApply "APC"].
-    }
+    { jFrame. }
 
     (* abstraction of KnotMain *)
-    iPoseProof
+    jPoseProof
       (KnotMainIA.ctxr genv sp sp_rec sp_fun sp_pure)
-      as "-#REF"; eauto.
+      with "[MAIN KNOT MEM APC]"
+      as "(MAIN & KNOT & MEM & APC)".
     { eapply genv_wf. }
     { unfold genv. eapply incl_appr; refl. }
+    { unfold sp_fun. refl. }
     { split; et.
       repeat try eapply insert_subseteq_l;
         last apply map_empty_subseteq; mod_tac.
@@ -108,19 +107,15 @@ Section KnotAux.
         repeat try eapply insert_subseteq_l;
         try apply map_empty_subseteq; mod_tac.
     }
-    jPoseProof "REF" with "[MAIN KNOT MEM APC]"
-      as "(MAIN & KNOT & MEM & APC)".
-    { jSplitL "MAIN"; [jApply "MAIN"|].
-      jSplitL "KNOT"; [jApply "KNOT"|].
-      jSplitL "MEM"; [jApply "MEM"|jApply "APC"].
-    }
+    { jFrame. }
 
     (* abstraction of APCA to APCC *)
-    iPoseProof
+    jPoseProof
       (APCAC.ctxr
         (KnotMainA.t genv sp_rec true sp
           ★ KnotA.t genv sp_rec sp_fun sp)
-        sp sp sp_pure) as "-#REF".
+        sp sp sp_pure)
+      with "[MAIN KNOT APC]" as "(APC & MAIN & KNOT)".
     { split; et.
       repeat try eapply insert_subseteq_l;
         last apply map_empty_subseteq; mod_tac.
@@ -138,18 +133,15 @@ Section KnotAux.
       clear H0. apply map_disjoint_insert_l_2;
         simpl_map; auto with map_disjoint.
     }
-    jPoseProof "REF" with "[MAIN KNOT APC]"
-      as "(APC & MAIN & KNOT)".
-    { jSplitL "APC"; [jApply "APC"|].
-      jSplitL "MAIN"; [jApply "MAIN"|jApply "KNOT"].
-    }
+    { jFrame. }
 
     (* elimination of pure cCall *)
-    iPoseProof
+    jPoseProof
       (KnotMainIA.ctxr_close genv sp sp_rec sp_fun sp_pure)
-      as "-#REF"; eauto.
+      with "[MAIN APC]" as "(MAIN & APC)".
     { eapply genv_wf. }
     { unfold genv. eapply incl_appr; refl. }
+    { unfold sp_fun. refl. }
     { split; et.
       repeat try eapply insert_subseteq_l;
         last apply map_empty_subseteq; mod_tac.
@@ -169,15 +161,12 @@ Section KnotAux.
         repeat try eapply insert_subseteq_l;
         try apply map_empty_subseteq; mod_tac.
     }
-    jPoseProof "REF" with "[MAIN APC]" as "(MAIN & APC)".
-    { jSplitL "MAIN"; [jApply "MAIN"|jApply "APC"]. }
+    { jFrame. }
 
     (* elimination of mem *)
     jPoseProof elim_module with "MEM" as "_".
 
-    jSplitL "MAIN"; [jApply "MAIN"|].
-    jSplitL "KNOT"; [jApply "KNOT"|].
-    jApply "APC".
+    jFrame.
   (*SLOW*)Qed.
 
   Lemma top_tgt :

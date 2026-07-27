@@ -159,72 +159,55 @@ Section SCHMainAux.
     jIntros (ctx_refines_BiProset)
       "(MAIN & SCH & RRS & NDS & RRSNODE & NDSNODE & MEM & HYB)".
 
-    iPoseProof SCHMainIAproof.ctxr as "-#REF".
+    jPoseProof SCHMainIAproof.ctxr with "MAIN" as "MAIN".
     { eapply spsch_in_sp. }
     { eapply sch_in_sp. }
     { eapply rrs_in_spsch. }
     { eapply nds_in_spsch. }
     { eapply rrsnode_in_sprrs. }
     { eapply ndsnode_in_sprrs. }
-    jPoseProof "REF" with "MAIN" as "MAIN".
 
-    iPoseProof (SchIA.ctxr with "HSCH_INIT") as "REF".
+    jPoseProof SchIA.ctxr with "HSCH_INIT" "SCH" as "SCH".
     { eapply sch_in_sp. }
     { eapply spsch_in_sp. }
     { et. }
-    jPoseProof "REF" with "SCH" as "SCH".
 
-    iPoseProof (RRSIA.ctxr with "HRRS_INIT") as "REF".
+    jPoseProof RRSIA.ctxr with "HRRS_INIT" "RRS" as "RRS".
     { eapply yield_in_sp. }
     { etrans; [eapply rrs_in_spsch|eapply spsch_in_sp]. }
     { eapply sprrs_in_sp. }
     { eapply yield_spec_cond. }
     { et. }
-    jPoseProof "REF" with "RRS" as "RRS".
 
-    iPoseProof (NDSIA.ctxr with "HNDS_INIT") as "REF".
+    jPoseProof NDSIA.ctxr with "HNDS_INIT" "NDS" as "NDS".
     { eapply yield_in_sp. }
     { etrans; [eapply nds_in_spsch|eapply spsch_in_sp]. }
     { eapply spnds_in_sp. }
     { eapply yield_spec_cond. }
     { et. }
-    jPoseProof "REF" with "NDS" as "NDS".
 
-    iPoseProof (MemIA.ctxr sp genv with "HMEM_INIT") as "REF".
-    jPoseProof "REF" with "MEM" as "MEM".
+    jPoseProof (MemIA.ctxr sp genv) with "HMEM_INIT" "MEM" as "MEM".
 
-    iPoseProof (MemDH.ctxr with "HHYB_INIT") as "REF".
-    jPoseProof "REF" with "HYB" as "HYB".
+    jPoseProof MemDH.ctxr with "HHYB_INIT" "HYB" as "HYB".
 
-    iPoseProof (RRSNodeIAproof.ctxr with "[]") as "RRS_REF".
+    jPoseProof RRSNodeIAproof.ctxr with "[RRSNODE MEM RRS]" as "(RRSNODE & MEM & RRS)".
     { eapply sprrs_in_sp. }
     { etrans; [eapply rrs_in_spsch|eapply spsch_in_sp]. }
     { eapply rrsnode_in_sprrs. }
     { done. }
-    jPoseProof "RRS_REF" with "[RRSNODE MEM RRS]"
-      as "(RRSNODE & MEM & RRS)".
-    { jSplitL "RRSNODE"; [jApply "RRSNODE"|].
-      jSplitL "MEM"; [jApply "MEM"|].
-      jApply "RRS".
-    }
+    { jFrame "RRSNODE MEM RRS". }
 
-    iPoseProof (NDSNodeIAproof.ctxr with "[]") as "NDS_REF".
+    jPoseProof NDSNodeIAproof.ctxr with "[NDSNODE HYB]" as "(NDSNODE & HYB)".
     { eapply spnds_in_sp. }
     { etrans; [eapply nds_in_spsch|eapply spsch_in_sp]. }
     { eapply ndsnode_in_sprrs. }
     { done. }
-    jPoseProof "NDS_REF" with "[NDSNODE HYB]" as "(NDSNODE & HYB)".
-    { jSplitL "NDSNODE"; [jApply "NDSNODE"|jApply "HYB"]. }
+    { jFrame "NDSNODE HYB". }
 
     jPoseProof elim_module with "MEM" as "_".
     jPoseProof elim_module with "HYB" as "_".
 
-    jSplitL "MAIN"; [jApply "MAIN"|].
-    jSplitL "SCH"; [jApply "SCH"|].
-    jSplitL "RRS"; [jApply "RRS"|].
-    jSplitL "NDS"; [jApply "NDS"|].
-    jSplitL "RRSNODE"; [jApply "RRSNODE"|].
-    jApply "NDSNODE".
+    jFrame "MAIN SCH RRS NDS RRSNODE NDSNODE".
   (*SLOW*)Qed.
 
   Lemma top_tgt :
