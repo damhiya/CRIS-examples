@@ -18,7 +18,8 @@ Module CellIA. Section CellIA.
   Local Definition CellAMod := (CellA.t idx sp_s).
   Local Definition CellIMod := (CellI.t idx).
 
-  Lemma simF_get : ISim.sim_fun open CellAMod CellIMod Ist (fid (CellHdr.get idx)).
+  Lemma simF_get :
+    ⊢ ISim.sim_fun open CellAMod CellIMod Ist (fid (CellHdr.get idx)).
   Proof using.
     cStartFunSim. rewrite /CellI.get.
 
@@ -40,7 +41,8 @@ Module CellIA. Section CellIA.
     iExists _, _. iSplit; eauto. iRight. iFrame; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_set : ISim.sim_fun open CellAMod CellIMod Ist (fid (CellHdr.set idx)).
+  Lemma simF_set :
+    ⊢ ISim.sim_fun open CellAMod CellIMod Ist (fid (CellHdr.set idx)).
   Proof using.
     cStartFunSim. rewrite /CellI.set.
 
@@ -81,12 +83,13 @@ Module CellIA. Section CellIA.
     iExists _, _. iSplit; eauto. iRight. iFrame; eauto.
   (*SLOW*)Qed.
 
-  Theorem sim : ISim.t open CellAMod CellIMod (CellA.init_cond idx) Ist.
+  Theorem sim :
+    CellA.init_cond idx ⊢ ISim.t open CellAMod CellIMod Ist.
   Proof.
     cStartModSim.
     - iIntros "IC". iDestruct "IC" as (v) "(C & A)".
       repeat iExists _. iSplit; eauto. iLeft. iFrame.
-    - eapply simF_get; eauto.
-    - eapply simF_set; eauto.
+    - iApply simF_get.
+    - iApply simF_set.
   Qed.
 End CellIA. End CellIA.

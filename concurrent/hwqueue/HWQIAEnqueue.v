@@ -126,7 +126,7 @@ Section HWQPM.
   Qed.
 
   Lemma simF_enqueue :
-    ISim.sim_fun open
+    ⊢ ISim.sim_fun open
       ((HWQM ★ HelpOn) ★ MemA ★ ProphA) ((HWQP ★ HelpDummy) ★ MemA ★ ProphA)
       IstFull (fid HWQHdr.enqueue).
   Proof.

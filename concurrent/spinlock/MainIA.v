@@ -23,7 +23,8 @@ Module MainIA. Section MainIA.
   Local Notation MA := (SpinLockMainA ★ (SpinLockA ★ MemA)).
   Local Notation MI := (SpinLockMainI ★ (SpinLockA ★ MemA)).
 
-  Lemma incr_simF : ISim.sim_fun open MA MI IstFull (fid SpinLockMainHdr.incr).
+  Lemma incr_simF :
+    ⊢ ISim.sim_fun open MA MI IstFull (fid SpinLockMainHdr.incr).
   Proof using SchInSp_s SchInSp_t MainInSp.
     cStartFunSim. rewrite /SpinLockMainI.incr /incr /sfunN /sfunU.
     (* process src precondition *)
@@ -74,7 +75,7 @@ Module MainIA. Section MainIA.
     cStep. iFrame. eauto.
   (*SLOW*)Qed.
 
-  Lemma main_simF : ISim.sim_fun open MA MI IstFull entry.
+  Lemma main_simF : ⊢ ISim.sim_fun open MA MI IstFull entry.
   Proof using SchInSp_s SchInSp_t MainInSp.
     cStartFunSim. rewrite /SpinLockMainI.main /main /sfunN /sfunU.
     
@@ -193,11 +194,11 @@ Module MainIA. Section MainIA.
     cForcesS. iFrame; iSplit; first eauto. cStep. iSplit; eauto.
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open MA MI emp%I IstFull.
+  Lemma sim : ⊢ ISim.t open MA MI IstFull.
   Proof.
     cStartModSim.
-    { eapply main_simF. }
-    { eapply incr_simF. }
+    { apply main_simF. }
+    { apply incr_simF. }
     { iIntros "_"; repeat iExists _; repeat iSplit; eauto. }
   Qed.
 
@@ -205,5 +206,5 @@ Module MainIA. Section MainIA.
     ⊢ ctx_refines
         (SpinLockMainI.t ★ (LockA.t (↑N) sp_t ★ MemA.t sp_s))
         (MainA.t N sp_s ★ (LockA.t (↑N) sp_t ★ MemA.t sp_s)).
-  Proof. eapply main_adequacy, sim. Qed.
+  Proof. iApply main_adequacy. iApply sim. Qed.
 End MainIA. End MainIA.

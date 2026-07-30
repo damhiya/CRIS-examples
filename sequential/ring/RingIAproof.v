@@ -30,15 +30,15 @@ Module RingIA. Section RingIA.
         rewrite /= !right_id length_seq.
         jIntros (ctx_refines_BiProset) "(CELLS & CELL)".
         jPoseProof IH with "HCs" "CELLS" as "CELLS".
-        jPoseProof main_adequacy with "HC" "CELL" as "CELL".
-        { eapply (CellIA.sim spt). }
+        jPoseProof main_adequacy with "[HC]" "CELL" as "CELL".
+        { iApply (CellIA.sim spt). iFrame. }
         jFrame.
     }
     iIntros "[HR HC]".
     jIntros (ctx_refines_BiProset) "(CTRL & CELLS)".
     jPoseProof (Hcells max_size) with "HC" "CELLS" as "CELLS".
-    jPoseProof main_adequacy with "HR" "[CTRL CELLS]" as "M".
-    { eapply (CtrlIA.sim max_size spt sps). }
+    jPoseProof main_adequacy with "[HR]" "[CTRL CELLS]" as "M".
+    { iApply (CtrlIA.sim max_size spt sps). iFrame. }
     { jFrame. }
     jFrame.
   Qed.

@@ -36,7 +36,7 @@ Section HWQPM.
   Notation ProphA := (ProphecyA.t mnp ∅).
 
   Lemma simF_new_queue : 
-    ISim.sim_fun open
+    ⊢ ISim.sim_fun open
       ((HWQM ★ HelpOn) ★ MemA ★ ProphA) ((HWQP ★ HelpDummy) ★ MemA ★ ProphA)
       IstFull (fid HWQHdr.new_queue).
   Proof.

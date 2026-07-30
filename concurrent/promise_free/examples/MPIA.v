@@ -29,7 +29,7 @@ Module MPIA. Section MPIA.
     iFrame. iSplit; [done|iIntros (??) "[$ [% [-> [% $]]]]"]; eauto.
   Qed.
 
-  Lemma simF_mp : ISim.sim_fun open MA MI IstFull entry.
+  Lemma simF_mp : ⊢ ISim.sim_fun open MA MI IstFull entry.
   Proof using SchInSpS HMP.
     cStartFunSim. rewrite /MPI.mp /MPA.mp.
     cStepsS. iDestruct "ASM" as "[-> TV]". rewrite /MPA.mp /MPI.mp; cStepsS; cStepsT.
@@ -285,7 +285,7 @@ Module MPIA. Section MPIA.
   Unshelve. all: try exact 1%Qp; try exact ⊤.
   (*SLOW*)Qed.
 
-  Lemma simF_mp2 : ISim.sim_fun open MA MI IstFull (fid MPHdr.mp2).
+  Lemma simF_mp2 : ⊢ ISim.sim_fun open MA MI IstFull (fid MPHdr.mp2).
   Proof using SchInSpS HMP.
     cStartFunSim. rewrite /sfunU /sfunN /MPI.mp2.
     cStepsS. destruct _q as [tid stid].
@@ -373,11 +373,11 @@ Module MPIA. Section MPIA.
   Unshelve. all: try exact ⊤.
   Qed.
 
-  Lemma sim : ISim.t open MA MI emp%I IstFull.
+  Lemma sim : ⊢ ISim.t open MA MI IstFull.
   Proof.
     cStartModSim.
-    { eapply simF_mp2. }
-    { eapply simF_mp. }
+    { iApply simF_mp2. }
+    { iApply simF_mp. }
     { iIntros "_"; repeat iExists _; repeat iSplit; eauto. }
   Qed.
 End MPIA.
@@ -390,6 +390,8 @@ Section ctxr.
     ⊢ ctx_refines
       (MPI.t ★ SystemA.t sp_user ⊤ sp_s ★ PFMemA.t sp_s)
       (MPA.t sp_s ★ SystemA.t sp_user ⊤ sp_s ★ PFMemA.t sp_s).
-  Proof using. intros ??; eapply main_adequacy, sim; eauto. Qed.
+  Proof using.
+    intros ??. iApply main_adequacy. iApply sim; eauto.
+  Qed.
 End ctxr.
 End MPIA.

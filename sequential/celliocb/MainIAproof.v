@@ -15,14 +15,17 @@ Module MainIA. Section MainIA.
   Local Notation MainA := (MainA.t sp).
   Local Notation IstFull := (IstProd (IstSB MainA.(Mod.scopes) IstTrue) IstEq).
 
-  Lemma simF_cb : ISim.sim_fun open MainA (MainI.t ★ CellioAMod) IstFull (fid MainHdr.input_cb).
+  Lemma simF_cb :
+    ⊢ ISim.sim_fun open MainA (MainI.t ★ CellioAMod) IstFull
+        (fid MainHdr.input_cb).
   Proof using.
     cStartFunSim. unfold MainA.input_cb, MainI.input_cb.
     destruct Any.downcast; cStepsS; des_ifs.
     cStepsS. cStepsT. cStep. cStep. cStep. iSplit; et.
   Qed. 
 
-  Lemma simF_main : ISim.sim_fun open MainA (MainI.t ★ CellioAMod) IstFull entry.
+  Lemma simF_main :
+    ⊢ ISim.sim_fun open MainA (MainI.t ★ CellioAMod) IstFull entry.
   Proof using sp_foo sp_cb.
     cStartFunSim. unfold MainA.main, MainI.main.
     
@@ -54,11 +57,11 @@ Module MainIA. Section MainIA.
     cStep. cStepsS. cStepsT. cForcesS. iSplit; et. cStep. iFrame; et. 
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open MainA (MainI.t ★ CellioAMod) emp IstFull.
+  Lemma sim : ⊢ ISim.t open MainA (MainI.t ★ CellioAMod) IstFull.
   Proof using sp_foo sp_cb.
     cStartModSim.
     { iIntros "_". unfold IstFull, IstProd. repeat (iExists ∅). ss. }
-    { eapply simF_cb; eauto. }  
-    { eapply simF_main; eauto. }
+    { iApply simF_cb; eauto. }
+    { iApply simF_main; eauto. }
   Qed.
 End MainIA. End MainIA.

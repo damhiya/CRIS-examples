@@ -42,7 +42,8 @@ Module KnotIA. Section KnotIA.
   Local Notation KnotIMod := ((KnotI.t genv) ★ MemA ★ APCA).
   Local Notation IstFull := (IstProd (IstSB KnotA.(Mod.scopes) Ist) IstEq).
 
-  Lemma simF_rec : ISim.sim_fun open KnotAMod KnotIMod IstFull (fid KnotHdr.rec).
+  Lemma simF_rec :
+    ⊢ ISim.sim_fun open KnotAMod KnotIMod IstFull (fid KnotHdr.rec).
   Proof using GEnvWF GEnvIncl RecInSp APCInSp FunInPure PureInSp.
     cStartFunSim. rewrite /KnotI.recF.
 
@@ -115,7 +116,8 @@ Module KnotIA. Section KnotIA.
     Unshelve. all: try exact (tt↑).
   (*SLOW*)Qed.
 
-  Lemma simF_knot : ISim.sim_fun open KnotAMod KnotIMod IstFull (fid KnotHdr.knot).
+  Lemma simF_knot :
+    ⊢ ISim.sim_fun open KnotAMod KnotIMod IstFull (fid KnotHdr.knot).
   Proof using GEnvWF GEnvIncl RecInSp APCInSp FunInPure PureInSp.
     cStartFunSim. rewrite /KnotI.knotF.
 
@@ -168,11 +170,12 @@ Module KnotIA. Section KnotIA.
     { unfold var_points_to. des_ifs. }
   Qed.
 
-  Lemma sim : ISim.t open KnotAMod KnotIMod (KnotA.init_cond genv) IstFull.
+  Lemma sim :
+    KnotA.init_cond genv ⊢ ISim.t open KnotAMod KnotIMod IstFull.
   Proof.
     cStartModSim.
-    { apply simF_rec. }
-    { apply simF_knot. }
+    { iApply simF_rec. }
+    { iApply simF_knot. }
     { iIntros "[VF FL]". iExists _, _, _, _. iSplit; et. iSplit; eauto.
       iSplit; iFrame; et. iPureIntro. ii. inv EQ.
     }
@@ -183,5 +186,8 @@ Module KnotIA. Section KnotIA.
       ctx_refines
         (KnotI.t genv ★ MemA ★ APCA.t sp_pure sp)
         (KnotA.t genv sp_rec sp_fun sp ★ MemA ★ APCA.t sp_pure sp).
-  Proof. eapply main_adequacy, sim; eauto. Qed.
+  Proof.
+    etrans; first (eapply sim; eauto).
+    eapply main_adequacy.
+  Qed.
 End KnotIA. End KnotIA.

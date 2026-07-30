@@ -133,7 +133,8 @@ Module PQueueIA. Section PQueueIA.
   Local Definition PQueueI := PQueueI.t ★ (StackA.t ★ SchI.t ★ MemA.t sp).
   Local Definition IstFull := IstProd (IstSB (Mod.scopes (PQueueA.t)) IstTrue) IstEq.
 
-  Lemma new_simF : ISim.sim_fun open PQueueA PQueueI IstFull (fid PQueueHdr.new).
+  Lemma new_simF :
+    ⊢ ISim.sim_fun open PQueueA PQueueI IstFull (fid PQueueHdr.new).
   Proof.
     cStartFunSim. rewrite /PQueueI.new /PQueueA.new. cStepsS.
     aStepS (N [n range]) "[-> %Hrange]".
@@ -237,7 +238,8 @@ Module PQueueIA. Section PQueueIA.
     }
   Qed.
 
-  Lemma add_simF : ISim.sim_fun open PQueueA PQueueI IstFull (fid PQueueHdr.add).
+  Lemma add_simF :
+    ⊢ ISim.sim_fun open PQueueA PQueueI IstFull (fid PQueueHdr.add).
   Proof.
     cStartFunSim. rewrite /PQueueA.add /PQueueI.add. cStepsS; cStepsT.
     aStepS (N [[γq priority] v]) "/= [%range [%q [%n [[-> %Hp] #HQ]]]]".
@@ -272,7 +274,9 @@ Module PQueueIA. Section PQueueIA.
     sYields. sYieldS. cStep; iFrame. auto.
   Qed.
 
-  Lemma remove_min_simF : ISim.sim_fun open PQueueA PQueueI IstFull (fid PQueueHdr.remove_min).
+  Lemma remove_min_simF :
+    ⊢ ISim.sim_fun open PQueueA PQueueI IstFull
+        (fid PQueueHdr.remove_min).
   Proof.
     cStartFunSim. rewrite /PQueueA.remove_min /PQueueI.remove_min. cStepsS; cStepsT.
     aStepS (N [γq range]) "/= [%q [%n [-> #[%queueb [%queueofs [-> Q]]]]]]".
@@ -362,7 +366,7 @@ Module PQueueIA. Section PQueueIA.
     sYields. sYieldS. cStepsS. sYieldS. cStep; iFrame. auto.
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open PQueueA PQueueI emp IstFull.
+  Lemma sim : ⊢ ISim.t open PQueueA PQueueI IstFull.
   Proof.
     cStartModSim.
     { apply new_simF. }
@@ -378,5 +382,5 @@ Section ctxr.
     ⊢ ctx_refines
         (PQueueI.t ★ StackA.t ★ SchI.t ★ MemA.t sp)
         (PQueueA.t ★ StackA.t ★ SchI.t ★ MemA.t sp).
-  Proof. eapply main_adequacy, sim; eauto. Qed.
+  Proof. iApply main_adequacy. iApply sim; eauto. Qed.
 End ctxr. End PQueueIA.

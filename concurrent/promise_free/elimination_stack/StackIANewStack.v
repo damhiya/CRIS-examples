@@ -24,7 +24,7 @@ Section StackIM.
     IstProd (IstSB [mn] (IstHelp IstTrue ⊤)) IstEq.
 
   Lemma new_stack_simF :
-    ISim.sim_fun open MA MI Ist (fid StackHdr.new_stack).
+    ⊢ ISim.sim_fun open MA MI Ist (fid StackHdr.new_stack).
   Proof.
     cStartFunSim. rewrite /StackI.new_stack /StackM.new_stack.
     cStepsS. destruct _q as [[tid stid] V].

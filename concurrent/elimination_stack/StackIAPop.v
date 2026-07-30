@@ -21,7 +21,8 @@ Section StackIM.
   Local Notation StackI := ((CFilter.filter (Helping.exports mn) StackI.t ★ HelpingDummy) ★ MemA ★ SchI).
   Local Notation Ist := (IstProd (IstSB [mn] (IstHelp IstTrue ⊤)) IstEq).
 
-  Lemma pop_simF : ISim.sim_fun open StackM StackI Ist (fid StackHdr.pop).
+  Lemma pop_simF :
+    ⊢ ISim.sim_fun open StackM StackI Ist (fid StackHdr.pop).
   Proof.
     cStartFunSim. rewrite /StackI.pop /StackM.pop /yield_iter. cStepsS; cStepsT.
     aStepS (N γs) "[%s [-> [%n #[%stackb [%stackofs [%γ [-> Hinv]]]]]]]". cStepsT. cStepsS.

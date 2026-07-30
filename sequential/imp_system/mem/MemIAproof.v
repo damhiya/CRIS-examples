@@ -245,7 +245,8 @@ Module MemIA. Section MemIA.
   Local Definition rel : Type := ∀ R_s R_t : Type,
     post R_s R_t → bool → bool → state * itree crisE R_s → state * itree crisE R_t → iProp Σ.
 
-  Lemma simF_alloc : ISim.sim_fun open MemA MemI IstFull (fid MemHdr.alloc).
+  Lemma simF_alloc :
+    ⊢ ISim.sim_fun open MemA MemI IstFull (fid MemHdr.alloc).
   Proof using.
     cStartFunSim. rewrite /MemI.alloc. cStepsS.
     rename _q into sz, _q0 into varg.
@@ -286,7 +287,8 @@ Module MemIA. Section MemIA.
         i; des; destruct (dec _ _); ss; try case_bool_decide; naive_solver.
   (*SLOW*)Qed.
 
-  Lemma simF_free : ISim.sim_fun open MemA MemI IstFull (fid MemHdr.free).
+  Lemma simF_free :
+    ⊢ ISim.sim_fun open MemA MemI IstFull (fid MemHdr.free).
   Proof using.
     cStartFunSim. rewrite /MemI.free.
     cStepS. destruct _q as [[blk ofs] v].
@@ -309,7 +311,8 @@ Module MemIA. Section MemIA.
     - rewrite /update. ii. ss. repeat destruct dec; ss; subst; et.
   (*SLOW*)Qed.
 
-  Lemma simF_load : ISim.sim_fun open MemA MemI IstFull (fid MemHdr.load).
+  Lemma simF_load :
+    ⊢ ISim.sim_fun open MemA MemI IstFull (fid MemHdr.load).
   Proof using.
     cStartFunSim. rewrite /MemI.load.
     cStepS. destruct _q as [[[blk ofs] q] v]. cStepsS.
@@ -325,7 +328,8 @@ Module MemIA. Section MemIA.
     iExists _, _, _, _; repeat (iSplit; et).
   (*SLOW*)Qed.
 
-  Lemma simF_store : ISim.sim_fun open MemA MemI IstFull (fid MemHdr.store).
+  Lemma simF_store :
+    ⊢ ISim.sim_fun open MemA MemI IstFull (fid MemHdr.store).
   Proof using.
     cStartFunSim. rewrite /MemI.store.
     cStepS. destruct _q as [[[blk ofs] q] v]. cStepsS.
@@ -348,7 +352,8 @@ Module MemIA. Section MemIA.
     - ii; ss; repeat destruct dec; ss; subst; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_cmp : ISim.sim_fun open MemA MemI IstFull (fid MemHdr.cmp).
+  Lemma simF_cmp :
+    ⊢ ISim.sim_fun open MemA MemI IstFull (fid MemHdr.cmp).
   Proof using.
     cStartFunSim. rewrite /MemI.cmp.
     cStepS. destruct _q as [[[v_old v_new] v_cmp] Cmp]. cStepsS.
@@ -368,7 +373,8 @@ Module MemIA. Section MemIA.
     iExists _, _, _, _; iSplit; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_cas : ISim.sim_fun open MemA MemI IstFull (fid MemHdr.cas).
+  Lemma simF_cas :
+    ⊢ ISim.sim_fun open MemA MemI IstFull (fid MemHdr.cas).
   Proof using.
     cStartFunSim. rewrite /MemI.cas.
     cStepS. destruct _q as [[[[[[blk ofs ] v_old] v_new] v_upd] v_cmp] Cmp]. cStepsS.
@@ -409,7 +415,8 @@ Module MemIA. Section MemIA.
     iExists _, _, _, _; repeat (iSplit; eauto).
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open MemA MemI (MemA.init_cond genv) IstFull.
+  Lemma sim :
+    MemA.init_cond genv ⊢ ISim.t open MemA MemI IstFull.
   Proof using.
     cStartModSim.
     { iIntros "?"; iFrame.
@@ -426,12 +433,12 @@ Module MemIA. Section MemIA.
         i. inv H'. eapply lookup_lt_Some; eauto.
       }
     }
-    { apply simF_alloc. }
-    { apply simF_free. }
-    { apply simF_load. }
-    { apply simF_store. }
-    { apply simF_cmp. }
-    { apply simF_cas. }
+    { iApply simF_alloc. }
+    { iApply simF_free. }
+    { iApply simF_load. }
+    { iApply simF_store. }
+    { iApply simF_cmp. }
+    { iApply simF_cas. }
   (*SLOW*)Qed.
 End MemIA.
 Section MemIA.
@@ -439,6 +446,7 @@ Section MemIA.
 
   Lemma ctxr sp genv : MemA.init_cond genv ⊢ ctx_refines (MemI.t genv) (MemA.t sp).
   Proof using.
-    eapply main_adequacy, sim; eauto.
+    etrans; first eapply sim.
+    eapply main_adequacy.
   Qed.
 End MemIA. End MemIA.

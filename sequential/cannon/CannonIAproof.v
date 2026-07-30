@@ -14,7 +14,8 @@ Module CannonIA. Section CannonIA.
   Local Definition CannonAMod := (CannonA.t sp).
   Local Definition CannonIMod := (CannonI.t).
 
-  Lemma simF_fire : ISim.sim_fun open CannonAMod CannonIMod Ist (fid CannonHdr.fire).
+  Lemma simF_fire :
+    ⊢ ISim.sim_fun open CannonAMod CannonIMod Ist (fid CannonHdr.fire).
   Proof using.
     cStartFunSim. rewrite /CannonI.fire /fire.
 
@@ -35,11 +36,11 @@ Module CannonIA. Section CannonIA.
     iSplit; eauto. iRight. iApply ReadyBall; iFrame.
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open CannonAMod CannonIMod CannonA.Ready Ist.
+  Lemma sim : CannonA.Ready ⊢ ISim.t open CannonAMod CannonIMod Ist.
   Proof using.
     cStartModSim.
     - iIntros "IC"; iLeft; iFrame; eauto.
-    - eapply simF_fire.
+    - iApply simF_fire.
   Qed.
 End CannonIA.
 
@@ -48,5 +49,8 @@ Section ctxr.
 
   Lemma ctxr (sp : specmap) :
     CannonA.Ready ⊢ ctx_refines CannonI.t (CannonA.t sp).
-  Proof using. eapply main_adequacy, sim. Qed.
+  Proof using.
+    etrans; first eapply sim.
+    eapply main_adequacy.
+  Qed.
 End ctxr. End CannonIA.

@@ -29,7 +29,8 @@ Module SystemIA. Section SystemIA.
 
   Local Definition IstFull := (IstProd (IstSB (Mod.scopes (SystemA.t sp_user ⊤ sp)) Ist) IstEq).
 
-  Lemma simF__spawn : ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr._spawn).
+  Lemma simF__spawn :
+    ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr._spawn).
   Proof using Hincl Hsysincl.
     cStartFunSim. rewrite /SystemI._spawn.
     cStepsS. destruct _q as [].
@@ -66,7 +67,8 @@ Module SystemIA. Section SystemIA.
     cByCoind CIH; iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_spawn : ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.spawn).
+  Lemma simF_spawn :
+    ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.spawn).
   Proof using Hincl Hsysincl ConcInGlobal.
     cStartFunSim. rewrite /SystemI.spawn.
 
@@ -139,7 +141,8 @@ Module SystemIA. Section SystemIA.
   Unshelve. ss.
   (*SLOW*)Qed.
 
-  Lemma simF_yield : ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.yield).
+  Lemma simF_yield :
+    ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.yield).
   Proof using Hincl Hsysincl ConcInGlobal.
     cStartFunSim. rewrite /SystemI.yield /yield.
 
@@ -201,7 +204,8 @@ Module SystemIA. Section SystemIA.
     iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_get_tid : ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.get_tid).
+  Lemma simF_get_tid :
+    ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.get_tid).
   Proof using Hincl Hsysincl ConcInGlobal.
     cStartFunSim. rewrite /SystemI.get_tid /get_tid.
 
@@ -241,16 +245,21 @@ Section ctx_refines.
         (SystemA.t sp_user ⊤ sp ★ PFMemA.t sp).
   Proof.
     intros ???.
-    eapply main_adequacy with (Ist := (IstProd (IstSB (Mod.scopes (SystemA.t sp_user ⊤ sp)) Ist) IstEq)).
+    etrans; cycle 1.
+    { eapply (main_adequacy
+        (SystemI.t ★ PFMemA.t sp)
+        (SystemA.t sp_user ⊤ sp ★ PFMemA.t sp)
+        (IstProd
+          (IstSB (Mod.scopes (SystemA.t sp_user ⊤ sp)) Ist) IstEq)). }
     cStartModSim.
-    { apply simF__spawn; eauto. }
-    { apply simF_spawn; eauto. }
-    { apply simF_yield; eauto. }
-    { apply simF_get_tid; eauto. }
-    { apply simF_alloc; eauto. }
-    { apply simF_write; eauto. }
-    { apply simF_read; eauto. }
-    { apply simF_cas; eauto. }
+    { iApply simF__spawn; eauto. }
+    { iApply simF_spawn; eauto. }
+    { iApply simF_yield; eauto. }
+    { iApply simF_get_tid; eauto. }
+    { iApply simF_alloc; eauto. }
+    { iApply simF_write; eauto. }
+    { iApply simF_read; eauto. }
+    { iApply simF_cas; eauto. }
     { iIntros "TA"; repeat iExists _; repeat iSplit; ss.
       iExists 1%positive, {[1%positive := (TView.init size, 0)]}; iFrame.
       iSplit; first eauto.

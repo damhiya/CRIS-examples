@@ -27,7 +27,8 @@ Section SystemIA.
 
   Local Definition IstFull := (IstProd (IstSB (Mod.scopes (SystemA.t sp_user ⊤ sp)) Ist) IstEq).
 
-  Lemma simF_write : ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.write).
+  Lemma simF_write :
+    ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.write).
   Proof using.
     cStartFunSim.
     cStepsS. destruct _q as [X|[X|[]]].

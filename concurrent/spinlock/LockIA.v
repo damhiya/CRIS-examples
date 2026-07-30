@@ -20,7 +20,8 @@ Module LockIA. Section LockIA.
   Local Notation MA := (SpinLockA ★ MemA).
   Local Notation MI := (SpinLockI ★ MemA).
 
-  Lemma newlock_simF : ISim.sim_fun open MA MI IstFull (fid SpinLockHdr.newlock).
+  Lemma newlock_simF :
+    ⊢ ISim.sim_fun open MA MI IstFull (fid SpinLockHdr.newlock).
   Proof using SchInSp Hsub.
     cStartFunSim. rewrite /SpinLockI.newlock /newlock.
 
@@ -57,7 +58,8 @@ Module LockIA. Section LockIA.
     cStep. iFrame. eauto.
   (*SLOW*)Qed.
 
-  Lemma acquire_simF : ISim.sim_fun open MA MI IstFull (fid SpinLockHdr.acquire).
+  Lemma acquire_simF :
+    ⊢ ISim.sim_fun open MA MI IstFull (fid SpinLockHdr.acquire).
   Proof using SchInSp Hsub.
     cStartFunSim. rewrite /SpinLockI.acquire /acquire.
 
@@ -114,7 +116,8 @@ Module LockIA. Section LockIA.
   Unshelve. all: try exact 1%Qp. all: try exact Vundef.
   (*SLOW*)Qed.
 
-  Lemma release_simF : ISim.sim_fun open MA MI IstFull (fid SpinLockHdr.release).
+  Lemma release_simF :
+    ⊢ ISim.sim_fun open MA MI IstFull (fid SpinLockHdr.release).
   Proof using SchInSp Hsub.
     cStartFunSim. rewrite /SpinLockI.release /release.
     (* process src precondition *)
@@ -148,7 +151,7 @@ Module LockIA. Section LockIA.
   (*SLOW*)Qed.
 
   (* Construct ISim.t for summing up each simulation proofs *)
-  Lemma sim : ISim.t open MA MI init_cond IstFull.
+  Lemma sim : init_cond ⊢ ISim.t open MA MI IstFull.
   Proof.
     cStartModSim.
     { apply newlock_simF. }
@@ -162,5 +165,5 @@ Module LockIA. Section LockIA.
     ⊢ ctx_refines
         (SpinLockI.t ★ MemA.t sp)
         (LockA.t E sp ★ MemA.t sp).
-  Proof. eapply main_adequacy, sim; eauto. Qed.
+  Proof. iApply main_adequacy. iApply sim; eauto. Qed.
 End LockIA. End LockIA.

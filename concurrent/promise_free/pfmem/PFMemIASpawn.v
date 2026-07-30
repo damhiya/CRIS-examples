@@ -17,7 +17,7 @@ Section spawn.
   Definition MA := (PFMemA.t sp).
   Definition MI := (PFMemI.t syn size).
 
-  Lemma simF_spawn : ISim.sim_fun open MA MI Ist (fid PFMemHdr.spawn).
+  Lemma simF_spawn : ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.spawn).
   Proof.
     cStartFunSim. rewrite /PFMemI.spawn. cStepsS. destruct _q as [tid V].
     iDestruct "ASM" as "[-> [-> TV]]".

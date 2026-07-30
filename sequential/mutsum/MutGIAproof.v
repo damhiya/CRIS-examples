@@ -24,7 +24,7 @@ Module MutGIA. Section MutGIA.
   (*************)
 
   Lemma simF_mutg:
-    ISim.sim_fun open MutGAMod MutGIMod IstFull (fid MutHdr.mutg).
+    ⊢ ISim.sim_fun open MutGAMod MutGIMod IstFull (fid MutHdr.mutg).
   Proof using _crisG APCInSp FInPure PureInSp.
     cStartFunSim. rewrite /MutGI.gF.
     
@@ -84,10 +84,10 @@ Module MutGIA. Section MutGIA.
   (*SLOW*)Qed.
 
   Lemma sim:
-    ISim.t open MutGAMod MutGIMod MutGA.init_cond IstFull.
+    MutGA.init_cond ⊢ ISim.t open MutGAMod MutGIMod IstFull.
   Proof.
     cStartModSim.
-    - eapply simF_mutg.
+    - iApply simF_mutg.
     - iIntros "C". iFrame. do 4 iExists _. iPureIntro; esplits; eauto; set_solver.
   Qed.
 End MutGIA.
@@ -101,5 +101,8 @@ Section ctxr.
     (PureInSp : SpPure ⊆ Sp) :
     MutGA.init_cond ⊢
       ctx_refines (MutGI.t ★ APCA.t SpPure Sp) (MutGA.t Sp ★ APCA.t SpPure Sp).
-  Proof. eapply main_adequacy, sim; eauto. Qed.
+  Proof.
+    etrans; first (eapply sim; eauto).
+    eapply main_adequacy.
+  Qed.
 End ctxr. End MutGIA.

@@ -24,7 +24,7 @@ Module StackIM. Section StackIM.
   Local Notation Ist := (IstProd (IstSB [mn] (IstHelp IstTrue ⊤)) IstEq).
 
   (* Construct ISim.t for summing up each simulation proofs *)
-  Lemma sim : ISim.t open StackM StackI (hinv_ownE ⊤) Ist.
+  Lemma sim : hinv_ownE ⊤ ⊢ ISim.t open StackM StackI Ist.
   Proof.
     cStartModSim.
     { apply new_stack_simF. }
@@ -58,8 +58,8 @@ Module StackIA. Section StackIA.
       jIntros (ctx_refines_BiProset)
         "((STACK & DUMMY) & MEM & SCH)".
       jPoseProof main_adequacy
-        with "HE" "[STACK DUMMY MEM SCH]" as "DST".
-      { apply (StackIM.sim mn sp). }
+        with "[HE]" "[STACK DUMMY MEM SCH]" as "DST".
+      { iApply (StackIM.sim mn sp). iFrame. }
       { jFrame "STACK DUMMY MEM SCH". }
       jDestruct "DST" as "((STACK & HELP) & MEM & SCH)".
       jFrame "STACK MEM SCH HELP".
@@ -77,8 +77,9 @@ Module StackIA. Section StackIA.
           CFilter.filter (Helping.exports mn) (MemA.t sp) ★
           CFilter.filter (Helping.exports mn) SchI.t))%I
       as "REF".
-    { iApply (main_adequacy _ _ emp%I
+    { iApply (main_adequacy _ _
       (IstProd (IstSB (Mod.scopes StackA.t ++ [mn]) IstTrue) IstEq)).
+    iStopProof.
     cStartModSim.
     { cStartFunSim. rewrite /StackM.new_stack /StackA.new_stack. cStepsS; cStepsT.
       aStepS (N n) "[%v ->]".
@@ -111,7 +112,6 @@ Module StackIA. Section StackIA.
       cStep; eauto with iFrame.
     }
     { iIntros "_"; repeat iExists _; repeat iSplit; eauto. }
-    iEmpIntro.
     }
     jApply "REF".
     jFrame.

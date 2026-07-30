@@ -55,7 +55,7 @@ Module IOIM. Section IOIM.
   Local Definition IstFull : ist_type Σ :=
     IstProd (IstSB [mn] (IstHelp IstTrue ⊤)) IstEq.
 
-  Lemma init_simF : ISim.sim_fun open
+  Lemma init_simF : ⊢ ISim.sim_fun open
     (((IOM.t mn ★ ProxyM.t mn) ★ HelpingOn.t mn jobCode) ★ (PQ ★ Mem) ★ SchI)
     (((IOI ★ ProxyI) ★ HelpingDummy.t mn) ★ (PQ ★ Mem) ★ SchI)
     IstFull (fid IOHdr.init).
@@ -85,7 +85,7 @@ Module IOIM. Section IOIM.
     iIntros (tid ??) "IST J". cStep; iFrame "∗#"; eauto.
   Qed.
 
-  Lemma request_simF : ISim.sim_fun open
+  Lemma request_simF : ⊢ ISim.sim_fun open
     (((IOM.t mn ★ ProxyM.t mn) ★ HelpingOn.t mn jobCode) ★ (PQ ★ Mem) ★ SchI)
     (((IOI ★ ProxyI) ★ HelpingDummy.t mn) ★ (PQ ★ Mem) ★ SchI)
     IstFull (fid IOHdr.request).
@@ -135,7 +135,7 @@ Module IOIM. Section IOIM.
     cStepsS. cStep; iFrame. eauto.
   Qed.
 
-  Lemma proxy_simF : ISim.sim_fun open
+  Lemma proxy_simF : ⊢ ISim.sim_fun open
     (((IOM.t mn ★ ProxyM.t mn) ★ HelpingOn.t mn jobCode) ★ (PQ ★ Mem) ★ SchI)
     (((IOI ★ ProxyI) ★ HelpingDummy.t mn) ★ (PQ ★ Mem) ★ SchI)
     IstFull (fid IOHdr.proxy).
@@ -258,10 +258,10 @@ Module IOIM. Section IOIM.
   Qed.
 
   (* Combine the function-level simulations into a module-level ISim.t. *)
-  Lemma sim : ISim.t open
+  Lemma sim : hinv_ownE ⊤ ⊢ ISim.t open
     (((IOM.t mn ★ ProxyM.t mn) ★ HelpingOn.t mn jobCode) ★ (PQ ★ Mem) ★ SchI)
     (((IOI ★ ProxyI) ★ HelpingDummy.t mn) ★ (PQ ★ Mem) ★ SchI)
-    (hinv_ownE ⊤) IstFull.
+    IstFull.
   Proof.
     cStartModSim.
     { apply init_simF. }
@@ -289,7 +289,7 @@ Module IOIA. Section IOIA.
   Local Notation IOM_mod :=
     (((IOM.t mn ★ ProxyM.t mn) ★ HelpingOff.t mn jobCode) ★ PQ ★ Mem ★ SchI).
 
-  Lemma init_simFA : ISim.sim_fun open
+  Lemma init_simFA : ⊢ ISim.sim_fun open
     ((IOA.t ★ ProxyA.t (SchA.sp sp_user ⊤)) ★ PQ ★ Mem ★ SchI)
     (((IOM.t mn ★ ProxyM.t mn) ★ HelpingOff.t mn jobCode) ★ PQ ★ Mem ★ SchI)
     IstMA (fid IOHdr.init).
@@ -311,7 +311,7 @@ Module IOIA. Section IOIA.
     cStep; iFrame "GRT"; iFrame; auto.
   Qed.
 
-  Lemma request_simFA : ISim.sim_fun open
+  Lemma request_simFA : ⊢ ISim.sim_fun open
     ((IOA.t ★ ProxyA.t (SchA.sp sp_user ⊤)) ★ PQ ★ Mem ★ SchI)
     (((IOM.t mn ★ ProxyM.t mn) ★ HelpingOff.t mn jobCode) ★ PQ ★ Mem ★ SchI)
     IstMA (fid IOHdr.request).
@@ -355,7 +355,7 @@ Module IOIA. Section IOIA.
     iApply ("IHr" $! _ _ (S k) with "[] [] IST"); iPureIntro; lia.
   Qed.
 
-  Lemma proxy_simFA : ISim.sim_fun open
+  Lemma proxy_simFA : ⊢ ISim.sim_fun open
     ((IOA.t ★ ProxyA.t (SchA.sp sp_user ⊤)) ★ PQ ★ Mem ★ SchI)
     (((IOM.t mn ★ ProxyM.t mn) ★ HelpingOff.t mn jobCode) ★ PQ ★ Mem ★ SchI)
     IstMA (fid IOHdr.proxy).
@@ -376,10 +376,10 @@ Module IOIA. Section IOIA.
 
   (* Combine the IOA → IOM (helping-off) function-level simulations into
      a module-level ISim.t. *)
-  Lemma sim : ISim.t open
+  Lemma sim : ⊢ ISim.t open
     ((IOA.t ★ ProxyA.t (SchA.sp sp_user ⊤)) ★ PQ ★ Mem ★ SchI)
     (((IOM.t mn ★ ProxyM.t mn) ★ HelpingOff.t mn jobCode) ★ PQ ★ Mem ★ SchI)
-    emp%I IstMA.
+    IstMA.
   Proof.
     cStartModSim.
     { apply init_simFA. }
@@ -411,8 +411,8 @@ Module IOIA_ctxr. Section IOIA_ctxr.
       rewrite !CFilter.filter_app.
       rewrite comm assoc (comm _ (HelpingDummy.t mn)).
       jIntros (ctx_refines_BiProset) "SRC".
-      jPoseProof main_adequacy with "HE" "SRC" as "DST".
-      { apply (IOIM.sim mn); exact sp. }
+      jPoseProof main_adequacy with "[HE]" "SRC" as "DST".
+      { iApply (IOIM.sim mn). iFrame. }
       jDestruct "DST"
         as "(((IO & PROXY) & HELP) & ((PQ & MEM) & SCH))".
       jFrame.
@@ -434,8 +434,8 @@ Module IOIA_ctxr. Section IOIA_ctxr.
         (CFilter.filter (Helping.exports mn) PQueueA.t ★
          (CFilter.filter (Helping.exports mn) (MemA.t ∅) ★
           CFilter.filter (Helping.exports mn) SchI.t))).
-      iApply (main_adequacy _ _ emp%I (IOIA.IstMA mn) (IOIA.sim mn sp)).
-      iEmpIntro.
+      iApply (main_adequacy _ _ (IOIA.IstMA mn)).
+      iApply (IOIA.sim mn sp).
     }
   Qed.
 End IOIA_ctxr. End IOIA_ctxr.

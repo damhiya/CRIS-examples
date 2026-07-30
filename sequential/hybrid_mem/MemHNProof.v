@@ -14,7 +14,8 @@ Module MemHN. Section MemHN.
   Local Definition HybMem := HybMem.t.
   Local Definition IstFull := (IstProd (IstSB NonDetMem.(Mod.scopes) Ist) IstEq).
 
-  Lemma simF_alloc : ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.alloc).
+  Lemma simF_alloc :
+    ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.alloc).
   Proof using.
     cStartFunSim. rewrite /HybMem.alloc /NonDetMem.alloc.
     cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
@@ -33,7 +34,8 @@ Module MemHN. Section MemHN.
     iPureIntro. repeat (esplits; eauto).
   (* SLOW *)Qed.
 
-  Lemma simF_free : ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.free).
+  Lemma simF_free :
+    ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.free).
   Proof using.
     cStartFunSim. rewrite /HybMem.free /NonDetMem.free.
     cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
@@ -50,7 +52,8 @@ Module MemHN. Section MemHN.
     iPureIntro. repeat (esplits; eauto).
   (*SLOW*)Qed.
 
-  Lemma simF_load : ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.load).
+  Lemma simF_load :
+    ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.load).
   Proof using.
     cStartFunSim. rewrite /HybMem.load /NonDetMem.load.
     cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
@@ -69,7 +72,8 @@ Module MemHN. Section MemHN.
     iPureIntro. repeat (esplits; eauto).
   (*SLOW*)Qed.
 
-  Lemma simF_store : ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.store).
+  Lemma simF_store :
+    ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.store).
   Proof using.
     cStartFunSim. rewrite /HybMem.store /NonDetMem.store.
     cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
@@ -89,7 +93,8 @@ Module MemHN. Section MemHN.
     iPureIntro. repeat (esplits; eauto).
   (*SLOW*)Qed.
 
-  Lemma simF_cmp : ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.cmp).
+  Lemma simF_cmp :
+    ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.cmp).
   Proof using.
     cStartFunSim. rewrite /HybMem.cmp /NonDetMem.cmp.
     cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
@@ -109,7 +114,8 @@ Module MemHN. Section MemHN.
     iPureIntro. repeat (esplits; eauto).
   (*SLOW*)Qed.
 
-  Lemma simF_cas : ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.cas).
+  Lemma simF_cas :
+    ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.cas).
   Proof using.
     cStartFunSim. rewrite /HybMem.cas /NonDetMem.cas.
     cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
@@ -142,22 +148,25 @@ Module MemHN. Section MemHN.
     cStep. iSplit; eauto.
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open NonDetMem HybMem emp%I IstFull.
+  Lemma sim : ⊢ ISim.t open NonDetMem HybMem IstFull.
   Proof using.
     cStartModSim.
     - rewrite /IstFull /HybMem /NonDetMem. unfold_mod. s. 
       iIntros "_". iPureIntro. repeat (esplits; ss).
       + instantiate (1 := ∅). instantiate (1 := Mem.empty). ss.
       + ss.
-    - apply simF_alloc.
-    - apply simF_free.
-    - apply simF_load.
-    - apply simF_store.
-    - apply simF_cmp.
-    - apply simF_cas.
+    - iApply simF_alloc.
+    - iApply simF_free.
+    - iApply simF_load.
+    - iApply simF_store.
+    - iApply simF_cmp.
+    - iApply simF_cas.
   (*SLOW*)Qed.
 
   Lemma ctxr :
     ⊢ ctx_refines HybMem NonDetMem.
-  Proof using. eapply main_adequacy, sim; eauto. Qed.
+  Proof using.
+    iApply (main_adequacy HybMem NonDetMem _).
+    iApply sim.
+  Qed.
 End MemHN. End MemHN.

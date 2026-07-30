@@ -36,7 +36,7 @@ Module SCHMainIA. Section SCHMainIA.
   Local Definition MA := (SCHMainA.t sp).
   Local Definition MI := (SCHMainI.t).
 
-  Lemma simF_main : ISim.sim_fun open MA MI IstTrue entry.
+  Lemma simF_main : ⊢ ISim.sim_fun open MA MI IstTrue entry.
   Proof using Hschglob (* Hschrrs Hschnds *) Hsch Hrrs Hnds Hrrsnode Hndsnode.
     cStartFunSim.
 
@@ -145,11 +145,11 @@ Module SCHMainIA. Section SCHMainIA.
     cStep. iFrame; eauto.
   Qed.
 
-  Lemma sim : ISim.t open MA MI emp%I IstTrue.
+  Lemma sim : ⊢ ISim.t open MA MI IstTrue.
   Proof using Hschglob (* Hschrrs Hschnds *) Hsch Hrrs Hnds Hrrsnode Hndsnode.
     cStartModSim.
-    - eauto.
-    - eapply simF_main.
+    - done.
+    - iApply simF_main.
   Qed.
 
 End SCHMainIA. End SCHMainIA.
@@ -171,6 +171,9 @@ Section ctxr.
     (Hrrsnode: (RRSNodeAS.sp ⊤) ⊆ sp_rrs_user)
     (Hndsnode: (NDSNodeA.sp ⊤) ⊆ sp_nds_user) :
     ⊢ ctx_refines SCHMainI.t (SCHMainA.t sp).
-  Proof using. eapply main_adequacy, (SCHMainIA.sim sp sp_sch_user sp_rrs_user sp_nds_user); eauto. Qed.
+  Proof using.
+    iApply main_adequacy.
+    iApply (SCHMainIA.sim sp sp_sch_user sp_rrs_user sp_nds_user); eauto.
+  Qed.
 
 End ctxr.

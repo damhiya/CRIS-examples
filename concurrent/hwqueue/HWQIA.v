@@ -41,7 +41,10 @@ Module HWQPM. Section HWQPM.
         ((HWQP ★ HelpDummy) ★ MemA ★ ProphA)
         ((HWQM ★ HelpOn) ★ MemA ★ ProphA).
   Proof.
-    eapply main_adequacy with (Ist := IstFull).
+    etrans; last eapply (main_adequacy
+      ((HWQP ★ HelpDummy) ★ MemA ★ ProphA)
+      ((HWQM ★ HelpOn) ★ MemA ★ ProphA)
+      IstFull).
     cStartModSim.
     { apply simF_new_queue. }
     { apply simF_enqueue. }
@@ -74,14 +77,22 @@ Module HWQMA. Section HWQMA.
         (HWQM.t mnh ★ ProphecyA.t mnp ∅ ★ HelpingOff.t mnh HWQM.jobCode)
         HWQA.t.
   Proof.
-    eapply main_adequacy. instantiate (1:=λ _ _, True%I).
-    cStartModSim; ss.
-    { cStartFunSim. rewrite /HWQA.new_queue. cStepsS. cStepT.
+    iApply (main_adequacy
+      (HWQM.t mnh ★ ProphecyA.t mnp ∅ ★
+        HelpingOff.t mnh HWQM.jobCode)
+      HWQA.t
+      (λ _ _, True%I)).
+    iStopProof.
+    cStartModSim.
+    { done. }
+    { cStartFunSim.
+      rewrite /HWQA.new_queue. cStepsS. cStepT.
       aStepS (N [n sz]) "[-> %Hsz]".
       aForceT N with ""; first (instantiate (1:=(_, _)); eauto).
       sYields. case_match; cStepsT; sYieldS; cForceS (_, tt); cStep; iFrame; ss.
     }
-    { cStartFunSim. rewrite /HWQA.enqueue /HWQM.enqueue. cStepsS. cStepsT.
+    { cStartFunSim.
+      rewrite /HWQA.enqueue /HWQM.enqueue. cStepsS. cStepsT.
       aStepS (N [γq ?]) "A".
       aForceT N with "A"; first (instantiate (1:=(_, _))); simpl; eauto with iFrame.
       cStepsT. cInlineT. cStepsT. rewrite /HelpingOff.run. cStepsT. aUnfoldS.
@@ -94,7 +105,8 @@ Module HWQMA. Section HWQMA.
       }
       cStepsT. sYields. sYieldS. cStep; iFrame. by iFrame.
     }
-    { cStartFunSim. rewrite /HWQA.dequeue. cStepsS. cStepsT.
+    { cStartFunSim.
+      rewrite /HWQA.dequeue. cStepsS. cStepsT.
       aStepS (N ?) "A". aForceT N with "A"; iFrame.
       aStep. iExists 0; iAuIntro; iAaccIntro "% $ !>" with ""; iSplit.
       { iIntros "$ !>"; by iFrame. }

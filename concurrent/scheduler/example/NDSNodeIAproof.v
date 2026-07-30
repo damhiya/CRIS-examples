@@ -23,7 +23,8 @@ Module NDSNodeIA. Section NDSNodeIA.
   Local Definition MA := (NDSNodeA.t sp ★ HybMem.t).
   Local Definition MI := (NDSNodeI.t ★ HybMem.t).
 
-  Lemma simF_main : ISim.sim_fun open MA MI IstFull (fid NDSNodeHdr.f_main).
+  Lemma simF_main :
+    ⊢ ISim.sim_fun open MA MI IstFull (fid NDSNodeHdr.f_main).
   Proof using Hschnds Hnds Hnode.
     cStartFunSim. rewrite /NDSNodeI.f_main /f_main.
     
@@ -96,7 +97,8 @@ Module NDSNodeIA. Section NDSNodeIA.
     cStep. iFrame; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_f : ISim.sim_fun open MA MI IstFull (fid NDSNodeHdr.f).
+  Lemma simF_f :
+    ⊢ ISim.sim_fun open MA MI IstFull (fid NDSNodeHdr.f).
   Proof using Hschnds Hnds Hnode.
     cStartFunSim. rewrite /NDSNodeI.f /f.
 
@@ -128,7 +130,7 @@ Module NDSNodeIA. Section NDSNodeIA.
     cStep. iFrame; eauto.
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open MA MI init_cond IstFull.
+  Lemma sim : init_cond ⊢ ISim.t open MA MI IstFull.
   Proof using Hschnds Hnds Hnode.
     cStartModSim.
     - eapply simF_main.
@@ -153,6 +155,9 @@ Section ctxr.
       ctx_refines
         (NDSNodeI.t ★ HybMem.t)
         (NDSNodeA.t sp ★ HybMem.t).
-  Proof using. eapply main_adequacy, (NDSNodeIA.sim sp sp_user); eauto. Qed.
+  Proof using.
+    etrans; first (eapply (NDSNodeIA.sim sp sp_user); eauto).
+    eapply main_adequacy.
+  Qed.
 
 End ctxr.

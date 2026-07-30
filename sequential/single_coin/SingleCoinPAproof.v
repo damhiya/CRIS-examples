@@ -38,7 +38,8 @@ Module SingleCoinPA. Section SingleCoinPA.
             ∧ (Prophecy.consistent coin_proph ol b)⌝
         )%I.
 
-  Lemma simF_new : ISim.sim_fun open MA MI Ist (fid SingleCoinHdr.new).
+  Lemma simF_new :
+    ⊢ ISim.sim_fun open MA MI Ist (fid SingleCoinHdr.new).
   Proof.
     cStartFunSim. rewrite /new .
     iDestruct "IST" as (l_s l_t) "[[-> %EQ] [F [AUTH PL]]]".
@@ -87,7 +88,8 @@ Module SingleCoinPA. Section SingleCoinPA.
     cStep. iFrame. eauto.
   Qed.
 
-  Lemma simF_read : ISim.sim_fun open MA MI Ist (fid SingleCoinHdr.read).
+  Lemma simF_read :
+    ⊢ ISim.sim_fun open MA MI Ist (fid SingleCoinHdr.read).
   Proof.
     cStartFunSim. rewrite /read.
     cStepsS. destruct _q as [idx b]. iDestruct "ASM" as "[-> [-> C]]".
@@ -134,11 +136,12 @@ Module SingleCoinPA. Section SingleCoinPA.
     }
   Qed.
 
-  Lemma sim : ISim.t open MA MI SingleCoinA.init_cond Ist.
+  Lemma sim :
+    SingleCoinA.init_cond ⊢ ISim.t open MA MI Ist.
   Proof.
     cStartModSim.
     { iIntros "[A F]". iExists [], []. iSplit; eauto. iFrame. ss. }
-    { eapply simF_new; eauto. }
-    { eapply simF_read; eauto. }
+    { iApply simF_new. }
+    { iApply simF_read. }
   Qed.
 End SingleCoinPA. End SingleCoinPA.

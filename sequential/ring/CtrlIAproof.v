@@ -104,7 +104,8 @@ Module CtrlIA. Section CtrlIA.
 
   Notation IstFull := (IstProd (IstSB (RingA.t max_size sps).(Mod.scopes) Ist) IstEq).
 
-  Lemma simF_init : ISim.sim_fun open RingAMod RingIMod IstFull (fid RingHdr.init).
+  Lemma simF_init :
+    ⊢ ISim.sim_fun open RingAMod RingIMod IstFull (fid RingHdr.init).
   Proof using.
     cStartFunSim. rewrite /CtrlI.init /RingA.init.
 
@@ -137,7 +138,8 @@ Module CtrlIA. Section CtrlIA.
       rewrite Nat.Div0.mod_mod; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_get_size : ISim.sim_fun open RingAMod RingIMod IstFull (fid RingHdr.get_size).
+  Lemma simF_get_size :
+    ⊢ ISim.sim_fun open RingAMod RingIMod IstFull (fid RingHdr.get_size).
   Proof using.
     cStartFunSim. rewrite /CtrlI.get_size /RingA.get_size.
 
@@ -157,7 +159,8 @@ Module CtrlIA. Section CtrlIA.
     repeat iExists _. iFrame. eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_enqueue : ISim.sim_fun open RingAMod RingIMod IstFull (fid RingHdr.enqueue).
+  Lemma simF_enqueue :
+    ⊢ ISim.sim_fun open RingAMod RingIMod IstFull (fid RingHdr.enqueue).
   Proof using.
     unfold RingAMod, RingIMod, CellGS.
     cStartFunSim. rewrite /CtrlI.enqueue /RingA.enqueue.
@@ -218,7 +221,8 @@ Module CtrlIA. Section CtrlIA.
       rewrite <-!Nat.add_assoc. eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_dequeue : ISim.sim_fun open RingAMod RingIMod IstFull (fid RingHdr.dequeue).
+  Lemma simF_dequeue :
+    ⊢ ISim.sim_fun open RingAMod RingIMod IstFull (fid RingHdr.dequeue).
   Proof using.
     unfold RingAMod, RingIMod, CellGS.
     cStartFunSim. rewrite /CtrlI.dequeue /RingA.dequeue.
@@ -275,13 +279,14 @@ Module CtrlIA. Section CtrlIA.
       exists 1. nia.
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open RingAMod RingIMod (RingA.init_cond max_size) IstFull.
+  Lemma sim :
+    RingA.init_cond max_size ⊢ ISim.t open RingAMod RingIMod IstFull.
   Proof using.
     cStartModSim.
-    - eapply simF_init; eauto.
-    - eapply simF_get_size; eauto.
-    - eapply simF_enqueue; eauto.
-    - eapply simF_dequeue; eauto.
+    - iApply simF_init.
+    - iApply simF_get_size.
+    - iApply simF_enqueue.
+    - iApply simF_dequeue.
     - iIntros "R".
       repeat iExists _; repeat iSplit; eauto.
       iExists [], (replicate max_size 0%Z), 0, 0.

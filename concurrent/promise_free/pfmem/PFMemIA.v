@@ -14,7 +14,9 @@ Module PFMemIA. Section PFMemIA.
   Lemma ctxr sp :
     PFMemA.init_cond ⊢ ctx_refines (PFMemI.t PFMemA.syn []) (PFMemA.t sp).
   Proof using.
-    eapply main_adequacy with (Ist := PFMemIA.Ist).
+    etrans; cycle 1.
+    { eapply (main_adequacy
+        (PFMemI.t PFMemA.syn []) (PFMemA.t sp) PFMemIA.Ist). }
     cStartModSim.
     { iIntros "[TVA [HA HFA]]"; ss.
       rewrite /PFMemIA.Ist.
@@ -39,12 +41,12 @@ Module PFMemIA. Section PFMemIA.
         rewrite IdentMap.singleton_neq //=.
       }
     }
-    { apply simF_alloc. }
-    { apply simF_free. }
-    { apply simF_read. }
-    { apply simF_write. }
-    { apply simF_cas. }
-    { apply simF_fence. }
-    { apply simF_spawn. }
+    { iApply simF_alloc. }
+    { iApply simF_free. }
+    { iApply simF_read. }
+    { iApply simF_write. }
+    { iApply simF_cas. }
+    { iApply simF_fence. }
+    { iApply simF_spawn. }
   Qed.
 End PFMemIA. End PFMemIA.
