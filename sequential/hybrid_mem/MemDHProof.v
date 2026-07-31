@@ -417,7 +417,8 @@ Module MemDH. Section MemDH.
       + exact CMP.
   Qed.
 
-  Lemma simF_alloc : ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.alloc).
+  Lemma simF_alloc :
+    ⊢ ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.alloc).
   Proof using.
     cStartFunSim. rewrite /HybMem.alloc /DetMem.alloc.
     
@@ -807,7 +808,8 @@ Module MemDH. Section MemDH.
     split; [exact HRA|]. split; [exact HSRC|exact HTGT].
   (* SLOW *)Qed.
 
-  Lemma simF_free : ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.free).
+  Lemma simF_free :
+    ⊢ ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.free).
   Proof using.
     cStartFunSim. rewrite /HybMem.free /DetMem.free.
 
@@ -921,7 +923,8 @@ Module MemDH. Section MemDH.
         cbn. rewrite /dec. destruct (Z_Dec loc loc0); [congruence|exact Htgt].
   (*SLOW*)Qed.
 
-  Lemma simF_load : ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.load).
+  Lemma simF_load :
+    ⊢ ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.load).
   Proof using.
     cStartFunSim. rewrite /HybMem.load /DetMem.load.
 
@@ -983,7 +986,8 @@ Module MemDH. Section MemDH.
     iFrame. iSplit; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_store : ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.store).
+  Lemma simF_store :
+    ⊢ ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.store).
   Proof using.
     cStartFunSim. rewrite /HybMem.store /DetMem.store.
 
@@ -1117,7 +1121,8 @@ Module MemDH. Section MemDH.
         exists v1. split; [exact Hra|]. split; [exact Hsrc|exact Htgt].
   (*SLOW*)Qed.
 
-  Lemma simF_cmp : ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.cmp).
+  Lemma simF_cmp :
+    ⊢ ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.cmp).
   Proof using.
     cStartFunSim. rewrite /HybMem.cmp /DetMem.cmp.
 
@@ -1171,7 +1176,8 @@ Module MemDH. Section MemDH.
     iFrame. iSplit; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_cas : ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.cas).
+  Lemma simF_cas :
+    ⊢ ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.cas).
   Proof using.
     cStartFunSim. rewrite /HybMem.cas /DetMem.cas.
     cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
@@ -1308,7 +1314,7 @@ Module MemDH. Section MemDH.
       instantiate (1 := {[DetMem.v_mem # _↑]}). repeat (iSplit; eauto).
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open HybMem DetMem HybMem.init_cond IstFull.
+  Lemma sim : HybMem.init_cond ⊢ ISim.t open HybMem DetMem IstFull.
   Proof using.
     cStartModSim.
     - rewrite /IstFull /HybMem /DetMem. unfold_mod. s. 
@@ -1322,15 +1328,18 @@ Module MemDH. Section MemDH.
       iPureIntro.      
       split; ss.
       ii. left. ss.
-    - apply simF_alloc.
-    - apply simF_free.
-    - apply simF_load.
-    - apply simF_store.
-    - apply simF_cmp.
-    - apply simF_cas.
+    - iApply simF_alloc.
+    - iApply simF_free.
+    - iApply simF_load.
+    - iApply simF_store.
+    - iApply simF_cmp.
+    - iApply simF_cas.
   (*SLOW*)Qed.
 
   Lemma ctxr :
     HybMem.init_cond ⊢ ctx_refines DetMem HybMem.
-  Proof using. eapply main_adequacy, sim; eauto. Qed.
+  Proof using.
+    etrans; first eapply sim.
+    eapply main_adequacy.
+  Qed.
 End MemDH. End MemDH.

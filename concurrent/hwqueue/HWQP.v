@@ -117,7 +117,8 @@ Module HWQIP. Section HWQIP.
         (HWQI.t ★ ProphecyI.t mn)
         (HWQP.t mn ★ ProphecyI.t mn).
   Proof using.
-    apply main_adequacy with (Ist:=IstFull).
+    iApply (main_adequacy _ _ IstFull).
+    iStopProof.
     cStartModSim.
     { cStartFunSim.
       cStepsS. destruct Any.downcast as [sz|]; cStepsS; ss. cStepsT.

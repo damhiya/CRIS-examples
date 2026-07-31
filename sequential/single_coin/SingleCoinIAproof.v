@@ -23,13 +23,11 @@ Module SingleCoinIA. Section SingleCoinIA.
     { exact Hreal. }
     iSplitR "HP HC".
     { iIntros (mn). iApply main_adequacy.
-      { eapply SingleCoinIP.sim. }
-      iEmpIntro.
+      iApply SingleCoinIP.sim.
     }
     iFrame "HP".
     iIntros (mn). iApply main_adequacy.
-    { eapply SingleCoinPA.sim. }
-    iFrame.
+    iApply SingleCoinPA.sim. iFrame.
     Unshelve. all: apply True.
   Qed.
 End SingleCoinIA. End SingleCoinIA.

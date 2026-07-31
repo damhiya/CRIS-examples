@@ -60,7 +60,7 @@ Section StackIM.
   Proof. inversion ADD; done. Qed.
 
   Lemma pop_simF :
-    ISim.sim_fun open MA MI Ist (fid StackHdr.pop).
+    ⊢ ISim.sim_fun open MA MI Ist (fid StackHdr.pop).
   Proof.
     cStartFunSim. rewrite /StackI.pop /StackM.pop /stack_atomic_fun.
     cStepsS. cStepsT.

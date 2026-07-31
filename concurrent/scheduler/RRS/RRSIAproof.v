@@ -68,7 +68,8 @@ Module RRSIA. Section RRSIA.
   Local Definition RRSAMod := RRSA.t parent_yield sp sp_rrs_user get_stid PYIP.
   Local Definition RRSIMod := RRSI.t parent_yield.
 
-  Lemma simF_init : ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.init).
+  Lemma simF_init :
+    ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.init).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.init /RRSI.init.
 
@@ -196,7 +197,8 @@ Module RRSIA. Section RRSIA.
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_inner_spawn : ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr._spawn).
+  Lemma simF_inner_spawn :
+    ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr._spawn).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.inner_spawn /RRSI.inner_spawn.
 
@@ -349,7 +351,8 @@ Module RRSIA. Section RRSIA.
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_spawn : ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.spawn).
+  Lemma simF_spawn :
+    ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.spawn).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.spawn /RRSI.spawn.
 
@@ -442,7 +445,8 @@ Module RRSIA. Section RRSIA.
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_yield : ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.yield).
+  Lemma simF_yield :
+    ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.yield).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.yield /RRSI.yield.
 
@@ -566,7 +570,9 @@ Module RRSIA. Section RRSIA.
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_yield_global : ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.yield_global).
+  Lemma simF_yield_global :
+    ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist
+        (fid RRSHdr.yield_global).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.yield_global /RRSI.yield_global.
 
@@ -663,7 +669,8 @@ Module RRSIA. Section RRSIA.
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_get_tid : ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.get_tid).
+  Lemma simF_get_tid :
+    ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.get_tid).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.get_tid /RRSI.get_tid.
 
@@ -709,19 +716,19 @@ Module RRSIA. Section RRSIA.
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open RRSAMod RRSIMod RRSA.init_cond Ist.
+  Lemma sim : RRSA.init_cond ⊢ ISim.t open RRSAMod RRSIMod Ist.
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartModSim.
     - rewrite /RRSA.init_cond /init_inv /init_tid /init_pub. unseal RRS.
       iIntros "(RRI & tid & pub)". rewrite /Ist.
       iExists [], 0, 0, 0, ∅, (existT 0 emp%SAT).
       iSplit; eauto. ss. iFrame. iLeft. iFrame; eauto.
-    - eapply simF_init.
-    - eapply simF_inner_spawn.
-    - eapply simF_spawn.
-    - eapply simF_yield.
-    - eapply simF_yield_global.
-    - eapply simF_get_tid.
+    - iApply simF_init.
+    - iApply simF_inner_spawn.
+    - iApply simF_spawn.
+    - iApply simF_yield.
+    - iApply simF_yield_global.
+    - iApply simF_get_tid.
   Qed.
 End RRSIA.
 
@@ -750,7 +757,10 @@ Section ctxr.
       ctx_refines
         (RRSI.t parent_yield)
         (RRSA.t parent_yield sp sp_rrs_user get_stid PYIP).
-  Proof using. eapply main_adequacy, sim; eauto. Qed.
+  Proof using.
+    etrans; first (eapply sim; eauto).
+    eapply main_adequacy.
+  Qed.
 
 End ctxr.
 End RRSIA.

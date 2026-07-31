@@ -27,7 +27,8 @@ Section SystemIA.
 
   Local Definition IstFull := (IstProd (IstSB (Mod.scopes (SystemA.t sp_user ⊤ sp)) Ist) IstEq).
 
-  Lemma simF_alloc : ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.alloc).
+  Lemma simF_alloc :
+    ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.alloc).
   Proof using.
     cStartFunSim. rewrite /SystemI.alloc.
     cStepsS. destruct _q as [[[tid ?] ?] ?]; iDestruct "ASM" as "[-> [-> TVS]]".

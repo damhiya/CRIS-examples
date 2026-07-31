@@ -31,7 +31,9 @@ Module KnotMainIA. Section KnotMainIA.
   Local Notation KnotMainIMod := (KnotMainI ★ KnotAMod).
   Local Notation IstFull := (IstProd (IstSB KnotMainA.(Mod.scopes) IstTrue) IstEq).
 
-  Lemma simF_fib : ISim.sim_fun open KnotMainAMod KnotMainIMod IstFull (fid KnotMainHdr.fib).
+  Lemma simF_fib :
+    ⊢ ISim.sim_fun open KnotMainAMod KnotMainIMod IstFull
+        (fid KnotMainHdr.fib).
   Proof using APCInSp GEnvIncl GEnvWF KnotInSp MainInFun PureInGlobal RecInSpPure.
     cStartFunSim. rewrite /KnotMainI.fibF.
 
@@ -101,7 +103,8 @@ Module KnotMainIA. Section KnotMainIA.
     Unshelve. all: exact (0↑).
   (*SLOW*)Qed.
 
-  Lemma simF_main : ISim.sim_fun open KnotMainAMod KnotMainIMod IstFull entry.
+  Lemma simF_main :
+    ⊢ ISim.sim_fun open KnotMainAMod KnotMainIMod IstFull entry.
   Proof using APCInSp GEnvIncl GEnvWF KnotInSp MainInFun PureInGlobal RecInSpPure.
     cStartFunSim. rewrite /KnotMainI.mainF /main_body.
 
@@ -179,12 +182,11 @@ Module KnotMainIA. Section KnotMainIA.
     Unshelve. all: try exact (tt↑).
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open KnotMainAMod KnotMainIMod emp%I IstFull.
+  Lemma sim : ⊢ ISim.t open KnotMainAMod KnotMainIMod IstFull.
   Proof.
     cStartModSim.
-    (* - exfalso. revert H. unfold_mod; ss. *)
-    { eapply simF_fib; et. }
-    { eapply simF_main; et. }
+    { iApply simF_fib; eauto. }
+    { iApply simF_main; eauto. }
     { iIntros "_"; repeat iExists _; iSplit; eauto. }
   Qed.
 
@@ -198,14 +200,18 @@ Module KnotMainIA. Section KnotMainIA.
         ★ KnotA.t genv sp_rec sp_fun sp
         ★ MemA.t ∅
         ★ APCA.t sp_pure sp).
-  Proof. eapply main_adequacy, sim; eauto. Qed.
+  Proof.
+    iApply main_adequacy.
+    iApply sim; eauto.
+  Qed.
 
   Lemma ctxr_close :
     ⊢ ctx_refines
         (KnotMainA.t genv sp_rec true sp ★ APCC.t sp)
         (KnotMainA.t genv sp_rec false sp ★ APCC.t sp).
   Proof using APCInSp GEnvIncl GEnvWF KnotInSp MainInFun PureInGlobal RecInSpPure _MEM.
-    eapply main_adequacy.
+    iApply main_adequacy.
+    iStopProof.
     cStartModSim.
     { cStartFunSim. rewrite /pure_body.
       cStepsS. case_match. iDestruct "ASM" as "[[% PRE] %]"; des; cSimpl.
@@ -228,7 +234,8 @@ Module KnotMainIA. Section KnotMainIA.
       cStepsT. cForcesS. iSplit; eauto. cStep.
       iSplit; eauto.
     }
-    { instantiate (1:=const (const emp%I)). iIntros "_"; repeat iExists _; repeat iSplit; eauto. }
+    { instantiate (1:=const (const emp%I)).
+      iIntros "_"; repeat iExists _; repeat iSplit; eauto. }
   Unshelve. all: et. exact tt.
   (*SLOW*)Qed.
 End KnotMainIA. End KnotMainIA.

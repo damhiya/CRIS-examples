@@ -17,7 +17,8 @@ Module SingleCoinIP. Section SingleCoinIP.
 
   Local Definition IstFull := IstProd (IstSB (Mod.scopes (SingleCoinP.t mn)) Ist) IstEq.
 
-  Lemma simF_new : ISim.sim_fun open MA MI IstFull (fid SingleCoinHdr.new).
+  Lemma simF_new :
+    ⊢ ISim.sim_fun open MA MI IstFull (fid SingleCoinHdr.new).
   Proof.
     cStartFunSim. rewrite /SingleCoinI.new /SingleCoinP.new.
     iDestruct "IST" as "%"; des; subst.
@@ -27,7 +28,8 @@ Module SingleCoinIP. Section SingleCoinIP.
     do 2 (iSplit; eauto; ss).
   Qed.
 
-  Lemma simF_read : ISim.sim_fun open MA MI IstFull (fid SingleCoinHdr.read).
+  Lemma simF_read :
+    ⊢ ISim.sim_fun open MA MI IstFull (fid SingleCoinHdr.read).
   Proof.
     cStartFunSim. rewrite /SingleCoinI.read /SingleCoinP.read.
     iDestruct "IST" as "%"; des; subst.
@@ -45,11 +47,11 @@ Module SingleCoinIP. Section SingleCoinIP.
     { rewrite /triggerUB. cStepsS. des_ifs; cStepsS; ss. }
   Qed.
 
-  Lemma sim : ISim.t open MA MI emp%I IstFull.
+  Lemma sim : ⊢ ISim.t open MA MI IstFull.
   Proof.
     cStartModSim.
-    { eapply simF_new; eauto. }
-    { eapply simF_read; eauto. }
+    { iApply simF_new. }
+    { iApply simF_read. }
     { iPureIntro; esplits; ss. }
   Qed.
 End SingleCoinIP. End SingleCoinIP.

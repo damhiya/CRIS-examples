@@ -62,7 +62,8 @@ Module RRSNodeIA. Section RRSNodeIA.
     iFrame; eauto.
   Qed.
 
-  Lemma simF_main : ISim.sim_fun open MA MI IstFull (fid RRSNodeHdr.f_main).
+  Lemma simF_main :
+    ⊢ ISim.sim_fun open MA MI IstFull (fid RRSNodeHdr.f_main).
   Proof using Hschrrs Hrrs Hnode.
     cStartFunSim. rewrite /RRSNodeI.f_main /RRSNodeA.f_main.
 
@@ -157,7 +158,8 @@ Module RRSNodeIA. Section RRSNodeIA.
     subst a b. inv H.
   Qed.
 
-  Lemma simF_f : ISim.sim_fun open MA MI IstFull (fid RRSNodeHdr.f).
+  Lemma simF_f :
+    ⊢ ISim.sim_fun open MA MI IstFull (fid RRSNodeHdr.f).
   Proof using Hschrrs Hrrs Hnode.
     cStartFunSim. rewrite /RRSNodeI.f /RRSNodeA.f.
 
@@ -244,7 +246,7 @@ Module RRSNodeIA. Section RRSNodeIA.
     cStep. iFrame; eauto.
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open MA MI init_cond IstFull.
+  Lemma sim : init_cond ⊢ ISim.t open MA MI IstFull.
   Proof using Hschrrs Hrrs Hnode.
     cStartModSim.
     - eapply simF_main.
@@ -270,6 +272,9 @@ Section ctxr.
       ctx_refines
         (RRSNodeI.t ★ MemA.t sp ★ RRSA.t SchHdr.yield.1 sp sp_user get_stid PYIP)
         (RRSNodeA.t sp ★ MemA.t sp ★ RRSA.t SchHdr.yield.1 sp sp_user get_stid PYIP).
-  Proof using. eapply main_adequacy, (RRSNodeIA.sim sp sp_user); eauto. Qed.
+  Proof using.
+    etrans; first (eapply (RRSNodeIA.sim sp sp_user); eauto).
+    eapply main_adequacy.
+  Qed.
 
 End ctxr.

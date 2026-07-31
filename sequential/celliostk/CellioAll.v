@@ -142,20 +142,20 @@ Section CellioAux.
 
     jIntros (ctx_refines_BiProset) "(MAIN & CELLIO & MEM & CTX)".
 
-    jPoseProof main_adequacy with "Hinit" "MEM" as "MEM".
-    { apply MemIA.sim with (sp:=sp). }
+    jPoseProof main_adequacy with "[Hinit]" "[MEM]" as "MEM".
+    { iApply (MemIA.sim [] sp). iFrame. }
+    { jFrame. }
 
     jPoseProof main_adequacy with "[CELLIO MEM]" as "M".
-    { apply (CellioIA.sim sp). }
-    { rewrite /CellioA.init_cond. iEmpIntro. }
+    { iApply (CellioIA.sim sp).
+      rewrite /CellioA.init_cond. iEmpIntro. }
     { jFrame. }
     rewrite /CellioIAproof.CellioIA.CellioAMod.
     jDestruct "M" as "[CELLIO MEM]".
     jPoseProof elim_module with "MEM" as "_".
 
     jPoseProof main_adequacy with "[MAIN CELLIO]" as "MAIN".
-    { apply MainIA.sim; eauto using sp_foo, sp_cb. }
-    { iEmpIntro. }
+    { iApply MainIA.sim; eauto using sp_foo, sp_cb. }
     { jFrame. }
 
     jFrame.

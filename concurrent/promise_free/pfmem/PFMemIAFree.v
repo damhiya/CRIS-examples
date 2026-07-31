@@ -335,7 +335,7 @@ Section free.
     intros ->; des_ifs.
   Qed.
 
-  Lemma simF_free : ISim.sim_fun open MA MI Ist (fid PFMemHdr.free).
+  Lemma simF_free : ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.free).
   Proof.
     cStartFunSim.
     cStepsS. destruct _q as [[[tid loc] sz] V]. iDestruct "ASM" as "[-> [-> [TV [OLV F]]]]".

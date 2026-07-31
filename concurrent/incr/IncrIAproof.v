@@ -12,7 +12,8 @@ Module IncrIA. Section IncrIA.
   Local Notation MA := (IncrA.t ★ MemA.t sp_m).
   Local Notation MI := (IncrI.t ★ MemA.t sp_m).
 
-  Lemma incr_simF : ISim.sim_fun open MA MI IstFull (fid IncrHdr.incr).
+  Lemma incr_simF :
+    ⊢ ISim.sim_fun open MA MI IstFull (fid IncrHdr.incr).
   Proof.
     cStartFunSim. rewrite /IncrA.incr /IncrI.incr. cStepsS. cStepsT.
     aStepS (N [blk ofs]) "->". cStepsT. aAddY. sYields.

@@ -16,7 +16,8 @@ Module MainIA. Section MainIA.
   Local Definition MainA := (MainA.t sp).
   Local Definition IstFull := (IstProd (IstSB MainA.(Mod.scopes) IstTrue) IstEq).
 
-  Lemma simF_start : ISim.sim_fun open MainA (MainI.t ★ CellioA) IstFull entry.
+  Lemma simF_start :
+    ⊢ ISim.sim_fun open MainA (MainI.t ★ CellioA) IstFull entry.
   Proof using sp_start.
     cStartFunSim. unfold MainI.start, MainA.start.
     cStepsS. rewrite sp_start. cStepsS. cForceS _q. cStepsS. cForceS arg. cStepsS.
@@ -24,7 +25,9 @@ Module MainIA. Section MainIA.
     cStepsS. cForcesS. iSplit; et. cStepsT. cStep. iSplit; et.
   Qed.
   
-  Lemma simF_main : ISim.sim_fun open MainA (MainI.t ★ CellioA) IstFull (funid MainAS.main).
+  Lemma simF_main :
+    ⊢ ISim.sim_fun open MainA (MainI.t ★ CellioA) IstFull
+        (funid MainAS.main).
   Proof using sp_input sp_foo.
     cStartFunSim. unfold MainI.main, MainA.main.
 
@@ -63,12 +66,12 @@ Module MainIA. Section MainIA.
     Unshelve. all:(exact ()).
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open MainA (MainI.t ★ CellioA) emp%I IstFull.
+  Lemma sim : ⊢ ISim.t open MainA (MainI.t ★ CellioA) IstFull.
   Proof using sp_start sp_input sp_foo.
     cStartModSim.
     - iIntros "_". unfold IstFull, IstProd.
       iExists ∅, ∅, ∅, ∅. ss.
-    - eapply simF_start; eauto.
-    - eapply simF_main; eauto.
+    - iApply simF_start; eauto.
+    - iApply simF_main; eauto.
   Qed.
 End MainIA. End MainIA.

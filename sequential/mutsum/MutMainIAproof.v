@@ -24,7 +24,7 @@ Module MutMainIA. Section MutMainIA.
   (*************)
 
   Lemma simF_main:
-    ISim.sim_fun open MutMainAMod MutMainIMod IstFull entry.
+    ⊢ ISim.sim_fun open MutMainAMod MutMainIMod IstFull entry.
   Proof using APCInSp FInPure PureInSp.
     cStartFunSim.
 
@@ -61,10 +61,10 @@ Module MutMainIA. Section MutMainIA.
   (*SLOW*)Qed.
 
   Theorem sim:
-    ISim.t open MutMainAMod MutMainIMod MutMainA.init_cond IstFull.
+    MutMainA.init_cond ⊢ ISim.t open MutMainAMod MutMainIMod IstFull.
   Proof.
     cStartModSim.
-    - apply simF_main; eauto.
+    - iApply simF_main.
     - iIntros "C". iFrame. do 4 iExists _; esplits; eauto.
   Qed.
 
@@ -72,17 +72,22 @@ Module MutMainIA. Section MutMainIA.
     ⊢ ctx_refines
         (MutMainI.t ★ APCA.t SpPure Sp)
         (MutMainA.t true Sp ★ APCA.t SpPure Sp).
-  Proof. eapply main_adequacy, sim; eauto. Qed.
+  Proof.
+    iApply (main_adequacy
+      (MutMainI.t ★ APCA.t SpPure Sp)
+      (MutMainA.t true Sp ★ APCA.t SpPure Sp)
+      IstFull).
+    iApply sim. done.
+  Qed.
 
   Theorem ctxr_close:
     ⊢ ctx_refines
         (MutMainA.t true Sp ★ APCC.t Sp)
         (MutMainA.t false Sp ★ APCC.t Sp).
   Proof using APCInSp FInPure PureInSp.
-    eapply main_adequacy
-      with (Ist := IstProd (IstSB MutMainA.scopes IstEq) IstEq).
-    cStartModSim.
-    (* { inv H. } *)
+    iApply (main_adequacy _ _
+      (IstProd (IstSB MutMainA.scopes IstEq) IstEq)).
+    iStopProof. cStartModSim.
     { cStartFunSim.
       cStepsS. cForcesT.
       iDestruct "IST" as "%"; des; cSimpl. cStepsT.

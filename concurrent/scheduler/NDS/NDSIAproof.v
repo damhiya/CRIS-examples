@@ -81,7 +81,8 @@ Module NDSIA. Section sim.
   Local Definition NDSAMod := NDSA.t parent_yield sp sp_nds_user T get_stid PYIP.
   Local Definition NDSIMod := NDSI.t parent_yield.
 
-  Lemma simF_init : ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.init).
+  Lemma simF_init :
+    ⊢ ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.init).
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /NDSI.init /init.
 
@@ -212,7 +213,8 @@ Module NDSIA. Section sim.
     cByCoind CIH; eauto. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_inner_spawn : ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr._spawn).
+  Lemma simF_inner_spawn :
+    ⊢ ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr._spawn).
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /NDSI.inner_spawn /inner_spawn.
 
@@ -541,7 +543,8 @@ Module NDSIA. Section sim.
     }
   (*SLOW*)Qed.
 
-  Lemma simF_spawn : ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.spawn).
+  Lemma simF_spawn :
+    ⊢ ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.spawn).
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /NDSI.spawn /spawn.
 
@@ -636,7 +639,8 @@ Module NDSIA. Section sim.
     Unshelve. exact (tid_new, None).
   (*SLOW*)Qed.
 
-  Lemma simF_yield : ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.yield).
+  Lemma simF_yield :
+    ⊢ ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.yield).
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /NDSI.yield /yield.
 
@@ -769,7 +773,9 @@ Module NDSIA. Section sim.
     esplits; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_yield_global : ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.yield_global).
+  Lemma simF_yield_global :
+    ⊢ ISim.sim_fun open NDSAMod NDSIMod Ist
+        (fid NDSHdr.yield_global).
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /NDSI.yield_global /yield_global.
 
@@ -871,7 +877,8 @@ Module NDSIA. Section sim.
     esplits; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_join : ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.join).
+  Lemma simF_join :
+    ⊢ ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.join).
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /NDSI.join /join.
 
@@ -938,7 +945,8 @@ Module NDSIA. Section sim.
     }
   (*SLOW*)Qed.
 
-  Lemma simF_get_tid : ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.get_tid).
+  Lemma simF_get_tid :
+    ⊢ ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.get_tid).
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /NDSI.get_tid /get_tid.
 
@@ -978,20 +986,20 @@ Module NDSIA. Section sim.
     do 4 iExists _. iFrame. iSplit; eauto. do 2 iRight. iLeft. iFrame; eauto.
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open NDSAMod NDSIMod NDSA.init_cond Ist.
+  Lemma sim : NDSA.init_cond ⊢ ISim.t open NDSAMod NDSIMod Ist.
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
     cStartModSim.
     - rewrite /init_cond.
       iIntros "[TiA [JoinA [P PubA]]]". iExists [], 0, 0, 0.
       iFrame. ss. iSplit; eauto. iSplit; eauto. iLeft; rewrite /Ist_init.
       iSplit; eauto. rewrite /Pending /pub_priv. unseal NDS. iFrame.
-    - eapply simF_init.
-    - eapply simF_inner_spawn.
-    - eapply simF_spawn.
-    - eapply simF_yield.
-    - eapply simF_yield_global.
-    - eapply simF_join.
-    - eapply simF_get_tid.
+    - iApply simF_init.
+    - iApply simF_inner_spawn.
+    - iApply simF_spawn.
+    - iApply simF_yield.
+    - iApply simF_yield_global.
+    - iApply simF_join.
+    - iApply simF_get_tid.
   Qed.
 End sim.
 
@@ -1019,6 +1027,9 @@ Section ctxr.
       ctx_refines
         (NDSI.t parent_yield)
         (NDSA.t parent_yield sp sp_nds_user T get_stid PYIP).
-  Proof. eapply main_adequacy, sim; eauto. Qed.
+  Proof.
+    etrans; first (eapply sim; eauto).
+    eapply main_adequacy.
+  Qed.
 End ctxr.
 End NDSIA.

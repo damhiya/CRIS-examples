@@ -24,7 +24,7 @@ Module MutFIA. Section MutFIA.
   (*************)
 
   Lemma simF_mutf:
-    ISim.sim_fun open MutFAMod MutFIMod IstFull (fid MutHdr.mutf).
+    ⊢ ISim.sim_fun open MutFAMod MutFIMod IstFull (fid MutHdr.mutf).
   Proof using _crisG APCInSp GInPure PureInSp.
     cStartFunSim. rewrite /MutFI.fF.
 
@@ -84,10 +84,10 @@ Module MutFIA. Section MutFIA.
   (*SLOW*)Qed.
 
   Lemma sim:
-    ISim.t open MutFAMod MutFIMod MutFA.init_cond IstFull.
+    MutFA.init_cond ⊢ ISim.t open MutFAMod MutFIMod IstFull.
   Proof.
     cStartModSim.
-    - eapply simF_mutf.
+    - iApply simF_mutf.
     - iIntros "C". iFrame. do 4 iExists _. iPureIntro; esplits; eauto; set_solver.
   Qed.
 End MutFIA.
@@ -101,5 +101,8 @@ Section ctxr.
     (PureInSp : SpPure ⊆ Sp) :
     MutFA.init_cond ⊢
       ctx_refines (MutFI.t ★ APCA.t SpPure Sp) (MutFA.t Sp ★ APCA.t SpPure Sp).
-  Proof. eapply main_adequacy, sim; eauto. Qed.
+  Proof.
+    etrans; first (eapply sim; eauto).
+    eapply main_adequacy.
+  Qed.
 End ctxr. End MutFIA.

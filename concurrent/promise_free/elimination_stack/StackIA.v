@@ -30,7 +30,7 @@ Module StackIM. Section StackIM.
     (IstProd (IstSB [mn] (IstHelp IstTrue ⊤)) IstEq).
 
   Lemma sim (Hsys : (SystemA.sp sp_user (↑stackN)) ⊆ sp) :
-    ISim.t open MA MI (hinv_ownE ⊤) Ist.
+    hinv_ownE ⊤ ⊢ ISim.t open MA MI Ist.
   Proof.
     rewrite /MA /MI.
     rewrite -(assoc Mod.add
@@ -40,9 +40,9 @@ Module StackIM. Section StackIM.
       (CFilter.filter (Helping.exports mn) StackI.t ★
         HelpingDummy.t mn) SysF SchF).
     cStartModSim.
-    { rewrite !assoc. exact (new_stack_simF mn sp_user sp). }
-    { rewrite !assoc. exact (push_simF mn sp_user sp). }
-    { rewrite !assoc. exact (pop_simF mn sp_user sp). }
+    { rewrite !assoc. iApply (new_stack_simF mn sp_user sp). }
+    { rewrite !assoc. iApply (push_simF mn sp_user sp). }
+    { rewrite !assoc. iApply (pop_simF mn sp_user sp). }
     { cStartFunSim; cStepsT. cStepsT; ss. }
     { cStartFunSim; cStepsT. cStepsT; ss. }
     all: try mod_tac.
@@ -77,8 +77,8 @@ Module StackIA. Section StackIA.
       (* intermediate refinement with helping facilities *)
       rewrite comm assoc (comm _ (HelpingDummy.t mn)).
       jIntros (ctx_refines_BiProset) "((STACK & DUMMY) & SYS & SCH)".
-      jPoseProof main_adequacy with "HE" "[STACK DUMMY SYS SCH]" as "M".
-      { eapply (StackIM.sim mn sp_user sp); et. } 
+      jPoseProof main_adequacy with "[HE]" "[STACK DUMMY SYS SCH]" as "M".
+      { iApply (StackIM.sim mn sp_user sp); et. }
       { jFrame. }
       rewrite /StackIM.MA.
       jDestruct "M" as "[[[STACK HELP] SYS] SCH]".
@@ -100,13 +100,13 @@ Module StackIA. Section StackIA.
             (SystemA.t sp_user (↑stackN) sp) ★
           CFilter.filter (Helping.exports mn) SchI.t))%I
       as "REF".
-    { iApply (main_adequacy _ _ emp%I
+    { iApply (main_adequacy _ _
       (IstProd
         (IstSB
           (Mod.scopes (StackA.t (SystemA.sp sp_user (↑stackN))) ++ [mn])
           IstTrue)
         IstEq)).
-    cStartModSim.
+    iStopProof. cStartModSim.
     { (* new_stack *)
       cStartFunSim.
       rewrite /StackM.new_stack /StackA.new_stack /stack_atomic_fun.
@@ -186,7 +186,6 @@ Module StackIA. Section StackIA.
       cStep. iFrame. auto.
     }
     { iIntros "_"; repeat iExists _; repeat iSplit; eauto. }
-    iEmpIntro.
     }
     jApply "REF".
     jFrame "STACK HELP SYS SCH".

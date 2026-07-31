@@ -20,7 +20,8 @@ Module MapMA. Section MapMA.
   Local Definition MapA := (MapA.t sp_s).
   Local Definition MapM := (MapM.t sp_t).
 
-  Lemma simF_init : ISim.sim_fun open MapA MapM Ist (fid MapHdr.init).
+  Lemma simF_init :
+    ⊢ ISim.sim_fun open MapA MapM Ist (fid MapHdr.init).
   Proof using MapInSpS MapInSpT.
     cStartFunSim. rewrite /MapM.init.
 
@@ -48,7 +49,8 @@ Module MapMA. Section MapMA.
     iExists _, _. iSplitR; eauto. iRight. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_get : ISim.sim_fun open MapA MapM Ist (fid MapHdr.get).
+  Lemma simF_get :
+    ⊢ ISim.sim_fun open MapA MapM Ist (fid MapHdr.get).
   Proof using MapInSpS MapInSpT.
     cStartFunSim. rewrite /MapM.get /get.
 
@@ -80,7 +82,8 @@ Module MapMA. Section MapMA.
     iExists _, _. iSplit; eauto. iRight. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_set : ISim.sim_fun open MapA MapM Ist (fid MapHdr.set).
+  Lemma simF_set :
+    ⊢ ISim.sim_fun open MapA MapM Ist (fid MapHdr.set).
   Proof using MapInSpS MapInSpT.
     cStartFunSim. rewrite /MapM.set /set.
 
@@ -112,7 +115,8 @@ Module MapMA. Section MapMA.
     iExists _, _. iSplit; eauto. iRight. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_set_by_user : ISim.sim_fun open MapA MapM Ist (fid MapHdr.set_by_user).
+  Lemma simF_set_by_user :
+    ⊢ ISim.sim_fun open MapA MapM Ist (fid MapHdr.set_by_user).
   Proof using MapInSpS MapInSpT.
     cStartFunSim. rewrite /MapM.set_by_user /set_by_user. cHideS. cHideT.
 
@@ -152,17 +156,20 @@ Module MapMA. Section MapMA.
     cStep. iFrame. eauto.
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open MapA MapM MapA.init_cond Ist.
+  Lemma sim : MapA.init_cond ⊢ ISim.t open MapA MapM Ist.
   Proof using MapInSpS MapInSpT.
     cStartModSim.
     { iIntros "(IST & P)"; s. iExists _, _. iSplit; eauto. iLeft. iFrame. eauto. }
-    { apply simF_init; eauto. }
-    { apply simF_get; eauto. }
-    { apply simF_set; eauto. }
-    { apply simF_set_by_user; eauto. }
+    { iApply simF_init. }
+    { iApply simF_get. }
+    { iApply simF_set. }
+    { iApply simF_set_by_user. }
   Qed.
 
   Lemma ctxr :
     MapA.init_cond ⊢ ctx_refines (MapM.t sp_t) (MapA.t sp_s).
-  Proof. eapply main_adequacy, MapMA.sim; eauto. Qed.
+  Proof.
+    etrans; first (eapply MapMA.sim; eauto).
+    eapply main_adequacy.
+  Qed.
 End MapMA. End MapMA.

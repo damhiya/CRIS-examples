@@ -155,12 +155,12 @@ Section CellioAux.
 
     jIntros (ctx_refines_BiProset) "(MAIN & CELLIO & CTX)".
 
-    jPoseProof main_adequacy with "Hinit" "CELLIO" as "CELLIO".
-    { apply CellioIA.sim. }
+    jPoseProof main_adequacy with "[Hinit]" "[CELLIO]" as "CELLIO".
+    { iApply CellioIA.sim. iFrame. }
+    { jFrame. }
 
     jPoseProof main_adequacy with "[MAIN CELLIO]" as "MAIN".
-    { apply MainIA.sim; eauto using sp_input, sp_foo, sp_main. }
-    { iEmpIntro. }
+    { iApply MainIA.sim; eauto using sp_input, sp_foo, sp_main. }
     { jFrame. }
 
     jFrame.

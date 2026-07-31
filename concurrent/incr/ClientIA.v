@@ -39,7 +39,8 @@ Module ClientIA. Section ClientIA.
     solve_base_sl_red; iSplit; done.
   Qed.
 
-  Lemma incr_simF : ISim.sim_fun open MA MI IstFull (fid ClientHdr.thread).
+  Lemma incr_simF :
+    ⊢ ISim.sim_fun open MA MI IstFull (fid ClientHdr.thread).
   Proof.
     cStartFunSim.
 
@@ -73,7 +74,7 @@ Module ClientIA. Section ClientIA.
     cStep; iFrame; done.
   Qed.
 
-  Lemma main_simF : ISim.sim_fun open MA MI IstFull entry.
+  Lemma main_simF : ⊢ ISim.sim_fun open MA MI IstFull entry.
   Proof.
     cStartFunSim. simpl.
 
@@ -148,11 +149,11 @@ Module ClientIA. Section ClientIA.
     cStep. iFrame. done.
   Qed.
 
-  Lemma sim : ISim.t open MA MI emp%I IstFull.
+  Lemma sim : ⊢ ISim.t open MA MI IstFull.
   Proof.
     cStartModSim.
-    { eapply incr_simF. }
-    { eapply main_simF. }
+    { apply incr_simF. }
+    { apply main_simF. }
     { iIntros "_"; iExists _, _, _, _; iSplit; eauto. }
   Qed.
 End ClientIA.
@@ -167,6 +168,6 @@ Section ctxr.
         (ClientI.t ★ IncrA.t ★ MemA.t sp)
         (ClientA.t N sp ★ IncrA.t ★ MemA.t sp).
   Proof using.
-    i; eapply main_adequacy, sim; eauto.
+    i. iApply main_adequacy. iApply sim; eauto.
   Qed.
 End ctxr. End ClientIA.

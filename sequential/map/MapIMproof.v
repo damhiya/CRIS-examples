@@ -76,7 +76,8 @@ Module MapIM. Section MapIM.
   Local Notation MapIMod := (MapI.t ★ MemA).
   Local Notation IstFull := (IstProd (IstSB MapM.(Mod.scopes) Ist) IstEq).
 
-  Lemma simF_init : ISim.sim_fun open MapMMod MapIMod IstFull (fid MapHdr.init).
+  Lemma simF_init :
+    ⊢ ISim.sim_fun open MapMMod MapIMod IstFull (fid MapHdr.init).
   Proof using MapInSp.
     cStartFunSim. rewrite /MapI.init /init.
 
@@ -153,7 +154,8 @@ Module MapIM. Section MapIM.
     rewrite replicate_S_end; f_equal. rewrite -app_assoc //=.
   (*SLOW*)Qed.
 
-  Lemma simF_get : ISim.sim_fun open MapMMod MapIMod IstFull (fid MapHdr.get).
+  Lemma simF_get :
+    ⊢ ISim.sim_fun open MapMMod MapIMod IstFull (fid MapHdr.get).
   Proof using MapInSp.
     cStartFunSim. rewrite /MapI.get /get.
 
@@ -188,7 +190,8 @@ Module MapIM. Section MapIM.
     iPoseProof ("M" with "IP") as "M". iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_set : ISim.sim_fun open MapMMod MapIMod IstFull (fid MapHdr.set).
+  Lemma simF_set :
+    ⊢ ISim.sim_fun open MapMMod MapIMod IstFull (fid MapHdr.set).
   Proof using MapInSp.
     cStartFunSim. rewrite /MapI.set /set.
 
@@ -226,7 +229,8 @@ Module MapIM. Section MapIM.
     rewrite -> fun_to_list_update, Z2Nat.id; try nia. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_set_by_user : ISim.sim_fun open MapMMod MapIMod IstFull (fid MapHdr.set_by_user).
+  Lemma simF_set_by_user :
+    ⊢ ISim.sim_fun open MapMMod MapIMod IstFull (fid MapHdr.set_by_user).
   Proof using MapInSp.
     cStartFunSim. rewrite /MapI.set_by_user /set_by_user.
 
@@ -252,13 +256,13 @@ Module MapIM. Section MapIM.
     cStep. iFrame. done.
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open MapMMod MapIMod emp%I IstFull.
+  Lemma sim : ⊢ ISim.t open MapMMod MapIMod IstFull.
   Proof using MapInSp.
     cStartModSim.
-    { eapply simF_init; eauto. }
-    { eapply simF_get; eauto. }
-    { eapply simF_set; eauto. }
-    { eapply simF_set_by_user; eauto. }
+    { iApply simF_init; eauto. }
+    { iApply simF_get; eauto. }
+    { iApply simF_set; eauto. }
+    { iApply simF_set_by_user; eauto. }
     { iIntros "_". repeat iExists _; repeat iSplit; eauto. iLeft. eauto. }
   Qed.
 End MapIM.
@@ -271,5 +275,11 @@ Section MapIM.
     ⊢ ctx_refines
         (MapI.t ★ MemA.t sp_mem)
         (MapM.t sp_s ★ MemA.t sp_mem).
-  Proof. i; eapply main_adequacy, MapIM.sim; eauto. Qed.
+  Proof.
+    i.
+    iApply (main_adequacy
+      (MapI.t ★ MemA.t sp_mem)
+      (MapM.t sp_s ★ MemA.t sp_mem) _).
+    iApply MapIM.sim; eauto.
+  Qed.
 End MapIM. End MapIM.

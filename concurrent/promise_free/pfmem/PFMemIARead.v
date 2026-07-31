@@ -17,7 +17,8 @@ Section read.
   Definition MA := (PFMemA.t sp).
   Definition MI := (PFMemI.t syn size).
 
-  Lemma simF_read : ISim.sim_fun open MA MI PFMemIA.Ist (fid PFMemHdr.read).
+  Lemma simF_read :
+    ⊢ ISim.sim_fun open MA MI PFMemIA.Ist (fid PFMemHdr.read).
   Proof.
     cStartFunSim.
     cStepS. destruct _q as [f|[f|[]]].

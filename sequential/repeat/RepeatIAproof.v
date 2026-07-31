@@ -31,7 +31,9 @@ Module RepeatIA. Section RepeatIA.
     (λ _ _, True)%I.
   Local Definition IstFull := (IstProd (IstSB RepeatA.(Mod.scopes) Ist) IstEq).
 
-  Lemma simF_repeat : ISim.sim_fun open RepeatAMod RepeatIMod IstFull (fid RepeatHdr.repeat).
+  Lemma simF_repeat :
+    ⊢ ISim.sim_fun open RepeatAMod RepeatIMod IstFull
+        (fid RepeatHdr.repeat).
   Proof using APCInSp SpPureInSp SpPureFunInSpPure repeatInSpPure.
     (* Simulation Start *)
     cStartFunSim. rewrite /RepeatI.repeat.
@@ -110,10 +112,11 @@ Module RepeatIA. Section RepeatIA.
     Unshelve. all: et. all: exact (0↑). 
   (*SLOW*)Qed.
 
-  Lemma sim : ISim.t open RepeatAMod RepeatIMod RepeatA.init_cond IstFull.
+  Lemma sim :
+    RepeatA.init_cond ⊢ ISim.t open RepeatAMod RepeatIMod IstFull.
   Proof.
     cStartModSim.
-    - apply simF_repeat; eauto.
+    - iApply simF_repeat; eauto.
     - iIntros "_". rewrite /IstProd. eauto.
   Qed.
 End RepeatIA. 
@@ -129,5 +132,8 @@ Section ctxr.
     ⊢ ctx_refines
         ((RepeatI.t ge) ★ APCA.t sp_pure sp)
         ((RepeatA.t ge sp sp_pure_fun) ★ APCA.t sp_pure sp).
-  Proof. eapply main_adequacy, sim; eauto. Qed.
+  Proof.
+    iApply main_adequacy.
+    iApply sim; eauto.
+  Qed.
 End ctxr. End RepeatIA.

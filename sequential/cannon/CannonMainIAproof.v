@@ -15,7 +15,7 @@ Module CannonMainIA. Section CannonMainIA.
   Local Notation MainAMod := (MainA.t 1 sp).
   Local Notation MainIMod := (MainI.t 1).
   
-  Lemma simF_main : ISim.sim_fun open MainAMod MainIMod Ist entry.
+  Lemma simF_main : ⊢ ISim.sim_fun open MainAMod MainIMod Ist entry.
   Proof using CannonInMain.
     cStartFunSim. rewrite /MainA.main /MainI.main.
 
@@ -38,11 +38,11 @@ Module CannonMainIA. Section CannonMainIA.
     cStep. iFrame; et.
   (*SLOW*)Qed.
 
-  Theorem sim : ISim.t open MainAMod MainIMod emp%I Ist.
+  Theorem sim : ⊢ ISim.t open MainAMod MainIMod Ist.
   Proof using CannonInMain.
     cStartModSim.
     { iIntros "_"; done. }
-    { eapply simF_main. }
+    { iApply simF_main. }
   Qed.
 End CannonMainIA.
 
@@ -52,5 +52,9 @@ Section ctxr.
   Theorem ctxr (sp : specmap) :
     CannonA.sp ⊆ sp →
     ⊢ ctx_refines (MainI.t 1) (MainA.t 1 sp).
-  Proof. i; eapply main_adequacy, sim; eauto. Qed.
+  Proof.
+    intros.
+    iApply main_adequacy.
+    iApply sim; eauto.
+  Qed.
 End ctxr. End CannonMainIA.

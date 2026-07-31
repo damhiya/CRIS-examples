@@ -19,7 +19,7 @@ Module CellioIA. Section CellioIA.
   Local Definition CellioAMod := (CellioA.t ★ MemA).
 
   Lemma simF_new :
-    ISim.sim_fun open CellioAMod CellioIMod IstFull (fid CellioHdr.new).
+    ⊢ ISim.sim_fun open CellioAMod CellioIMod IstFull (fid CellioHdr.new).
   Proof using.
     cStartFunSim. rewrite /CellioI.new /new.
 
@@ -29,7 +29,7 @@ Module CellioIA. Section CellioIA.
   Qed.
 
   Lemma simF_push :
-    ISim.sim_fun open CellioAMod CellioIMod IstFull (fid CellioHdr.push).
+    ⊢ ISim.sim_fun open CellioAMod CellioIMod IstFull (fid CellioHdr.push).
   Proof using.
     cStartFunSim. rewrite /CellioI.push /push.
 
@@ -49,7 +49,8 @@ Module CellioIA. Section CellioIA.
     cStepsS. cStep. iFrame. et.
   (*SLOW*)Qed.
   
-  Lemma simF_pop : ISim.sim_fun open CellioAMod CellioIMod IstFull (fid CellioHdr.pop).
+  Lemma simF_pop :
+    ⊢ ISim.sim_fun open CellioAMod CellioIMod IstFull (fid CellioHdr.pop).
   Proof using.
     cStartFunSim. rewrite /pop /CellioI.pop.
 
@@ -70,12 +71,13 @@ Module CellioIA. Section CellioIA.
     cStepsS. cStep. iFrame. et.
   (*SLOW*)Qed.
   
-  Lemma sim : ISim.t open CellioAMod CellioIMod CellioA.init_cond IstFull.
+  Lemma sim :
+    CellioA.init_cond ⊢ ISim.t open CellioAMod CellioIMod IstFull.
   Proof using.
     cStartModSim.
-    - apply simF_new; eauto.
-    - apply simF_push; eauto.
-    - apply simF_pop; eauto.
+    - iApply simF_new.
+    - iApply simF_push.
+    - iApply simF_pop.
     - rewrite /init_cond /=. iIntros "_". repeat iExists _. et.
   Qed.
 End CellioIA. End CellioIA.
