@@ -1,3 +1,4 @@
+From CRIS.lib Require Import AList.
 Require Import CRIS.common.CRIS.
 From Stdlib Require Import OrdersFacts FMapPositive.
 From CRIS.promise_free.lib Require Import Basic DataStructure UsualFMapPositive.

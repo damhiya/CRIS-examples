@@ -1,4 +1,5 @@
 Require Import CRIS.common.CRIS.
+From CRIS.lib Require Import AList.
 Require Import CRIS.simulations.msim.ITactics.
 From CRIS.simulations.msim Require Import MSim WSim.
 From CRIS.scheduler Require Import NDS.NDSHeader NDS.NDSA.

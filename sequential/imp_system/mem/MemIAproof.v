@@ -1,6 +1,7 @@
 From CRIS.common Require Import CRIS.
 From CRIS.imp_system.mem Require Import MemHeader MemA MemI.
 From CRIS.imp_system.imp Require Import ImpPrelude.
+From CRIS.lib Require Import AList.
 From CRIS.filter Require Import CallFilter.
 From iris.algebra Require Import auth excl agree csum functions dfrac_agree.
 
@@ -281,10 +282,11 @@ Module MemIA. Section MemIA.
 
     case_bool_decide as Hblkofs; [destruct Hblkofs as [Hblk Hofs]|].
     { rewrite lookup_replicate_2; [subst|lia]; rewrite U left_id; right; esplits; eauto.
-      rewrite /update; destruct (dec _ _); ss; case_bool_decide; ss.
+      rewrite /update; destruct (AList.dec _ _); ss; case_bool_decide; ss.
     }
     rewrite right_id /update; destruct (_ blk' ofs') eqn : ?; hexploit (Hsim blk' ofs');
-        i; des; destruct (dec _ _); ss; try case_bool_decide; naive_solver.
+        i; des; destruct (AList.dec _ _); ss; try case_bool_decide;
+        naive_solver.
   (*SLOW*)Qed.
 
   Lemma simF_free :
@@ -307,8 +309,9 @@ Module MemIA. Section MemIA.
     iExists _; iSplit; eauto.
     iPureIntro. esplits; eauto.
     - ii. s. rewrite /mem_ra_upd /update.
-      repeat destruct dec; case_bool_decide; des; ss; subst; naive_solver.
-    - rewrite /update. ii. ss. repeat destruct dec; ss; subst; et.
+      repeat destruct AList.dec; case_bool_decide; des; ss; subst;
+        naive_solver.
+    - rewrite /update. ii. ss. repeat destruct AList.dec; ss; subst; et.
   (*SLOW*)Qed.
 
   Lemma simF_load :
@@ -348,8 +351,9 @@ Module MemIA. Section MemIA.
     iExists _; iSplit; et.
     iPureIntro. split; eauto. split.
     - ii. s. rewrite /mem_ra_upd /update.
-      repeat destruct dec; ss; subst; case_bool_decide; des; naive_solver.
-    - ii; ss; repeat destruct dec; ss; subst; eauto.
+      repeat destruct AList.dec; ss; subst; case_bool_decide; des;
+        naive_solver.
+    - ii; ss; repeat destruct AList.dec; ss; subst; eauto.
   (*SLOW*)Qed.
 
   Lemma simF_cmp :
@@ -405,8 +409,9 @@ Module MemIA. Section MemIA.
       iExists _; iSplit; eauto.
       iPureIntro. split; eauto. split.
       - ii. s. rewrite /mem_ra_upd /update.
-        repeat destruct dec; ss; subst; case_bool_decide; des; naive_solver.
-      - ii; ss; repeat destruct dec; ss; subst; eauto.
+        repeat destruct AList.dec; ss; subst; case_bool_decide; des;
+          naive_solver.
+      - ii; ss; repeat destruct AList.dec; ss; subst; eauto.
     }
 
     cStepsT. cForcesS.

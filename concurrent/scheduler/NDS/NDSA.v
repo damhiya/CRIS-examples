@@ -1,3 +1,4 @@
+From CRIS.lib Require Import AList.
 Require Import CRIS.common.CRIS.
 From CRIS.scheduler Require Import NDS.NDSHeader NDS.NDSI.
 Require Import CRIS.filter.CallFilter.
@@ -166,7 +167,8 @@ Module NDSA. Section NDSA.
             { i. rewrite fmap_app imap_app map_app /= in wf0.
               eapply elem_of_app in wf0. des; eauto.
               eapply elem_of_list_singleton in wf0. inv wf0.
-              rewrite /dec /option_Dec in H0. rewrite /AList.option_Dec_obligation_1 in H0. des_ifs. ss.
+              rewrite /AList.dec /option_Dec in H0.
+              rewrite /AList.option_Dec_obligation_1 in H0. des_ifs. ss.
               assert (to_agree false ≼ to_agree true) by rewrite H0 //.
               eapply to_agree_included in H. inv H.
             }
@@ -192,7 +194,8 @@ Module NDSA. Section NDSA.
             { i. rewrite fmap_app imap_app map_app /= in wf0.
               eapply elem_of_app in wf0. des; eauto.
               eapply elem_of_list_singleton in wf0. inv wf0.
-              rewrite /dec /option_Dec in H0. rewrite /AList.option_Dec_obligation_1 in H0. des_ifs.
+              rewrite /AList.dec /option_Dec in H0.
+              rewrite /AList.option_Dec_obligation_1 in H0. des_ifs.
               { ii. inv H.
                 assert (to_agree false ≼ to_agree true) by rewrite H0 //.
                 eapply to_agree_included in H. inv H. }
@@ -263,7 +266,9 @@ Module NDSA. Section NDSA.
               rewrite !lookup_union. rewrite H. f_equiv.
               { refl. }
               destruct (decide (n = n1)); subst.
-              { rewrite !lookup_insert. rewrite /dec /option_Dec /AList.option_Dec_obligation_1. des_ifs. }
+              { rewrite !lookup_insert.
+                rewrite /AList.dec /option_Dec
+                        /AList.option_Dec_obligation_1. des_ifs. }
               { rewrite !lookup_insert_ne; try (intro NEQ; inv NEQ; ss). refl. }
             }
           }
@@ -309,7 +314,8 @@ Module NDSA. Section NDSA.
                 set (m := list_to_map _).
                 destruct (m !! Some (length l)) eqn:L; cycle 1.
                 { rewrite L left_id //.
-                  rewrite /dec /option_Dec /AList.option_Dec_obligation_1. des_ifs. }
+                  rewrite /AList.dec /option_Dec
+                          /AList.option_Dec_obligation_1. des_ifs. }
                 { eapply elem_of_list_to_map in L; cycle 1.
                   { eapply NoDup_map_imap. }
                   exfalso. gen L. remember (length l) as len. assert (length l ≤ len)%nat by nia.
@@ -328,7 +334,9 @@ Module NDSA. Section NDSA.
               rewrite !lookup_union. rewrite H. f_equiv.
               { refl. }
               destruct (decide (n = n1)); subst.
-              { rewrite !lookup_insert. rewrite /dec /option_Dec /AList.option_Dec_obligation_1. des_ifs. }
+              { rewrite !lookup_insert.
+                rewrite /AList.dec /option_Dec
+                        /AList.option_Dec_obligation_1. des_ifs. }
               { rewrite !lookup_insert_ne; try (intro NEQ; inv NEQ; ss). refl. }
             }
           }
@@ -358,8 +366,9 @@ Module NDSA. Section NDSA.
       }
       iFrame. rewrite fmap_app imap_app map_app /= Nat.add_0_r list_to_map_app.
       rewrite insert_union_singleton_r.
-      { ss. destruct (dec (Some (length ths)) tido) eqn:D.
-        { rewrite /dec /option_Dec /AList.option_Dec_obligation_1 in D. des_ifs.
+      { ss. destruct (AList.dec (Some (length ths)) tido) eqn:D.
+        { rewrite /AList.dec /option_Dec
+                  /AList.option_Dec_obligation_1 in D. des_ifs.
           des; ss. inv IN. eapply lookup_lt_Some in IN0; nia. }
         ss. rewrite !length_fmap D /=. rewrite insert_empty. iModIntro. rewrite insert_union_l. eauto. }
       rewrite lookup_insert_ne; ss.

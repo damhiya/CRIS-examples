@@ -1,4 +1,5 @@
 Require Import CRIS.common.CRIS.
+From CRIS.lib Require Import AList.
 From CRIS.promise_free.pfmem Require Import PFMemHeader PFMemI PFMemA.
 From CRIS.promise_free.algebra Require Import HistoryRA AtomicRA.
 From CRIS.promise_free.gpfsl Require Import base.

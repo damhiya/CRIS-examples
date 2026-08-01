@@ -179,7 +179,7 @@ Module CtrlIA. Section CtrlIA.
     { cStep. cStep. iSplitL ""; eauto.
       iExists _, _, st_tgtR, st_tgtR.
       do 3 (iSplit; eauto).
-      iExists v, l, (tl + length v), tl. iFrame. eauto. }
+      iExists v, l, (tl + List.length v), tl. iFrame. eauto. }
 
     (* SRC: take cSteps *)
     cStepsS.
