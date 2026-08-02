@@ -1,4 +1,4 @@
-Require Import CRIS.common.CRIS.
+From CRIS.common Require Import CRIS.
 From CRIS.promise_free.pfmem Require Import PFMemHeader PFMemI PFMemA.
 From CRIS.promise_free.algebra Require Import HistoryRA AtomicRA.
 From CRIS.promise_free.gpfsl Require Import base.
@@ -18,7 +18,11 @@ Module PFMemIA. Section PFMemIA.
     { eapply (main_adequacy
         (PFMemI.t PFMemA.syn []) (PFMemA.t sp) PFMemIA.Ist). }
     cStartModSim.
-    { iIntros "[TVA [HA HFA]]"; ss.
+    { iPoseProof (state_init_tgt_acc _ _ PFMemI.v_config with "TGT") as
+        (ov) "(%Hconfig & CONFIG & _)".
+      { set_solver. }
+      simpl_map. subst ov.
+      iDestruct "INIT" as "[TVA [HA HFA]]"; ss.
       rewrite /PFMemIA.Ist.
       iExists (Global.init []), _, (View.init []); iSplit; cycle 1.
       { iFrame. rewrite Memory.cut_init //. }

@@ -27,11 +27,11 @@ Module RepeatIA. Section RepeatIA.
   Local Definition RepeatAMod := (RepeatA ★ APCA).
 
   (* IST *)
-  Definition Ist : gmap key (option Any.t) → gmap key (option Any.t) → iProp Σ :=
-    (λ _ _, True)%I.
-  Local Definition IstFull := (IstProd (IstSB RepeatA.(Mod.scopes) Ist) IstEq).
+  Definition Ist (_ : stateGS Σ) : iProp Σ := True%I.
+  Local Notation IstFull :=
+    (λ STATE, (Ist STATE ∗ IstEq APCA STATE)%I).
 
-  Lemma simF_repeat :
+  Lemma simF_repeat `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open RepeatAMod RepeatIMod IstFull
         (fid RepeatHdr.repeat).
   Proof using APCInSp SpPureInSp SpPureFunInSpPure repeatInSpPure.
@@ -81,7 +81,7 @@ Module RepeatIA. Section RepeatIA.
       cStepsS. unfold APC. cForceS 2.
 
       (* cCall apc with fn *)
-      apcCallWeak "IST" as (???) "ISTPOST"; et.
+      apcCallWeak "IST" as (?) "ISTPOST"; et.
       { instantiate (1:= 1%ord). apply OrdArith.lt_from_nat. lia. }
       { eapply Ord.lt_le_lt; et. apply OrdArith.lt_add_r. instantiate (1:=n'). apply OrdArith.lt_from_nat. lia. }
       { iFrame. ss. iSplit; et. iExists (Ord.omega + n')%ord. iSplit; et.
@@ -92,7 +92,7 @@ Module RepeatIA. Section RepeatIA.
       cStepsT. cStepsT. assert (S n' - 1 = n')%Z as -> by lia.
 
       (* cCall apc with repeat *)
-      apcCall "IST" as (???) "ISTPOST"; et.
+      apcCall "IST" as (?) "ISTPOST"; et.
       { instantiate (1 := 0%ord). apply OrdArith.lt_from_nat; lia. }
       { eapply Ord.lt_le_lt; et. apply OrdArith.lt_add_r. instantiate (1:= n'). apply OrdArith.lt_from_nat; lia. }
       { unfold precond. ss. iFrame. instantiate (1:= (n', (f_sem x), f_sem)). iPureIntro. split.
@@ -115,9 +115,16 @@ Module RepeatIA. Section RepeatIA.
   Lemma sim :
     RepeatA.init_cond ⊢ ISim.t open RepeatAMod RepeatIMod IstFull.
   Proof.
-    cStartModSim.
-    - iApply simF_repeat; eauto.
-    - iIntros "_". rewrite /IstProd. eauto.
+    iIntros "INIT".
+    iApply (ISim_reflR open RepeatA RepeatI APCA Ist).
+    - mod_tac.
+    - mod_tac.
+    - intros _. mod_tac.
+    - iIntros (STATE fn) "%Hfn".
+      repeat rewrite Mod.dom_fnsems_add in Hfn.
+      set_unfold in Hfn; des; subst.
+      iApply simF_repeat; eauto.
+    - iIntros (STATE) "SRC TGT". done.
   Qed.
 End RepeatIA. 
 

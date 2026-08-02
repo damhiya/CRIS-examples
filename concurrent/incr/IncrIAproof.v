@@ -8,17 +8,18 @@ Module IncrIA. Section IncrIA.
   Context `{!crisG Γ Σ α β τ _S _I, !memGS, !concGS}.
   Context (sp_m : specmap).
 
-  Local Definition IstFull := (IstProd (IstSB [] IstTrue) IstEq).
   Local Notation MA := (IncrA.t ★ MemA.t sp_m).
   Local Notation MI := (IncrI.t ★ MemA.t sp_m).
+  Local Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
+    (True ∗ IstEq (MemA.t sp_m) STATE)%I.
 
-  Lemma incr_simF :
+  Lemma incr_simF `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MA MI IstFull (fid IncrHdr.incr).
   Proof.
     cStartFunSim. rewrite /IncrA.incr /IncrI.incr. cStepsS. cStepsT.
     aStepS (N [blk ofs]) "->". cStepsT. aAddY. sYields.
 
-    iApply wsim_reset. cCoind CIH g __ with st_src st_tgt. iIntros "? /=".
+    iApply wsim_reset. cCoind CIH g __ with blk ofs. iIntros "? /=".
     aUnfoldT. sYields. sYieldS. aUnfoldS. sYieldS. cStepsS.
     rename _q into v; iRename "ASM" into "↦".
     mLoad. cForceS (inl tt); cForcesS; iFrame "↦". cStepsS.

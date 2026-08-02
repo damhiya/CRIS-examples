@@ -7,13 +7,13 @@ Module CellioIA. Section CellioIA.
   Import CellioA.
   Context `{!crisG Γ Σ α β τ _S _I, _CELLIOCB: !cellioGS}.
 
-  Definition Ist : ist_type Σ :=
-    (λ st_s st_t, (∃ v, ⌜st_t = {[CellioI.v_cv # v↑]}⌝ ∗ auth v))%I.
+  Definition Ist (STATE : stateGS Σ) : iProp Σ :=
+    (∃ v, CellioI.v_cv ↦tgt v↑ ∗ auth v)%I.
 
   Local Definition CellioIMod := (CellioI.t).
   Local Definition CellioAMod := (CellioA.t).
 
-  Lemma simF_set :
+  Lemma simF_set `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open CellioAMod CellioIMod Ist (fid CellioHdr.set).
   Proof using.
     cStartFunSim. rewrite /CellioI.set /set.
@@ -23,48 +23,51 @@ Module CellioIA. Section CellioIA.
 
     (* Call cb() simultaneously *)
     cStepsT. 
-    cCall "IST" as (???) "IST".
+    cCall "IST" as (?) "IST".
     cStepsS. cStepsT.
     destruct Any.downcast; cStepsS; des_ifs.
     rename z into v_new.
     
     (* Give cell(i) *)
-    iDestruct "IST" as (v') "(% & AUTH)". subst.
+    iDestruct "IST" as (v') "(CV & AUTH)".
     iPoseProof (cell_auth_get with "ASM AUTH") as "%"; subst.
     iMod (cell_auth_set _ v_new with "ASM AUTH") as "(C & A)".
 
     cForceS. iFrame.
     
-    cStepsT. cStepsT. cStepsS.
+    cPutT "CV". cStepsT. cStepsS.
 
     cStep.
     iSplit; eauto.
     iExists v_new. iFrame; cSimpl.
   (*SLOW*)Qed.
   
-  Lemma simF_get :
+  Lemma simF_get `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open CellioAMod CellioIMod Ist (fid CellioHdr.get).
   Proof using.
     cStartFunSim. unfold get, CellioI.get. cHideS. cHideT. cHideR.
 
     (* Take (x:Z) & cell(x) *)
     cStepsS. destruct Any.downcast; cStepsS; des_ifs.
-    iDestruct "IST" as (v) "(% & AUTH)". subst.
+    iDestruct "IST" as (v) "(CV & AUTH)".
 
     iPoseProof (cell_auth_get with "ASM AUTH") as "%"; subst.
-    cStepsT.
+    cStepsT. cGetT "CV".
 
     (* Give cell(x) *)
     cForcesS. iFrame. 
     
-    cStep. iSplit; eauto.
-    iExists _. iFrame; eauto.
+    cStep. iSplit; first done.
+    iExists _. iFrame.
   (*SLOW*)Qed.
   
   Lemma sim : CellioA.init_cond ⊢ ISim.t open CellioAMod CellioIMod Ist.
   Proof using.
     cStartModSim.
-    - iIntros. iExists _. iFrame. eauto.
+    - iPoseProof (state_init_tgt_acc _ _ CellioI.v_cv with "TGT") as
+        (ov) "(%Hcv & CV & _)".
+      { set_solver. }
+      simpl_map. subst ov. iExists 0%Z. iFrame.
     - iApply simF_set.
     - iApply simF_get.
   Qed.

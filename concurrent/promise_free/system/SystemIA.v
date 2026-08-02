@@ -1,4 +1,4 @@
-Require Import CRIS.common.CRIS.
+From CRIS.common Require Import CRIS.
 From CRIS.promise_free.system Require Import
   SystemHeader SystemI SystemA SystemIAAlloc SystemIAWrite SystemIARead SystemIACAS.
 From CRIS.promise_free.pfmem Require Import PFMemHeader PFMemA.
@@ -17,65 +17,69 @@ Module SystemIA. Section SystemIA.
   Local Definition SystemI_s := SystemI.t ★ PFMemA.t sp.
   Local Definition init_cond := init_cond size.
 
-  Definition Ist : ist_type Σ :=
-    λ st_src st_tgt,
+  Definition Ist (STGS : stateGS Σ) : iProp Σ :=
       (∃ (tid : Ident.t) (tids : gmap Ident.t (TView.t * nat)),
         let tids' : gmap Ident.t nat := snd <$> tids in
-        ⌜st_tgt = {[SystemI.v_tid # tid↑; SystemI.v_tids # tids'↑]} ∧
-         st_src = {[SystemI.v_tid # tid↑; SystemI.v_tids # tids'↑]}⌝ ∗
+        SystemI.v_tid ↦src tid↑ ∗ SystemI.v_tids ↦src tids'↑ ∗
+        SystemI.v_tid ↦tgt tid↑ ∗ SystemI.v_tids ↦tgt tids'↑ ∗
         tview_sys_auth tids ∗
         ([∗ map] i ↦ stid ∈ (snd <$> delete tid tids),
           (YIELD stid)))%I.
 
-  Local Definition IstFull := (IstProd (IstSB (Mod.scopes (SystemA.t sp_user ⊤ sp)) Ist) IstEq).
+  Local Definition IstFull (STGS : stateGS Σ) : iProp Σ :=
+    (Ist STGS ∗ IstEq (PFMemA.t sp) STGS)%I.
 
-  Lemma simF__spawn :
+  Lemma simF__spawn `{STGS : !stateGS Σ} :
     ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr._spawn).
   Proof using Hincl Hsysincl.
     cStartFunSim. rewrite /SystemI._spawn.
     cStepsS. destruct _q as [].
     iDestruct "ASM" as
       "[%stid [%tid [%𝓥 [%pre [%fvarg [%farg [%fn [[-> ->] [W [[%fsp [% Spawn]] [TV PRE]]]]]]]]]]]".
-    iDestruct "IST" as (????) "[[-> ->] [[% IST] ->]]".
-    iDestruct "IST" as "[%tid_cur [%tids [[-> ->] [TA TVS]]]]".
+    iDestruct "IST" as "[IST EQ]".
+    iDestruct "IST" as (tid_cur tids)
+      "(TID_SRC & TIDS_SRC & TID_TGT & TIDS_TGT & TA & TVS)".
     cStepsS. simpl_sp.
     iDestruct ("Spawn" with "[] [W PRE TV]") as "> [% [% [%Hfsp [Pre Post]]]]".
     { iPureIntro; exists (tid, stid); split; done. } 
     { iFrame; iSplit; eauto. }
     cForceS (FSpec_mk _ _ Hfsp); eauto. cForcesS. iFrame.
 
-    cStepsS. cStepsT. cCall "TA TVS" as (ret st_src st_tgt) "IST".
-    { iFrame. iExists _, _, _, _; repeat iSplit; eauto. }
+    cStepsS. cStepsT.
+    cCall "TID_SRC TIDS_SRC TID_TGT TIDS_TGT TA TVS EQ" as (ret) "IST".
+    { iSplitR "EQ"; last iFrame. iExists _, _. iFrame. }
     cStepsS. cStepsT.
 
     (* cStepsS. cStepsT. *)
     iMod ("Post" with "ASM") as "[W [% [_ TV]]] /=".
 
     rewrite /System.terminate; unseal "System". iApply wsim_reset.
-    cCoind CIH g' __ with st_src st_tgt. iIntros "[IST [W TV]]".
+    cCoind CIH g' __ with tid_cur. iIntros "[IST [W TV]]".
     iPoseProof (winv_split_empty with "W") as "[W We]".
 
-    unfoldIterCS. cStepsS. simpl_sp.
+    rewrite {1 2}unfold_iterC. cStepsS. simpl_sp.
     iDestruct "TV" as "[%V TV]".
     cForceS (tid, stid, V). cStepsS. cForceS (tt↑). cStepsS.
     iApply wsim_fold; iFrame "W".
     cForceS; iFrame "TV"; iSplit; eauto. cStepsS.
-    unfoldIterCT. cStepsT.
-    cCall "IST" as (ret st_src st_tgt) "IST".
+    cStepsT.
+    cCall "IST" as (ret) "IST".
     cStepsS. iDestruct "ASM" as "[-> [-> TV]]". cStepsS.
     cStepsT.
+    specialize (CIH tid_cur).
     cByCoind CIH; iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_spawn :
+  Lemma simF_spawn `{STGS : !stateGS Σ} :
     ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.spawn).
   Proof using Hincl Hsysincl ConcInGlobal.
     cStartFunSim. rewrite /SystemI.spawn.
 
     cStepsS. destruct _q as [[[tid stid] Post] V]. s.
     iDestruct "ASM" as "[%varg [-> [%fvarg [%farg [%fn [[-> ->] [Hspawn [TV PRE]]]]]]]]".
-    iDestruct "IST" as (????) "[[-> ->] [[% IST] ->]]".
-    iDestruct "IST" as "[%tid_cur [%tids [[-> ->] [TA TVS]]]]".
+    iDestruct "IST" as "[IST EQ]".
+    iDestruct "IST" as (tid_cur tids)
+      "(TID_SRC & TIDS_SRC & TID_TGT & TIDS_TGT & TA & TVS)".
 
     (* v_tid is set to a correct one *)
     iDestruct "TV" as "[TV STV]".
@@ -87,7 +91,11 @@ Module SystemIA. Section SystemIA.
     }
     subst.
 
-    cStepsT. cStepsS.
+    cStepsT. cStepsS. cGetS "TID_SRC". cGetT "TID_TGT".
+    cStepsS. cStepsT.
+    set (tids_any := (((snd <$> tids : gmap Ident.t nat)↑) : Any.t)).
+    cGetS "TIDS_SRC". cGetT "TIDS_TGT". subst tids_any.
+    cStepsS. cStepsT.
 
     (* Calling PFMemHdr.spawn *)
     cInlineT. cStepsT.
@@ -120,16 +128,14 @@ Module SystemIA. Section SystemIA.
     cForceS. iSplitL "TVS_new PRE Hspawn".
     { iIntros "? ? ?". iExists _, _, _, _, _, _, _. iFrame. iSplit; eauto. }
     cStepsS.
+    cPutS "TIDS_SRC". cPutT "TIDS_TGT".
 
     cForcesS. iFrame "TV STV". iSplit; eauto. cStepsS. cStep.
     iSplit; eauto.
-    iExists _, _, st_tgtR, st_tgtR; iSplit; first ss.
-    iSplit; eauto.
-    iSplit; eauto.
+    iSplitR "EQ"; last iFrame.
     iExists tid_cur, (<[tid_new := (V, nths)]> tids).
-    rewrite -?fmap_insert /=.
-    (* iSplit; eauto. *)
-    rewrite ?fmap_insert /=; iSplit; eauto; iFrame.
+    rewrite fmap_insert /=.
+    iFrame "TID_SRC TIDS_SRC TID_TGT TIDS_TGT".
     rewrite -fmap_insert; iFrame "TA".
     iSplitL "TV_new MTVS".
     { iPoseProof (big_sepM_insert with "[TV_new MTVS]") as "$"; last iFrame; eauto. }
@@ -141,14 +147,15 @@ Module SystemIA. Section SystemIA.
   Unshelve. ss.
   (*SLOW*)Qed.
 
-  Lemma simF_yield :
+  Lemma simF_yield `{STGS : !stateGS Σ} :
     ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.yield).
   Proof using Hincl Hsysincl ConcInGlobal.
     cStartFunSim. rewrite /SystemI.yield /yield.
 
     cStepsS. destruct _q as [[tid stid] V]. iDestruct "ASM" as "[-> [-> TV]]".
-    iDestruct "IST" as (????) "[[-> ->] [[% IST] ->]]".
-    iDestruct "IST" as "[%tid_cur [%tids [[-> ->] [TA YS]]]]".
+    iDestruct "IST" as "[IST EQ]".
+    iDestruct "IST" as (tid_cur tids)
+      "(TID_SRC & TIDS_SRC & TID_TGT & TIDS_TGT & TA & YS)".
 
     (* v_tid is set to a correct one *)
     iDestruct "TV" as "[TV [TID Y]]".
@@ -159,11 +166,15 @@ Module SystemIA. Section SystemIA.
       iPoseProof (YieldToken_both with "Y2 Y") as "%"; done.
     }
     subst. cStepsS; cStepsT.
+    set (tids_any := (((snd <$> tids : gmap Ident.t nat)↑) : Any.t)).
+    cGetS "TIDS_SRC". cGetT "TIDS_TGT". subst tids_any.
+    cStepsS; cStepsT.
     
     destruct _q as [[tid_next stid_next] Hin].
     cForceS (exist _ (tid_next, stid_next) Hin). cStepsS.
 
-    rewrite ConcInGlobal. s.
+    cPutS "TID_SRC". cPutT "TID_TGT".
+    rewrite ConcInGlobal. s. cStepsS. cStepsT.
     cForceS stid. cStepsS.
     iAssert (YIELD stid_next ∗
         [∗ map] i ↦ e ∈ (snd <$> delete tid_next tids), YIELD e)%I
@@ -184,34 +195,33 @@ Module SystemIA. Section SystemIA.
     cForceS; iFrame.
 
     cStepsS; cStepsT. cStepsT.
-    iApply wsim_yield; iFrame. iSplit.
-    { iExists _, _, st_tgtR, st_tgtR; iSplit; first ss. iSplit; eauto. }
+    iApply wsim_yield; iFrame.
 
     clear dependent tids.
-    iIntros (st_src st_tgt) "IST".
-    iDestruct "IST" as (????) "[[-> ->] [[% IST] ->]]".
-    iDestruct "IST" as "[%tid_cur2 [%tids [[-> ->] [TA YS]]]]".
+    iIntros "IST".
+    iDestruct "IST" as "[IST EQ]".
+    iDestruct "IST" as (tid_cur2 tids)
+      "(TID_SRC & TIDS_SRC & TID_TGT & TIDS_TGT & TA & YS)".
     cStepsS. cForceS (tt↑). cStepS. iDestruct "ASM" as "[? [? ?]]".
     iApply wsim_fold; iFrame.
     cForceS. iFrame. iSplit; eauto.
 
     cStepsS; cStepsT. cStep.
     iSplit; eauto.
-    iExists _, _, _, _; iSplit; first ss.
-    iSplit; eauto.
-    iSplit; eauto.
-    iExists _, _; iSplit; first eauto.
-    iFrame.
+    iSplitR "EQ"; last iFrame.
+    iExists tid_cur2, tids. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_get_tid :
+  Lemma simF_get_tid `{STGS : !stateGS Σ} :
     ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.get_tid).
   Proof using Hincl Hsysincl ConcInGlobal.
     cStartFunSim. rewrite /SystemI.get_tid /get_tid.
 
     cStepsS. destruct _q as [[tid stid] V]. iDestruct "ASM" as "[-> [-> TV]]".
-    iDestruct "IST" as (????) "[[-> ->] [[% IST] ->]]".
-    iDestruct "IST" as "[%tid_cur [%tids [[-> ->] [TA YS]]]]".
+    iDestruct "IST" as "[IST EQ]".
+    iDestruct "IST" as (tid_cur tids)
+      "(TID_SRC & TIDS_SRC & TID_TGT & TIDS_TGT & TA & YS)".
+    cStepsS; cStepsT. cGetS "TID_SRC". cGetT "TID_TGT".
     cStepsS; cStepsT.
 
     (* v_tid is set to a correct one *)
@@ -225,10 +235,8 @@ Module SystemIA. Section SystemIA.
     subst.
     cForceS (tid_cur↑). cStepsS. cForceS. iFrame. iSplit; eauto. cStep. iSplit; eauto.
 
-    iExists _, _, _, _; iSplit; first ss.
-    iSplit; eauto.
-    iSplit; eauto.
-    iFrame. done.
+    iSplitR "EQ"; last iFrame.
+    iExists tid_cur, tids. iFrame.
   (*SLOW*)Qed.
 End SystemIA.
 Section ctx_refines.
@@ -249,21 +257,56 @@ Section ctx_refines.
     { eapply (main_adequacy
         (SystemI.t ★ PFMemA.t sp)
         (SystemA.t sp_user ⊤ sp ★ PFMemA.t sp)
-        (IstProd
-          (IstSB (Mod.scopes (SystemA.t sp_user ⊤ sp)) Ist) IstEq)). }
-    cStartModSim.
-    { iApply simF__spawn; eauto. }
-    { iApply simF_spawn; eauto. }
-    { iApply simF_yield; eauto. }
-    { iApply simF_get_tid; eauto. }
-    { iApply simF_alloc; eauto. }
-    { iApply simF_write; eauto. }
-    { iApply simF_read; eauto. }
-    { iApply simF_cas; eauto. }
-    { iIntros "TA"; repeat iExists _; repeat iSplit; ss.
-      iExists 1%positive, {[1%positive := (TView.init size, 0)]}; iFrame.
-      iSplit; first eauto.
+        (fun STGS => (Ist STGS ∗ IstEq (PFMemA.t sp) STGS)%I)). }
+    iIntros "TA".
+    iApply (ISim_reflR open
+      (SystemA.t sp_user ⊤ sp) SystemI.t (PFMemA.t sp) Ist).
+    - mod_tac.
+    - mod_tac.
+    - intros _. mod_tac.
+    - iIntros (STGS fn) "%Hfn".
+      set_unfold in Hfn; des; subst.
+      + iApply simF__spawn; eauto.
+      + iApply simF_spawn; eauto.
+      + iApply simF_yield; eauto.
+      + iApply simF_get_tid; eauto.
+      + iApply simF_alloc; eauto.
+      + iApply simF_write; eauto.
+      + iApply simF_read; eauto.
+      + iApply simF_cas; eauto.
+    - iIntros (STGS) "SRC TGT".
+      iEval (rewrite /state_init_src /=) in "SRC".
+      iEval (rewrite /state_init_tgt /=) in "TGT".
+      assert (SLS : state_slice ({["System"]} : gset string)
+          {[SystemA.v_tid # 1%positive↑;
+            SystemA.v_tids # ({[1%positive := 0]} : tidmap)↑]} =
+          {[SystemA.v_tid := 1%positive↑;
+            SystemA.v_tids := ({[1%positive := 0]} : tidmap)↑]}).
+      { apply map_eq. intros k. rewrite state_slice_lookup.
+        destruct (decide (k = SystemA.v_tid)); subst; simpl_map.
+        - case_decide; done.
+        - destruct (decide (k = SystemA.v_tids)); subst; simpl_map.
+          + case_decide; done.
+          + repeat case_decide; done.
+      }
+      assert (SLT : state_slice ({["System"]} : gset string)
+          {[SystemI.v_tid # 1%positive↑;
+            SystemI.v_tids # ({[1%positive := 0]} : tidmap)↑]} =
+          {[SystemI.v_tid := 1%positive↑;
+            SystemI.v_tids := ({[1%positive := 0]} : tidmap)↑]}).
+      { exact SLS. }
+      iEval (rewrite right_id_L SLS) in "SRC".
+      iEval (rewrite right_id_L SLT) in "TGT".
+      iDestruct "SRC" as "[SRC _]".
+      iEval (rewrite big_sepM_insert) in "SRC"; last simpl_map.
+      iDestruct "SRC" as "[TID_SRC TIDS_SRC]".
+      iEval (rewrite big_sepM_singleton) in "TIDS_SRC".
+      iDestruct "TGT" as "[TGT _]".
+      iEval (rewrite big_sepM_insert) in "TGT"; last simpl_map.
+      iDestruct "TGT" as "[TID_TGT TIDS_TGT]".
+      iEval (rewrite big_sepM_singleton) in "TIDS_TGT".
+      iExists 1%positive, {[1%positive := (TView.init size, 0)]}.
+      iFrame.
       rewrite delete_singleton fmap_empty //.
-    }
   Qed.
 End ctx_refines. End SystemIA.

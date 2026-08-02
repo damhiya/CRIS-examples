@@ -16,11 +16,12 @@ Module LockIA. Section LockIA.
   Local Definition MemA := MemA.t sp.
   Local Definition SpinLockA := (LockA.t E sp).
   Local Definition SpinLockI := (SpinLockI.t).
-  Local Definition IstFull := (IstProd (IstSB SpinLockA.(Mod.scopes) IstTrue) IstEq).
   Local Notation MA := (SpinLockA ★ MemA).
   Local Notation MI := (SpinLockI ★ MemA).
+  Local Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
+    (True ∗ IstEq MemA STATE)%I.
 
-  Lemma newlock_simF :
+  Lemma newlock_simF `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MA MI IstFull (fid SpinLockHdr.newlock).
   Proof using SchInSp Hsub.
     cStartFunSim. rewrite /SpinLockI.newlock /newlock.
@@ -58,7 +59,7 @@ Module LockIA. Section LockIA.
     cStep. iFrame. eauto.
   (*SLOW*)Qed.
 
-  Lemma acquire_simF :
+  Lemma acquire_simF `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MA MI IstFull (fid SpinLockHdr.acquire).
   Proof using SchInSp Hsub.
     cStartFunSim. rewrite /SpinLockI.acquire /acquire.
@@ -71,8 +72,8 @@ Module LockIA. Section LockIA.
 
     (* start coinduction for lock acquire/failure *)
     iApply wsim_reset.
-    cCoind CIH g' __ with st_src st_tgt. iIntros "[#LOCK [IST TID]] /=".
-    unfoldIterCT. cStepsT.
+    cCoind CIH g' __ with blk ofs. iIntros "[#LOCK [IST TID]] /=".
+    cNormT. rewrite unfold_iterC. cStepsT.
     (* tgt yield *)
     sYieldIR "IST" "TID".
     (* open invariant *)
@@ -116,7 +117,7 @@ Module LockIA. Section LockIA.
   Unshelve. all: try exact 1%Qp. all: try exact Vundef.
   (*SLOW*)Qed.
 
-  Lemma release_simF :
+  Lemma release_simF `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MA MI IstFull (fid SpinLockHdr.release).
   Proof using SchInSp Hsub.
     cStartFunSim. rewrite /SpinLockI.release /release.
@@ -153,11 +154,17 @@ Module LockIA. Section LockIA.
   (* Construct ISim.t for summing up each simulation proofs *)
   Lemma sim : init_cond ⊢ ISim.t open MA MI IstFull.
   Proof.
-    cStartModSim.
-    { apply newlock_simF. }
-    { apply acquire_simF. }
-    { apply release_simF. }
-    { iIntros "$"; iExists _, _, _, _; iFrame; eauto. }
+    iIntros "_".
+    iApply (ISim_reflR open SpinLockA SpinLockI MemA (λ _, True%I)).
+    - mod_tac.
+    - mod_tac.
+    - intros _. mod_tac.
+    - iIntros (STATE fn) "%Hfn".
+      set_unfold in Hfn; des; subst.
+      + iApply newlock_simF.
+      + iApply acquire_simF.
+      + iApply release_simF.
+    - iIntros (STATE) "SRC TGT". done.
   Qed.
 
   (* ctxr works as a unit in compositions of module simulations *)

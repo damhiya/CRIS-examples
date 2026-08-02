@@ -26,7 +26,7 @@ Module KnotIA. Section KnotIA.
   Context (FunInPure: sp_fun ⊆ sp_pure).
   Context (PureInSp : sp_pure ⊆ sp).
 
-  Definition Ist : ist_type Σ := λ _ _,
+  Definition Ist (_ : stateGS Σ) : iProp Σ :=
     (∃ (f' : optionO (natO -d> natO)) (fb' : val),
         (⌜∀ f (EQ: f' ≡ (Some f: optionO (natO -d> natO))),
             ∃ fb,
@@ -40,9 +40,10 @@ Module KnotIA. Section KnotIA.
   Local Notation KnotA := (KnotA.t genv sp_rec sp_fun sp).
   Local Notation KnotAMod := (KnotA ★ MemA ★ APCA).
   Local Notation KnotIMod := ((KnotI.t genv) ★ MemA ★ APCA).
-  Local Notation IstFull := (IstProd (IstSB KnotA.(Mod.scopes) Ist) IstEq).
+  Local Notation IstFull :=
+    (λ STATE, (Ist STATE ∗ IstEq (MemA ★ APCA) STATE)%I).
 
-  Lemma simF_rec :
+  Lemma simF_rec `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open KnotAMod KnotIMod IstFull (fid KnotHdr.rec).
   Proof using GEnvWF GEnvIncl RecInSp APCInSp FunInPure PureInSp.
     cStartFunSim. rewrite /KnotI.recF.
@@ -65,8 +66,9 @@ Module KnotIA. Section KnotIA.
     (* Simulation Start *)
     (* SRC: precondition *)
     cStepsS. destruct _q as [f o]. iDestruct "ASM" as "(((-> & %) & FG) & %Q)". cStepsT.
-    iDestruct "IST" as (? ? ? ?) "(%ST & [% IST] & %E)"; des; subst.
+    iDestruct "IST" as "[IST STATEEQ]".
     iDestruct "IST" as (? ?) "(%HIN & FL & VF)".
+    des; subst.
 
     (* RA: Set _f as a funciton pointer whose spec is "_f_spec" *)
     iPoseProof (knot_ra_merge with "FL FG") as "<-".
@@ -90,23 +92,25 @@ Module KnotIA. Section KnotIA.
 
     (* cCall apc with fn *)
     pose proof SPEC as SPEC1. inv SPEC1.
-    iApply wsim_apc_src_call_tgt_weaker; [ | | |cSimpl| | |iSplitL "FL FG VF"]; eauto.
+    iApply wsim_apc_src_call_tgt_weaker; [ | | |cSimpl| | |iSplitL "FL FG VF STATEEQ"]; eauto.
     { instantiate (1 := 0). apply OrdArith.lt_from_nat. nia. }
     { instantiate (1:= (2 * o)). eapply Ord.lt_le_lt; et.
       rewrite -OrdArith.mult_from_nat -OrdArith.add_from_nat. apply OrdArith.lt_from_nat. nia.
     }
-    { iSplitR "FL VF".
+    { iSplitR "FL VF STATEEQ".
       - ss. iFrame. iSplit.
         + iPureIntro. eexists; esplits; et. econs; et.
           { eapply GEnvWF; eauto. }
           econs; [cSimpl; eauto|].
           iIntros (??) "% %% F !>"; iExists _, _; iSplit; [done|iSplitL "F"; [done|iIntros "%% $//"]].
         + iPureIntro. eexists; esplits; et. rewrite -OrdArith.mult_from_nat. apply OrdArith.le_from_nat. nia. 
-      - iExists _, _, _, _. repeat (iSplit; et). iExists (Some f), _. iSplit.
-        + iPureIntro. intros ? temp; inv temp; esplits; et. econs; eauto.
-        + unfold var_points_to. rewrite SKINCL_F. iFrame.
+      - iSplitR "STATEEQ".
+        + iExists (Some f), _. iSplit.
+          * iPureIntro. intros ? temp; inv temp; esplits; et. econs; eauto.
+          * unfold var_points_to. rewrite SKINCL_F. iFrame.
+        + iFrame.
     }
-    clear_st. iIntros (st_src st_tgt ret) "IST".
+    iIntros (ret) "IST".
     iDestruct "IST" as "[IST [-> FG]]". cStepsT.
 
     (* SRC: change to skip *)
@@ -116,7 +120,7 @@ Module KnotIA. Section KnotIA.
     Unshelve. all: try exact (tt↑).
   (*SLOW*)Qed.
 
-  Lemma simF_knot :
+  Lemma simF_knot `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open KnotAMod KnotIMod IstFull (fid KnotHdr.knot).
   Proof using GEnvWF GEnvIncl RecInSp APCInSp FunInPure PureInSp.
     cStartFunSim. rewrite /KnotI.knotF.
@@ -136,7 +140,7 @@ Module KnotIA. Section KnotIA.
     (* SRC: precondition *)
     cStepsS. rename _q into new_spec.
     iDestruct "ASM" as "(%Q & (%FB & [%old OLD]))". des; subst. cStepsT.
-    iDestruct "IST" as (? ? ? ?) "(%ST & [% IST] & %E)"; des; subst.
+    iDestruct "IST" as "[IST STATEEQ]".
     iDestruct "IST" as (? ?) "(%HIN & FL & VF)".
 
     (* RA: unify the infomation of f_spec *)
@@ -164,21 +168,31 @@ Module KnotIA. Section KnotIA.
 
     (* check IST *)
     inv FB0. des.
-    iExists _, _, _, _. iSplit; et. iSplit; et. iSplit; et. unfold Ist, inv.
-    iExists (Some new_spec), _. iSplit; iFrame; et.
-    { iPureIntro. ii. eexists. esplits; et. econs; et. inv EQ. et. }
-    { unfold var_points_to. des_ifs. }
+    iSplitR "STATEEQ".
+    { unfold Ist, inv. iExists (Some new_spec), _. iSplit; iFrame; et.
+      { iPureIntro. ii. eexists. esplits; et. econs; et. inv EQ. et. }
+      { unfold var_points_to. des_ifs. }
+    }
+    { iFrame. }
   Qed.
 
   Lemma sim :
     KnotA.init_cond genv ⊢ ISim.t open KnotAMod KnotIMod IstFull.
   Proof.
-    cStartModSim.
-    { iApply simF_rec. }
-    { iApply simF_knot. }
-    { iIntros "[VF FL]". iExists _, _, _, _. iSplit; et. iSplit; eauto.
-      iSplit; iFrame; et. iPureIntro. ii. inv EQ.
-    }
+    iIntros "INIT".
+    iApply (ISim_reflR open KnotA (KnotI.t genv) (MemA ★ APCA) Ist).
+    - mod_tac.
+    - mod_tac.
+    - intros _. mod_tac.
+    - iIntros (STATE fn) "%Hfn".
+      repeat rewrite Mod.dom_fnsems_add in Hfn.
+      set_unfold in Hfn; des; subst.
+      + iApply simF_rec.
+      + iApply simF_knot.
+    - iIntros (STATE) "SRC TGT".
+      iDestruct "INIT" as "[VF FL]". iExists None, (Vint 0). iSplit.
+      + iPureIntro. ii. inv EQ.
+      + iFrame.
   Qed.
 
   Lemma ctxr :

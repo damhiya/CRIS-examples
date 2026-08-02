@@ -1,4 +1,4 @@
-Require Import CRIS.common.CRIS.
+From CRIS.common Require Import CRIS.
 From CRIS.scheduler Require Import SchHeader SchI SchA SchTactics.
 From CRIS.promise_free.algebra Require Import HistoryRA AtomicRA.
 From CRIS.promise_free.system Require Import SystemHeader SystemA SystemTactics.
@@ -20,10 +20,14 @@ Section StackIM.
   Local Definition MI :=
     ((CFilter.filter (Helping.exports mn) StackI.t ★
         HelpingDummy.t mn) ★ SysF) ★ SchF.
-  Local Definition Ist :=
-    IstProd (IstSB [mn] (IstHelp IstTrue ⊤)) IstEq.
+  Local Definition StackHelpM :=
+    StackM.t mn (SystemA.sp sp_user (↑stackN)) ★
+      HelpingOn.t mn StackM.jobCode.
+  Local Definition Ist (STATE : stateGS Σ) : iProp Σ :=
+    (IstHelp (IstEq StackHelpM STATE) ⊤ ∗
+      IstEq (SysF ★ SchF) STATE)%I.
 
-  Lemma new_stack_simF :
+  Lemma new_stack_simF `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MA MI Ist (fid StackHdr.new_stack).
   Proof.
     cStartFunSim. rewrite /StackI.new_stack /StackM.new_stack.
@@ -43,8 +47,7 @@ Section StackIM.
       rewrite /Helping.exports elem_of_union !elem_of_singleton.
       intros [EQ|EQ]; unfold Helping.run, Helping.help in EQ; discriminate. }
     iFrame "TV IST".
-    clear dependent st_src st_tgt.
-    iIntros (??) "IST TV".
+    iIntros "IST TV".
     cStepsT.
 
     iApply wsim_system_yield_ir; ss.
@@ -52,8 +55,7 @@ Section StackIM.
       rewrite /Helping.exports elem_of_union !elem_of_singleton.
       intros [EQ|EQ]; unfold Helping.run, Helping.help in EQ; discriminate. }
     iFrame "TV IST".
-    clear dependent st_src st_tgt.
-    iIntros (??) "IST TV".
+    iIntros "IST TV".
 
     cStepsT. cInlineT.
     cForceT (meta0 (tid, stid, loc >> 2, Val.zero, Ordering.na, _))%cris.
@@ -71,8 +73,7 @@ Section StackIM.
       rewrite /Helping.exports elem_of_union !elem_of_singleton.
       intros [EQ|EQ]; unfold Helping.run, Helping.help in EQ; discriminate. }
     iFrame "TV IST".
-    clear dependent st_src st_tgt.
-    iIntros (??) "IST TV".
+    iIntros "IST TV".
 
     cStepsT. cInlineT.
     cForceT (meta0
@@ -89,8 +90,7 @@ Section StackIM.
       rewrite /Helping.exports elem_of_union !elem_of_singleton.
       intros [EQ|EQ]; unfold Helping.run, Helping.help in EQ; discriminate. }
     iFrame "TV IST".
-    clear dependent st_src st_tgt.
-    iIntros (??) "IST TV".
+    iIntros "IST TV".
     cStepsT. cInlineT.
     cForceT (meta0
       (tid, stid, loc >> 1, Val.Vptr (loc >> 2), Ordering.na, _))%cris.
@@ -104,8 +104,7 @@ Section StackIM.
       rewrite /Helping.exports elem_of_union !elem_of_singleton.
       intros [EQ|EQ]; unfold Helping.run, Helping.help in EQ; discriminate. }
     iFrame "TV IST".
-    clear dependent st_src st_tgt.
-    iIntros (??) "IST TV". cStepsT.
+    iIntros "IST TV". cStepsT.
 
     iPoseProof (view_at_cur_mon_pred V3 V4 LE4 with "↦head") as "↦head".
     iPoseProof (view_at_cur_mon_pred V3 V4 LE4 with "↦guard") as "↦guard".

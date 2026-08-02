@@ -8,38 +8,42 @@ Module CannonIA. Section CannonIA.
 
   Context (sp : specmap).
 
-  Definition Ist : ist_type Σ :=
-    (λ st_s st_t, (⌜st_t = {[CannonI.v_lv # 1%Z↑]}⌝ ∗ Ready) ∨ Fired)%I.
+  Definition Ist (STATE : stateGS Σ) : iProp Σ :=
+    ((CannonI.v_lv ↦tgt 1%Z↑ ∗ Ready) ∨
+     (CannonI.v_lv ↦tgt 0%Z↑ ∗ Fired))%I.
   
   Local Definition CannonAMod := (CannonA.t sp).
   Local Definition CannonIMod := (CannonI.t).
 
-  Lemma simF_fire :
+  Lemma simF_fire `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open CannonAMod CannonIMod Ist (fid CannonHdr.fire).
   Proof using.
     cStartFunSim. rewrite /CannonI.fire /fire.
 
     (* SRC: precondition *)
     cStepsS. iDestruct "ASM" as "[-> [% [-> [-> B]]]]". cSimpl.
-    iDestruct "IST" as "[[% R] | F]"; des; subst; cycle 1. 
+    iDestruct "IST" as "[[LV R] | [LV F]]"; cycle 1.
     (* already fired *)
     { iExFalso. iApply FiredBall; iFrame. }
 
-    cStepsS. cStepsT. cStepsT.
+    cStepsS. cStepsT. cGetT "LV".
     change (1 `div` 1)%Z with 1%Z.
 
     (* SRC, TGT: print 1 *)
-    cStep. cStepsT.
+    cStep. cPutT "LV".
 
     (* prove postcondition & the IST - Ready * Ball = Shot *)
     cStepsS. cForcesS. iSplitR; eauto. cStep.
-    iSplit; eauto. iRight. iApply ReadyBall; iFrame.
+    iSplit; eauto. iRight. iFrame. iApply ReadyBall; iFrame.
   (*SLOW*)Qed.
 
   Lemma sim : CannonA.Ready ⊢ ISim.t open CannonAMod CannonIMod Ist.
   Proof using.
     cStartModSim.
-    - iIntros "IC"; iLeft; iFrame; eauto.
+    - iPoseProof (state_init_tgt_acc _ _ CannonI.v_lv with "TGT") as
+        (ov) "(%Hlv & LV & _)".
+      { set_solver. }
+      simpl_map. subst ov. iLeft. iFrame.
     - iApply simF_fire.
   Qed.
 End CannonIA.

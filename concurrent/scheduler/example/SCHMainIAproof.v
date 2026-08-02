@@ -35,8 +35,10 @@ Module SCHMainIA. Section SCHMainIA.
 
   Local Definition MA := (SCHMainA.t sp).
   Local Definition MI := (SCHMainI.t).
+  Local Definition IstFull (_ : stateGS Σ) : iProp Σ := True%I.
 
-  Lemma simF_main : ⊢ ISim.sim_fun open MA MI IstTrue entry.
+  Lemma simF_main `{STATE : !stateGS Σ} :
+    ⊢ ISim.sim_fun open MA MI IstFull entry.
   Proof using Hschglob (* Hschrrs Hschnds *) Hsch Hrrs Hnds Hrrsnode Hndsnode.
     cStartFunSim.
 
@@ -87,7 +89,7 @@ Module SCHMainIA. Section SCHMainIA.
       iIntros (??) "POST". iModIntro. subst Q1. rewrite /postcond /RRSAS.init_spec /=.
       iDestruct "POST" as "(W & % & % & F)". ss.
     }
-    cStepsS. cStepsT. cCall "IST" as (???) "IST".
+    cStepsS. cStepsT. cCall "IST" as (?) "IST".
     cStepsS.
     iDestruct "ASM" as "(% & % & Join)"; des; subst; cSimpl. cSimpl.
     cStepsT. cStepsS.
@@ -137,7 +139,7 @@ Module SCHMainIA. Section SCHMainIA.
       iDestruct "POST" as "(W & % & % & F)". ss.
     }
 
-    cStepsS. cCall "IST" as (???) "IST". cStepsT. cStepsS.
+    cStepsS. cCall "IST" as (?) "IST". cStepsT. cStepsS.
     iDestruct "ASM" as "(% & % & JoinF')"; des; subst; cSimpl.
 
     sYieldIR "IST" "T". sYieldS.
@@ -145,7 +147,7 @@ Module SCHMainIA. Section SCHMainIA.
     cStep. iFrame; eauto.
   Qed.
 
-  Lemma sim : ⊢ ISim.t open MA MI IstTrue.
+  Lemma sim : ⊢ ISim.t open MA MI IstFull.
   Proof using Hschglob (* Hschrrs Hschnds *) Hsch Hrrs Hnds Hrrsnode Hndsnode.
     cStartModSim.
     - done.

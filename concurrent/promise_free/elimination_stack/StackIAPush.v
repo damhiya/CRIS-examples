@@ -1,4 +1,4 @@
-Require Import CRIS.common.CRIS.
+From CRIS.common Require Import CRIS.
 From CRIS.scheduler Require Import SchHeader SchI SchA SchTactics.
 From CRIS.promise_free.algebra Require Import HistoryRA AtomicRA.
 From CRIS.promise_free.system Require Import SystemHeader SystemA SystemTactics.
@@ -21,8 +21,12 @@ Section StackIM.
   Local Definition MI :=
     ((CFilter.filter (Helping.exports mn) StackI.t ★
         HelpingDummy.t mn) ★ SysF) ★ SchF.
-  Local Notation Ist :=
-    (IstProd (IstSB [mn] (IstHelp IstTrue ⊤)) IstEq).
+  Local Definition StackHelpM :=
+    StackM.t mn (SystemA.sp sp_user (↑stackN)) ★
+      HelpingOn.t mn StackM.jobCode.
+  Local Definition Ist (STATE : stateGS Σ) : iProp Σ :=
+    (IstHelp (IstEq StackHelpM STATE) ⊤ ∗
+      IstEq (SysF ★ SchF) STATE)%I.
 
   Local Lemma push_postcond_irrel value γs tid stid V V' :
     postcond StackM.push_spec (value, γs, tid, stid, V) =
@@ -34,7 +38,7 @@ Section StackIM.
     Time.lt from to.
   Proof. inversion ADD; done. Qed.
 
-  Lemma push_simF :
+  Lemma push_simF `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MA MI Ist (fid StackHdr.push).
   Proof.
     cStartFunSim. rewrite /StackI.push /StackM.push. cStepsS. cStepsT.
@@ -47,14 +51,13 @@ Section StackIM.
       rewrite /Helping.exports elem_of_union !elem_of_singleton.
       intros [EQ|EQ]; unfold Helping.run, Helping.help in EQ; discriminate. }
     iFrame "TV IST".
-    clear dependent st_src st_tgt.
-    iIntros (st_src st_tgt) "IST TV".
+    iIntros "IST TV".
     iApply wsim_system_yield_src. cStepsS.
     iApply wsim_helping_run; [simpl_map; s; f_equal|].
     iIntros (reqid) "HELP".
     rewrite SRed.bind SBRed.bind bind_bind. cNormT.
     iApply wsim_reset.
-    cCoind CIH g' __ with st_src st_tgt V.
+    cCoind CIH g' __ with V.
     iIntros "[#HANDLE [IST [TV HELP]]] /=".
     rewrite StackI.push_loop_unfold /StackI.push_once.
     cStepsS. cStepsT. cHideS. cHideT. sYields.
@@ -64,7 +67,7 @@ Section StackIM.
       "[%STACK [#Hinv [#SNh [#SNo #SNg]]]]".
     destruct STACK as [-> STACK_BASE].
     sYield. cStepsT.
-    iEval (rewrite IstHelp_nested_equiv) in "IST".
+    iEval (rewrite /Ist IstHelp_nested_equiv) in "IST".
     iInv "Hinv" with "[IST]" as "[IST INV]" "ACC";
       first by iFrame.
     iEval (rewrite stack_inv'_eq; solve_base_sl_red) in "INV".
@@ -168,7 +171,7 @@ Section StackIM.
     iPoseProof (view_at_view_mon_pred
       (view_at (AtomicSeen (stack_loc >> 2) γguard ζguard)) _ _ HcurV5
       with "SNg") as "#SNg5".
-    iEval (rewrite IstHelp_nested_equiv) in "IST".
+    iEval (rewrite /Ist IstHelp_nested_equiv) in "IST".
     iInv "Hinv" with "[IST]" as "[IST INV]" "ACC";
       first by iFrame.
     iEval (rewrite stack_inv'_eq; solve_base_sl_red) in "INV".
@@ -351,7 +354,7 @@ Section StackIM.
       iPoseProof (atomic_pts_to_swriter_to_cas with "STATE SWos")
         as "STATE".
       sYields. cStepsT.
-      iEval (rewrite IstHelp_nested_equiv) in "IST".
+      iEval (rewrite /Ist IstHelp_nested_equiv) in "IST".
       iInv "Hinv" with "[IST]" as "[IST INV]" "ACC";
         first by iFrame.
       iEval (rewrite stack_inv'_eq; solve_base_sl_red) in "INV".
@@ -593,7 +596,7 @@ Section StackIM.
           (view_at (AtomicSeen offer_loc γoffer_guard
             (Cell.singleton (Message.message Val.zero Vog naog) LTog)))
           _ _ Hcur1011 with "SNoffer10") as "#SNoffer11".
-        iEval (rewrite IstHelp_nested_equiv) in "IST".
+        iEval (rewrite /Ist IstHelp_nested_equiv) in "IST".
         iInv "Hinv" with "[IST]" as "[IST INVe]" "ACCe";
           first by iFrame.
         iEval (rewrite stack_inv'_eq; solve_base_sl_red) in "INVe".
@@ -759,7 +762,7 @@ Section StackIM.
           shelve. }
         Unshelve.
         all: sYield; cStepsT; sYield; cStepsT;
-          iEval (rewrite IstHelp_nested_equiv) in "IST";
+          iEval (rewrite /Ist IstHelp_nested_equiv) in "IST";
           iInv "Hoinv" with "[IST]" as "[IST OINV]" "OACC".
         all: try (by iFrame).
         all: iEval (solve_base_sl_red) in "OINV";

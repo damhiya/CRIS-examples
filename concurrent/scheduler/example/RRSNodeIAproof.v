@@ -19,10 +19,13 @@ Module RRSNodeIA. Section RRSNodeIA.
   Context (Hrrs: (RRSAS.sp sp_user ⊤ get_stid PYIP) ⊆ sp).
   Context (Hnode: (RRSNodeAS.sp ⊤) ⊆ sp_user).
 
-  Local Definition IstFull := (IstProd (IstSB (RRSNodeA.t sp).(Mod.scopes) IstTrue) IstEq).
   Local Definition init_cond := RRSNodeA.init_cond.
-  Local Definition MA := (RRSNodeA.t sp ★ (MemA.t sp) ★ (RRSA.t SchHdr.yield.1 sp sp_user get_stid PYIP)).
-  Local Definition MI := (RRSNodeI.t ★ (MemA.t sp) ★ (RRSA.t SchHdr.yield.1 sp sp_user get_stid PYIP)).
+  Local Definition Ctx :=
+    (MemA.t sp ★ RRSA.t SchHdr.yield.1 sp sp_user get_stid PYIP).
+  Local Definition MA := (RRSNodeA.t sp ★ Ctx).
+  Local Definition MI := (RRSNodeI.t ★ Ctx).
+  Local Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
+    (True ∗ IstEq Ctx STATE)%I.
 
   Lemma f_spawnable n b Invs
     (RNG: 0 < n < size Invs)
@@ -62,7 +65,7 @@ Module RRSNodeIA. Section RRSNodeIA.
     iFrame; eauto.
   Qed.
 
-  Lemma simF_main :
+  Lemma simF_main `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MA MI IstFull (fid RRSNodeHdr.f_main).
   Proof using Hschrrs Hrrs Hnode.
     cStartFunSim. rewrite /RRSNodeI.f_main /RRSNodeA.f_main.
@@ -107,7 +110,7 @@ Module RRSNodeIA. Section RRSNodeIA.
       { des; subst; ss. }
     }
 
-    cStepsS; cStepsT. cCall "IST" as (???) "IST".
+    cStepsS; cStepsT. cCall "IST" as (?) "IST".
     cStepsS. rewrite map_size_insert map_size_empty lookup_empty.
     iDestruct "ASM" as (?) "[% [tidF [RRI [% %]]]]"; des; subst; cSimpl.
     cStepsS. cStepsT.
@@ -126,7 +129,7 @@ Module RRSNodeIA. Section RRSNodeIA.
       { i. vm_compute in H. do 3 (destruct m; ss); nia. }
     }
 
-    cStepsS; cStepsT. cCall "IST" as (???) "IST".
+    cStepsS; cStepsT. cCall "IST" as (?) "IST".
     cStepsS. rewrite !map_size_insert map_size_empty lookup_empty.
     rewrite lookup_insert_ne // lookup_empty.
     iDestruct "ASM" as (?) "[% [tidF [RRI [% %]]]]"; des; subst; cSimpl.
@@ -143,7 +146,7 @@ Module RRSNodeIA. Section RRSNodeIA.
       do 2 (rewrite lookup_insert_ne; eauto).
       rewrite lookup_insert. iSplit; eauto.
       solve_base_sl_red. rewrite /half_val. unseal "Node". iFrame. }
-    cStepsS; cStepsT. cCall "IST" as (???) "IST".
+    cStepsS; cStepsT. cCall "IST" as (?) "IST".
     cStepsS. cStepsT. iDestruct "ASM" as "(% & (% & tidF & % & % & RRI & % & INV))"; cSimpl.
 
     cForcesS. iSplitL "tidF"; eauto.
@@ -158,7 +161,7 @@ Module RRSNodeIA. Section RRSNodeIA.
     subst a b. inv H.
   Qed.
 
-  Lemma simF_f :
+  Lemma simF_f `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MA MI IstFull (fid RRSNodeHdr.f).
   Proof using Hschrrs Hrrs Hnode.
     cStartFunSim. rewrite /RRSNodeI.f /RRSNodeA.f.
@@ -192,17 +195,29 @@ Module RRSNodeIA. Section RRSNodeIA.
 
     cInlineT. cStepsT. cForceT (S mtid, stid, ssch).
     cForcesT. iSplitL "tidF"; iFrame; eauto. cStepsT.
-    iApply wsim_sget_tgt. cStepsT. rewrite /mjoin /option_join.
-    destruct (st_tgt1 !! RRSI.RRSI.v_tid) eqn:F; cycle 1.
-    { rewrite F. s. destruct (@Any.downcast nat tt↑) eqn:A; cStepsT; ss.
-      iDestruct "GRT" as "[<- [-> tid]]"; cSimpl.
-      exfalso. eapply unit_nat_neq; eauto. }
-      
-    rewrite F. cStepsT. destruct o; ss; cycle 1.
-    { destruct (@Any.downcast nat tt↑) eqn:A; cStepsT; ss.
-      iDestruct "GRT" as "[<- [-> tid]]"; cSimpl.
-      exfalso. eapply unit_nat_neq; eauto. }
+    iDestruct "IST" as "[_ EQ]".
+    iPoseProof (state_eq_get (list_to_set (Mod.scopes Ctx))
+      RRSI.RRSI.v_tid with "EQ") as (ov) "(TIDS & TIDT & CLOSEEQ)".
+    { rewrite elem_of_list_to_set /Ctx /=. set_solver. }
+    destruct ov as [t|]; cycle 1.
+    { iEval (rewrite /state_cell_src /state_cell_tgt /=) in "TIDS TIDT".
+      cShowT.
+      iApply wsim_sget_tgt_uninit. iFrame "TIDT". iIntros "TIDT".
+      iAssert (IstFull STATE) with "[TIDS TIDT CLOSEEQ]" as "IST".
+      { iSplit; first done. iApply ("CLOSEEQ" with "[$TIDS $TIDT]"). }
+      s. cNormT. cHideT. rewrite /mjoin /option_join.
+      destruct (@Any.downcast nat tt↑) eqn:A; cStepsT; ss.
+      all: cShowT; cNormT; rewrite !bind_ret_l.
+      all: rewrite A; cStepsT.
+      - iDestruct "GRT" as "[<- [-> tid]]"; cSimpl.
+        exfalso. eapply unit_nat_neq; eauto.
+      - destruct _q. }
 
+    iEval (rewrite /state_cell_src /state_cell_tgt /=) in "TIDS TIDT".
+    cGetT "TIDT".
+    iAssert (IstFull STATE) with "[TIDS TIDT CLOSEEQ]" as "IST".
+    { iSplit; first done. iApply ("CLOSEEQ" with "[$TIDS $TIDT]"). }
+    cStepsT. rewrite /mjoin /option_join.
     destruct (@Any.downcast nat t) eqn:A; cStepsT; ss.
     iDestruct "GRT" as "[% [% tidF]]"; subst. cStepsT.
 
@@ -239,7 +254,7 @@ Module RRSNodeIA. Section RRSNodeIA.
       iSplit; eauto. iFrame. iSplit; eauto. iExists _; iSplit; eauto. solve_base_sl_red.
       rewrite /half_val. unseal "Node". iFrame. }
      
-    cStepsS. cStepsT. cCall "IST" as (???) "IST".
+    cStepsS. cStepsT. cCall "IST" as (?) "IST".
     cStepsS. iDestruct "ASM" as "[% (% & tidF & % & % & RRI & % & INV)]"; cSimpl.
     cStepsT. cForcesS. replace (mtid + 1) with (S mtid) by nia.
     iFrame. iSplit; eauto.
@@ -248,10 +263,17 @@ Module RRSNodeIA. Section RRSNodeIA.
 
   Lemma sim : init_cond ⊢ ISim.t open MA MI IstFull.
   Proof using Hschrrs Hrrs Hnode.
-    cStartModSim.
-    - eapply simF_main.
-    - eapply simF_f.
-    - iIntros "RI". do 4 iExists _. iFrame. iSplit; eauto.
+    iIntros "_".
+    iApply (ISim_reflR open (RRSNodeA.t sp) RRSNodeI.t
+      Ctx (λ _ : stateGS Σ, True%I)).
+    - mod_tac.
+    - mod_tac.
+    - intros _. mod_tac.
+    - iIntros (STATE0 fn) "%Hfn".
+      set_unfold in Hfn; des; subst.
+      + iApply simF_main.
+      + iApply simF_f.
+    - iIntros (STATE0) "SRC TGT". done.
   Qed.
 
 End RRSNodeIA. End RRSNodeIA.

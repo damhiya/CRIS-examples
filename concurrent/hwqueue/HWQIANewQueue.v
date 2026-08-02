@@ -21,12 +21,10 @@ Section HWQPM.
   Context (mnh mnp : string).
   Context (sp_mem : specmap).
 
-  Definition Ist : ist_type Σ := λ st_src st_tgt,
+  Definition Ist : iProp Σ :=
     (∃ (X : gset val),
       free_id (λ x, x.1 = "hwq" ∧ match (x.2↓↓) with | Some x => x ∉ X | None => True end)%type ∗
       [∗ set] x ∈ X, ∃ ptr ofs, ⌜x = Vptr (ptr, ofs)⌝ ∗ ∃ v, (ptr, ofs) ↦{1/2} v)%I.
-  Definition IstFull : ist_type Σ :=
-    IstProd (IstSB [mnh] (IstHelp Ist ⊤)) IstEq.
 
   Notation HWQM := (HWQM.t mnh).
   Notation HWQP := (HWQP.t mnp).
@@ -35,7 +33,11 @@ Section HWQPM.
   Notation MemA := (MemA.t sp_mem).
   Notation ProphA := (ProphecyA.t mnp ∅).
 
-  Lemma simF_new_queue : 
+  Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
+    (IstHelp (Ist ∗ IstEq (HWQM ★ HelpOn) STATE) ⊤ ∗
+     IstEq (MemA ★ ProphA) STATE)%I.
+
+  Lemma simF_new_queue `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open
       ((HWQM ★ HelpOn) ★ MemA ★ ProphA) ((HWQP ★ HelpDummy) ★ MemA ★ ProphA)
       IstFull (fid HWQHdr.new_queue).
@@ -54,10 +56,11 @@ Section HWQPM.
     rewrite -[X in ITree.iter _ X](Nat.sub_diag sz).
     assert (sz ≤ sz) as Hle by lia; revert Hle.
     generalize sz at 1 4 5 10 as i; intros i Hle.
-    iInduction i as [|i] forall (Hle st_src st_tgt).
+    iInduction i as [|i] forall (Hle).
     { rewrite Nat.sub_0_r /= app_nil_r.
       aUnfoldT. sYields. rewrite Nat2Z.id Nat.ltb_irrefl. cStepsT. sYields.
-      iDestruct "IST" as "[% [% [% [% [[-> ->] [[% [HE IST]] ->]]]]]]".
+      iEval (rewrite /IstFull /IstHelp) in "IST".
+      iDestruct "IST" as "[[HE [IST CORE]] CTX]".
       iDestruct "IST" as (X) "[free acc]".
       destruct (decide (Vptr (blk, 0%Z) ∈ X)) as [HblkX|HblkX].
       { iPoseProof (big_sepS_elem_of_acc with "acc") as "[[% [% [% [% acc]]]] _]"; auto using HblkX.
@@ -100,8 +103,7 @@ Section HWQPM.
         - simpl. apply flatten_blocks_initial. }
       sYieldS. cForceS ((Vptr (blk, 0%Z))↑, tt).
       cIst "IST" with "[- He◯]".
-      { iExists _, _, _, _. repeat iSplit; des; eauto.
-        iFrame "HE".
+      { rewrite /IstFull /IstHelp. iFrame "HE CORE CTX".
         iExists (X ∪ {[Vptr (blk, 0%Z)]}).
         iSplitL "free".
         { iApply (free_id_iff with "free").

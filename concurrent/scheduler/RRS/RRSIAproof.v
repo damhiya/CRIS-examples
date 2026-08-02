@@ -53,11 +53,12 @@ Module RRSIA. Section RRSIA.
     rrinv rrinvO ∗ tid_global tid stid ∗
     YIELD ssch ∗ Shot ssch ∗ PublicAuth ths None.
 
-  Definition Ist: gmap key (option Any.t) → gmap key (option Any.t) → iProp Σ :=
-    λ st_src st_tgt,
+  Definition Ist (STATE : stateGS Σ) : iProp Σ :=
+    let _ := STATE in
       (∃ (ths: RRSI.thpool) (tid stid ssch: nat) (rrinvO: gmap nat InvO) (Inv: InvO),
-          ⌜st_tgt = {[RRSI.v_ths # ths↑; RRSI.v_tid # tid↑; RRSI.v_sch # ssch↑]}
-          ∧ st_src = st_tgt ∧ <<INVWF: size rrinvO = length ths>>⌝ ∗
+          RRSI.v_ths ↦src ths↑ ∗ RRSI.v_tid ↦src tid↑ ∗ RRSI.v_sch ↦src ssch↑ ∗
+          RRSI.v_ths ↦tgt ths↑ ∗ RRSI.v_tid ↦tgt tid↑ ∗ RRSI.v_sch ↦tgt ssch↑ ∗
+          ⌜<<INVWF: size rrinvO = length ths>>⌝ ∗
           TidAuth (list_to_map (imap pair ths)) ∗
           (Ist_init rrinvO
            ∨ Ist_private ths tid stid ssch rrinvO Inv
@@ -68,7 +69,7 @@ Module RRSIA. Section RRSIA.
   Local Definition RRSAMod := RRSA.t parent_yield sp sp_rrs_user get_stid PYIP.
   Local Definition RRSIMod := RRSI.t parent_yield.
 
-  Lemma simF_init :
+  Lemma simF_init `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.init).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.init /RRSI.init.
@@ -82,7 +83,10 @@ Module RRSIA. Section RRSIA.
     cForcesS; iFrame. cStepsS. cStep. cStepsS.
     iDestruct "ASM" as "[-> Tsch]". cStepsT.
 
-    iDestruct "IST" as (??????) "(% & TidA & [IST_init | [IST_private | [IST_public | [IST_global_in | IST_global_out]]]])"; des; subst; cycle 1.
+    iDestruct "IST" as (ths tid_cur stid_cur ssch0 rrinvO Inv0)
+      "(THSS & TIDS & SCHS & THST & TIDT & SCHT & %INVWF & TidA &
+       [IST_init | [IST_private | [IST_public |
+        [IST_global_in | IST_global_out]]]])"; cycle 1.
     { iExFalso. iDestruct "IST_private" as "(% & Ys & RRIA & Inv' & NschY & C' & S & PubA)".
       iCombine "P S" as "PS". iApply (PendingShot_false with "PS"). }
     { iExFalso. iDestruct "IST_public" as "(% & Ys & RRIA & NschY & S & PubA)".
@@ -94,6 +98,9 @@ Module RRSIA. Section RRSIA.
     iDestruct "IST_init" as "(% & RRIA & PubA)"; subst.
     rewrite map_size_empty in INVWF. destruct ths; ss.
 
+    cPutS "SCHS". cPutT "SCHT".
+    cStepsT. cStepsS. cSimpl.
+    cGetS "THSS". cGetT "THST".
     cStepsT. cStepsS. cSimpl.
     cForceS. cStepsS.
     cSpawn as (stid_0).
@@ -122,23 +129,29 @@ Module RRSIA. Section RRSIA.
     cForcesS. iSplitL "PRE RRI TidF0 C PubF' Spawn".
     { iIntros "Y T W". do 5 iExists _. rewrite /Public. unseal RRS. iFrame. iPureIntro; eauto. }
 
-    cStepsS. rewrite ConcInSp.
+    cStepsS.
+    cPutS "THSS". cPutT "THST".
+    cStepsS. cStepsT.
+    cPutS "TIDS". cPutT "TIDT".
+    cStepsS. cStepsT. rewrite ConcInSp.
     iApply wsim_unfold; iIntros "WI".
     cForcesS. iSplitL "Tsch Y WI"; first iFrame.
-    cStepsS. cStepsT. iApply wsim_yield; iSplitL "Ysch RRIA TidA TidF S' PubA".
-    { do 6 iExists _. iSplit; eauto.
-      { iPureIntro. esplits; eauto.
-        instantiate (1 := <[0:=Inv]> ∅). set_solver. }
+    cStepsS. cStepsT. iApply wsim_yield.
+    iSplitL "THSS TIDS SCHS THST TIDT SCHT Ysch RRIA TidA TidF S' PubA".
+    { iExists [stid_0], 0, stid_0, (get_stid x), (<[0 := Inv]> ∅), Inv.
+      iFrame "THSS TIDS SCHS THST TIDT SCHT".
+      iSplit.
+      { iPureIntro. rewrite map_size_insert; set_solver. }
       iFrame. do 4 iRight. iFrame.
       rewrite /PublicAuth. unseal RRS. iFrame. ss. }
-    iIntros (??) "IST".
+    iIntros "IST".
 
     cStepsS. cStepsT. iDestruct "ASM" as "(Tsch & Ysch & WI)".
 
-    cBind (λ _ _, False%I) as (????) "X"; ss.
+    cBind (λ _ _, False%I) as (??) "X"; ss.
 
     clear H1. iApply wsim_reset.
-    cCoind CIH g Hg with st_s' st_t' x.
+    cCoind CIH g Hg with x.
     iIntros "(PYIP & RRIP & PubF & S & IST & Tsch & Ysch & WI)"; subst.
     unfoldIterCS. unfoldIterCT.
 
@@ -155,13 +168,16 @@ Module RRSIA. Section RRSIA.
     cForcesS. iSplitL "PRE".
     { instantiate (1:=tt↑). subst P0. iFrame. }
     
-    cStepsS. cCall "IST" as (???) "IST". cStepsS. cStepsT. 
+    cStepsS. cCall "IST" as (?) "IST". cStepsS. cStepsT.
 
     iSpecialize ("POST" $! _q ret).
     iMod ("POST" with "[ASM]") as "(WI & (Tsch & Ysch & PYIP & %))"; des; subst.
     { iFrame. }
 
-    iDestruct "IST" as (??????) "(% & TidA & [IST_init | [IST_private | [IST_public | [IST_global_in | IST_global_out]]]])"; des; subst; cycle 4.
+    iDestruct "IST" as (ths1 tid_cur1 stid_cur1 ssch1 rrinvO1 Inv1)
+      "(THSS & TIDS & SCHS & THST & TIDT & SCHT & %INVWF1 & TidA &
+       [IST_init | [IST_private | [IST_public |
+        [IST_global_in | IST_global_out]]]])"; cycle 4.
     { iExFalso. iDestruct "IST_global_out" as "(% & Ys & RRIA & TidF & Ysch' & S' & PubA)".
       iPoseProof (Shot_match with "S S'") as "%". subst.
       iPoseProof (YieldToken_both with "Ysch Ysch'") as "%"; ss. }
@@ -178,6 +194,10 @@ Module RRSIA. Section RRSIA.
 
     iDestruct "IST_global_in" as "(% & Ys & RRIA & TidF & S' & PubA)". 
     
+    cStepsT. cStepsS.
+    cGetS "THSS". cGetT "THST".
+    cStepsT. cStepsS.
+    cGetS "TIDS". cGetT "TIDT".
     cStepsT. cStepsS. rewrite H. cStepsT. cStepsS.
     rewrite ConcInSp.
 
@@ -186,9 +206,12 @@ Module RRSIA. Section RRSIA.
 
     cForcesS. iSplitL "Tsch Y WI"; first iFrame.
 
-    cStepsS. cStepsT. iApply wsim_yield; iSplitL "TidA RRIA Ys Ysch TidF S PubA".
-    { do 6 iExists _. iSplit; eauto. iFrame "TidA". do 4 iRight. iFrame; eauto. }
-    iIntros (??) "IST".
+    cStepsS. cStepsT. iApply wsim_yield.
+    iSplitL "THSS TIDS SCHS THST TIDT SCHT TidA RRIA Ys Ysch TidF S PubA".
+    { iExists ths1, tid_cur1, stid_cur1, (get_stid x), rrinvO1, Inv1.
+      iFrame "THSS TIDS SCHS THST TIDT SCHT".
+      iSplit; eauto. iFrame "TidA". do 4 iRight. iFrame; eauto. }
+    iIntros "IST".
 
     cStepsT. cStepsS. iDestruct "ASM" as "(Tsch & Ysch & WI)".
 
@@ -197,7 +220,7 @@ Module RRSIA. Section RRSIA.
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_inner_spawn :
+  Lemma simF_inner_spawn `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr._spawn).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.inner_spawn /RRSI.inner_spawn.
@@ -210,7 +233,10 @@ Module RRSIA. Section RRSIA.
       iDestruct "ASM" as "[(% & % & % & % & % & % & (% & % & Spawn) & PRE & RRIP & TidF & WI & T & Y) PubF]"; des; subst; cSimpl.
 
       cStepsS. cStepsT.
-      iDestruct "IST" as (??????) "(% & TidA & [IST_init | [IST_private | [IST_public | [IST_global_in | IST_global_out]]]])"; des; subst; cycle 2.
+      iDestruct "IST" as (ths tid stid0 ssch rrinvO Inv)
+        "(THSS & TIDS & SCHS & THST & TIDT & SCHT & %INVWF & TidA &
+         [IST_init | [IST_private | [IST_public |
+          [IST_global_in | IST_global_out]]]])"; des; subst; cycle 2.
       { iExFalso. iDestruct "IST_public" as "(% & Ys & RRIA & NschY & S' & PubA)". cSimpl.
         iPoseProof (Tid_Auth_Tid with "[TidA TidF]") as "%Hmtid"; first iFrame.
         eapply elem_of_list_to_map_2, elem_of_lookup_imap in Hmtid. des. sym in Hmtid; inv Hmtid.
@@ -263,27 +289,38 @@ Module RRSIA. Section RRSIA.
       { iFrame; eauto. }
       cForceS (FSpec_mk _ _ Hfsp); eauto. cForcesS. iFrame.
 
-      cStepsS. cCall "TidA Ys RRIA S NschY PubA" as (???) "IST".
-      { do 6 iExists _. iSplit; eauto. iFrame "TidA". do 2 iRight. iLeft. iFrame; eauto. }
+      cStepsS.
+      cCall "THSS TIDS SCHS THST TIDT SCHT TidA Ys RRIA S NschY PubA"
+        as (?) "IST".
+      { iExists ths, mtid, stid, ssch, rrinvO, Inv.
+        iFrame "THSS TIDS SCHS THST TIDT SCHT".
+        iSplit; eauto. iFrame "TidA". do 2 iRight. iLeft. iFrame; eauto. }
 
       cStepsT. cStepsS.
 
-      cBind (λ _ _, False%I) as (????) "F"; ss.
+      cBind (λ _ _, False%I) as (??) "F"; ss.
 
       (* Coinduction on yield loop *)
-      iClear "IST ASM Post".
+      iClear "ASM Post".
       rewrite !/RRS.spin. unseal "RRS". iApply wsim_reset.
-      cCoind CIH g __ with st_s' st_t'. iIntros "_".
+      assert (EX : exists n : nat, True) by (exists 0; exact I).
+      destruct EX as [coind_n _].
+      iAssert (⌜coind_n = coind_n⌝ ∗ Ist STATE)%I with "[IST]" as "LOOP".
+      { iFrame. done. }
+      cCoind CIH g __ with coind_n. iIntros "[_ IST]".
       unfoldIterCS. unfoldIterCT.
       cStepsS; cStepsT.
-      cByCoind CIH; eauto.
+      cByCoind CIH; eauto. iFrame. done.
     }
     { (** CASE 2: init case **)
       iDestruct "ASM" as "(% & % & % & % & % & % & (% & % & Spawn) & PRE & RRI & TidF & C & PubF & WI & T & Y)"; des; subst; cSimpl.
 
       cStepsS. cStepsT.
 
-      iDestruct "IST" as (??????) "(% & TidA & [IST_init | [IST_private | [IST_public | [IST_global_in | IST_global_out]]]])"; des; subst.
+      iDestruct "IST" as (ths tid stid0 ssch rrinvO Inv0)
+        "(THSS & TIDS & SCHS & THST & TIDT & SCHT & %INVWF & TidA &
+         [IST_init | [IST_private | [IST_public |
+          [IST_global_in | IST_global_out]]]])"; des; subst.
       { iExFalso. iDestruct "IST_init" as "(% & RRIA & PubA)". subst. iCombine "RRI RRIA" as "RRIA".
         iPoseProof (rrinv_match with "RRIA") as "%"; ss. }
       { iExFalso. iDestruct "IST_private" as "(% & Ys & RRIA & Inv' & NschY & C' & S')". cSimpl.
@@ -332,26 +369,34 @@ Module RRSIA. Section RRSIA.
       { subst; iFrame; eauto. }
       cForceS (FSpec_mk _ _ Hfsp); eauto. cForcesS. iFrame.
 
-      cStepsS. cCall "TidA Ys RRIA S Ysch' PubA" as (???) "IST".
-      { do 6 iExists _. iSplit; eauto. iFrame "TidA". do 2 iRight. iLeft. iFrame; eauto. }
+      cStepsS.
+      cCall "THSS TIDS SCHS THST TIDT SCHT TidA Ys RRIA S Ysch' PubA"
+        as (?) "IST".
+      { iExists ths, 0, stid, ssch, rrinvO, Inv0.
+        iFrame "THSS TIDS SCHS THST TIDT SCHT".
+        iSplit; eauto. iFrame "TidA". do 2 iRight. iLeft. iFrame; eauto. }
 
       cStepsT. cStepsS.
 
-      cBind (λ _ _, False%I) as (????) "F"; ss.
+      cBind (λ _ _, False%I) as (??) "F"; ss.
 
       (* Coinduction on yield loop *)
-      iClear "IST ASM Post".
+      iClear "ASM Post".
       rewrite !/RRS.spin. unseal "RRS". iApply wsim_reset.
-      cCoind CIH g __ with st_s' st_t'. iIntros "_".
+      assert (EX : exists n : nat, True) by (exists 0; exact I).
+      destruct EX as [coind_n _].
+      iAssert (⌜coind_n = coind_n⌝ ∗ Ist STATE)%I with "[IST]" as "LOOP".
+      { iFrame. done. }
+      cCoind CIH g __ with coind_n. iIntros "[_ IST]".
       unfoldIterCS. unfoldIterCT.
       cStepsS; cStepsT.
-      cByCoind CIH; eauto.
+      cByCoind CIH; eauto. iFrame. done.
     }
 
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_spawn :
+  Lemma simF_spawn `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.spawn).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.spawn /RRSI.spawn.
@@ -360,7 +405,10 @@ Module RRSIA. Section RRSIA.
     cStepsS. iDestruct "ASM" as "(% & % & (% & % & % & % & Spawn & PRE) & (TidF & Y & T & S & C & PubF) & RRI)"; des; subst; cSimpl.
     
     cStepsS; cStepsT.
-    iDestruct "IST" as (??????) "(% & TidA & [IST_init | [IST_private | [IST_public | [IST_global_in | IST_global_out]]]])"; des; subst; cycle 3.
+    iDestruct "IST" as (ths tid stid0 ssch0 rrinvO InvState)
+      "(THSS & TIDS & SCHS & THST & TIDT & SCHT & %INVWF & TidA &
+       [IST_init | [IST_private | [IST_public |
+        [IST_global_in | IST_global_out]]]])"; des; subst; cycle 3.
     { iExFalso. iDestruct "IST_global_in" as "(% & Ys & RRIA & TidF' & S')". cSimpl.
       iPoseProof (Tid_Auth_Tid with "[TidA TidF]") as "%Hmtid"; first iFrame.
       eapply elem_of_list_to_map_2 in Hmtid; rewrite elem_of_lookup_imap in Hmtid.
@@ -390,6 +438,8 @@ Module RRSIA. Section RRSIA.
       case_decide; clarify. iPoseProof (YieldToken_both with "Y YIELD2") as "%"; ss. }
     rewrite H in Hmtid0. inv Hmtid0.
 
+    cStepsS. cStepsT.
+    cGetS "THSS". cGetT "THST".
     cStepsS. cStepsT. cSimpl.
     set (size rrinvO) as mtid_new.
     cStepsS. cStepsT.
@@ -424,13 +474,16 @@ Module RRSIA. Section RRSIA.
     { subst mtid_new. rewrite -INVWF. iFrame. iIntros "Y T WI". iFrame. iPureIntro. esplits; eauto. eapply insert_non_empty. }
 
     iApply wsim_unfold; iIntros "WI".
-    cStepsS. cForceS.  cStepsS.
+    cPutS "THSS". cPutT "THST".
+    cStepsS. cStepsT. cForceS. cStepsS.
     iApply wsim_guarantee_src.
     iSplitL "WI TidF RRI Y T S C PubF"; iFrame; eauto.
     cStepsS. cStep. iSplit; eauto.
-    do 6 iExists _. iSplit; eauto.
-    { iPureIntro. esplits; eauto. instantiate (1 := <[size rrinvO := Inv]> rrinvO).
-      rewrite map_size_insert LKN last_length INVWF //. }
+    iExists (ths ++ [stid_new]), mtid, stid, ssch0,
+      (<[size rrinvO := Inv]> rrinvO), InvState.
+    iFrame "THSS TIDS SCHS THST TIDT SCHT".
+    iSplit.
+    { iPureIntro. rewrite map_size_insert LKN last_length INVWF //. }
     iSplitL "TidA".
     { rewrite /TidAuth ?fmap_app /= imap_app /= ?length_fmap Nat.add_0_r list_to_map_snoc.
       { subst mtid_new. rewrite fmap_insert -INVWF //. }
@@ -445,7 +498,7 @@ Module RRSIA. Section RRSIA.
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_yield :
+  Lemma simF_yield `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.yield).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.yield /RRSI.yield.
@@ -453,7 +506,10 @@ Module RRSIA. Section RRSIA.
     cStepS. destruct _q as [[[mtid stid] ssch] Inv].
 
     cStepsS. iDestruct "ASM" as "(% & % & (TidF & Y & T & S & C & PubF) & RRI & % & % & Inv)"; des; subst.
-    iDestruct "IST" as (??????) "(% & TidA & [IST_init | [IST_private | [IST_public | [IST_global_in | IST_global_out]]]])"; des; subst; cycle 3.
+    iDestruct "IST" as (ths tid stid0 ssch0 rrinvO InvState)
+      "(THSS & TIDS & SCHS & THST & TIDT & SCHT & %INVWF & TidA &
+       [IST_init | [IST_private | [IST_public |
+        [IST_global_in | IST_global_out]]]])"; des; subst; cycle 3.
     { iExFalso. iDestruct "IST_global_in" as "(% & Ys & RRIA & TidF' & S')". cSimpl.
       iPoseProof (Tid_Auth_Tid with "[TidA TidF]") as "%Hmtid"; first iFrame.
       eapply elem_of_list_to_map_2 in Hmtid; rewrite elem_of_lookup_imap in Hmtid.
@@ -491,16 +547,20 @@ Module RRSIA. Section RRSIA.
 
     iMod (Public_update_private with "PubA PubF") as "[PubA PubF]"; eauto.
 
-    cStepsS. cStepsT. cSimpl.
+    cGetS "THSS". cStepsS. cStepsT.
+    cGetT "THST". cStepsS. cStepsT. cSimpl.
     cStepsS. cStepsT.
     cForcesS. iSplitL "T"; first iFrame.
     cStepsS. cStep. cStepsS. cStepsT. iDestruct "ASM" as "[-> T]". cSimpl.
+    cGetS "TIDS". cGetT "TIDT".
     cStepsS. cStepsT. rewrite H. case_decide; ss. cStepsS. cStepsT.
     eapply lookup_lt_Some in H as LEN.
     generalize (succ_rr_upperbound mtid (length ths) LEN); intro LEN0.
     eapply lookup_lt_is_Some in LEN0. rewrite /is_Some in LEN0. des. rewrite LEN0.
 
     rename x into stidn. set (succ_rr mtid (length ths)) as mtidn.
+    cStepsT. cStepsS.
+    cPutS "TIDS". cPutT "TIDT".
     cStepsT. cStepsS. rewrite ConcInSp.
     iAssert (YIELD stidn ∗
         [∗ list] i ↦ e ∈ ths, if decide (i = mtidn) then emp else YIELD e)%I
@@ -514,20 +574,26 @@ Module RRSIA. Section RRSIA.
       subst mtidn. eauto. }
     iApply wsim_unfold; iIntros "WI".
     cForcesS. iSplitL "T Y WI"; first iFrame.
-    cStepsS. cStepsT. iApply wsim_yield; iSplitL "TidA Ys RRIA Inv NschY C S' PubA".
-    { do 6 iExists _. iSplit; eauto. iFrame "TidA". iRight. iLeft. iFrame.
+    cStepsS. cStepsT. iApply wsim_yield.
+    iSplitL "THSS TIDS SCHS THST TIDT SCHT TidA Ys RRIA Inv NschY C S' PubA".
+    { iExists ths, mtidn, stidn, ssch0, Inv, Inv0.
+      iFrame "THSS TIDS SCHS THST TIDT SCHT".
+      iSplit; eauto. iFrame "TidA". iRight. iLeft. iFrame.
       iPureIntro. esplits.
       { subst mtidn. eauto. }
       { subst mtidn. rewrite INVWF pred_succ_id //. }
     }
-    iIntros (??) "IST". cStepsS. cStepsT.
+    iIntros "IST". cStepsS. cStepsT.
     iDestruct "ASM" as "(T & Y & WI)".
 
-    iDestruct "IST" as (??????) "(% & TidA & [IST_init | [IST_private | [IST_public | [IST_global_in | IST_global_out]]]])"; des; subst; cycle 2.
+    iDestruct "IST" as (ths1 tid1 stid1 ssch1 rrinvO1 Inv1)
+      "(THSS & TIDS & SCHS & THST & TIDT & SCHT & %INVWF1 & TidA &
+       [IST_init | [IST_private | [IST_public |
+        [IST_global_in | IST_global_out]]]])"; des; subst; cycle 2.
     { iExFalso. iDestruct "IST_public" as "(% & Ys & RRIA & NschY & S' & PubA)". cSimpl.
       iPoseProof (Tid_Auth_Tid with "[TidA TidF]") as "%Hmtid"; first iFrame.
       eapply elem_of_list_to_map_2, elem_of_lookup_imap in Hmtid. des. sym in Hmtid; inv Hmtid.
-      destruct (decide (tid = mtid)); subst; cycle 1.
+      destruct (decide (tid1 = mtid)); subst; cycle 1.
       { iPoseProof (big_sepL_lookup_acc _ _ mtid with "Ys") as "[YIELD2 _]"; eauto.
         case_decide; clarify. iPoseProof (YieldToken_both with "Y YIELD2") as "%"; ss. }
       rewrite H2 in Hmtid0. inv Hmtid0.
@@ -541,7 +607,7 @@ Module RRSIA. Section RRSIA.
     { iExFalso. iDestruct "IST_global_out" as "(% & Ys & RRIA & TidF' & Ysch' & S')".
       iPoseProof (Tid_Auth_Tid with "[TidA TidF]") as "%Hmtid"; first iFrame.
       eapply elem_of_list_to_map_2, elem_of_lookup_imap in Hmtid. des. sym in Hmtid; inv Hmtid.
-      destruct (decide (tid = mtid)); subst; cycle 1.
+      destruct (decide (tid1 = mtid)); subst; cycle 1.
       { iPoseProof (big_sepL_lookup_acc _ _ mtid with "Ys") as "[YIELD2 _]"; eauto.
         case_decide; clarify. iPoseProof (YieldToken_both with "Y YIELD2") as "%"; ss. }
       rewrite H2 in Hmtid0. inv Hmtid0. iCombine "TidF TidF'" gives %wf.
@@ -554,7 +620,7 @@ Module RRSIA. Section RRSIA.
     iPoseProof (Tid_Auth_Tid with "[TidA TidF]") as "%Hmtid"; first iFrame.
     eapply elem_of_list_to_map_2 in Hmtid; rewrite elem_of_lookup_imap in Hmtid.
     des. sym in Hmtid. inv Hmtid.
-    destruct (decide (tid = mtid)); subst; cycle 1.
+    destruct (decide (tid1 = mtid)); subst; cycle 1.
     { iPoseProof (big_sepL_lookup_acc _ _ mtid with "Ys") as "[YIELD2 _]"; eauto.
       case_decide; clarify; by iPoseProof (YieldToken_both with "Y YIELD2") as "%". }
     rewrite STID in Hmtid0. inv Hmtid0.
@@ -565,12 +631,15 @@ Module RRSIA. Section RRSIA.
     cForcesS. iFrame. iSplitR.
     { iPureIntro. esplits; eauto. }
 
-    cStep. iSplit; eauto. do 6 iExists _. iSplit; eauto. iFrame "TidA". do 2 iRight. iLeft. iFrame. eauto.
+    cStep. iSplit; eauto.
+    iExists ths1, mtid, stid, ssch1, rrinvO1, Inv1.
+    iFrame "THSS TIDS SCHS THST TIDT SCHT".
+    iSplit; eauto. iFrame "TidA". do 2 iRight. iLeft. iFrame. eauto.
     
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_yield_global :
+  Lemma simF_yield_global `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist
         (fid RRSHdr.yield_global).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
@@ -580,7 +649,10 @@ Module RRSIA. Section RRSIA.
 
     cStepsS. iDestruct "ASM" as "(% & % & (TidF & Y & T & S & C & PubF))"; des; subst.
     cStepsS. cStepsT.
-    iDestruct "IST" as (??????) "(% & TidA & [IST_init | [IST_private | [IST_public | [IST_global_in | IST_global_out]]]])"; des; subst; cycle 3.
+    iDestruct "IST" as (ths tid stid0 ssch0 rrinvO Inv)
+      "(THSS & TIDS & SCHS & THST & TIDT & SCHT & %INVWF & TidA &
+       [IST_init | [IST_private | [IST_public |
+        [IST_global_in | IST_global_out]]]])"; des; subst; cycle 3.
     { iExFalso. iDestruct "IST_global_in" as "(% & Ys & RRIA & TidF' & S')". cSimpl.
       iPoseProof (Tid_Auth_Tid with "[TidA TidF]") as "%Hmtid"; first iFrame.
       eapply elem_of_list_to_map_2, elem_of_lookup_imap in Hmtid. des. sym in Hmtid; inv Hmtid.
@@ -620,16 +692,23 @@ Module RRSIA. Section RRSIA.
 
     iMod (Public_update_private with "PubA PubF") as "[PubA PubF]"; eauto.
 
+    cGetS "SCHS". cGetT "SCHT".
     cStepsS. cSimpl. cStepsS. cStepsT. cSimpl. cStepsT.
     iApply wsim_unfold; iIntros "WI".
     cForcesS. iSplitL "T NschY WI"; first iFrame.
-    cStepsS. cStepsT. iApply wsim_yield; iSplitL "TidA Ys RRIA TidF0 S' Y PubA".
-    { do 6 iExists _. iSplit; eauto. iFrame "TidA". do 3 iRight. iLeft. iFrame.
+    cStepsS. cStepsT. iApply wsim_yield.
+    iSplitL "THSS TIDS SCHS THST TIDT SCHT TidA Ys RRIA TidF0 S' Y PubA".
+    { iExists ths, mtid, stid, ssch0, rrinvO, Inv.
+      iFrame "THSS TIDS SCHS THST TIDT SCHT".
+      iSplit; eauto. iFrame "TidA". do 3 iRight. iLeft. iFrame.
       iPoseProof (big_sepL_delete with "[Y Ys]") as "Ys"; eauto; iFrame. }
-    iIntros (??) "IST". cStepsT. cStepsS.
+    iIntros "IST". cStepsT. cStepsS.
 
     iDestruct "ASM" as "(T & Y & WI)".
-    iDestruct "IST" as (??????) "(% & TidA & [IST_init | [IST_private | [IST_public | [IST_global_in | IST_global_out]]]])"; des; subst.
+    iDestruct "IST" as (ths1 tid1 stid1 ssch1 rrinvO1 Inv1)
+      "(THSS & TIDS & SCHS & THST & TIDT & SCHT & %INVWF1 & TidA &
+       [IST_init | [IST_private | [IST_public |
+        [IST_global_in | IST_global_out]]]])"; des; subst.
     { iExFalso. iDestruct "IST_init" as "(% & RRIA & PubA)". subst. iCombine "RRIP RRIA" as "RRIA".
       iPoseProof (rrinv_prev_subset with "RRIA") as "%".
       eapply map_choose in NEMP. des. eapply lookup_weaken in H0; eauto. }
@@ -638,7 +717,7 @@ Module RRSIA. Section RRSIA.
     { iExFalso. iDestruct "IST_public" as "(% & Ys & RRIA & NschY & S' & PubA)". cSimpl.
       iPoseProof (Tid_Auth_Tid with "[TidA TidF]") as "%Hmtid"; first iFrame.
       eapply elem_of_list_to_map_2, elem_of_lookup_imap in Hmtid. des. sym in Hmtid; inv Hmtid.
-      destruct (decide (tid = mtid)); subst; cycle 1.
+      destruct (decide (tid1 = mtid)); subst; cycle 1.
       { iPoseProof (big_sepL_lookup_acc _ _ mtid with "Ys") as "[YIELD2 _]"; eauto.
         case_decide; clarify; iPoseProof (YieldToken_both with "Y YIELD2") as "%"; ss. }
       rewrite H0 in Hmtid0. inv Hmtid0.
@@ -653,7 +732,7 @@ Module RRSIA. Section RRSIA.
     iDestruct "IST_global_out" as "(% & Ys & RRIA & TidF' & Ysch & S' & PubA)".
     iPoseProof (Tid_Auth_Tid with "[TidA TidF]") as "%Hmtid"; first iFrame.
     eapply elem_of_list_to_map_2, elem_of_lookup_imap in Hmtid. des. sym in Hmtid; inv Hmtid.
-    destruct (decide (tid = mtid)); subst; cycle 1.
+    destruct (decide (tid1 = mtid)); subst; cycle 1.
     { iPoseProof (big_sepL_lookup_acc _ _ mtid with "Ys") as "[YIELD2 _]"; eauto.
       case_decide; clarify; iPoseProof (YieldToken_both with "Y YIELD2") as "%"; ss. }
     rewrite H0 in Hmtid0. inv Hmtid0.
@@ -663,13 +742,16 @@ Module RRSIA. Section RRSIA.
     iMod (Public_update_public with "PubA PubF") as "[PubA PubF]"; eauto.
 
     cForcesS. iSplitL "WI Y T S C TidF PubF"; iFrame; eauto.
-    cStep. iSplit; eauto. do 6 iExists _. iSplit; eauto. iFrame "TidA".
+    cStep. iSplit; eauto.
+    iExists ths1, mtid, stid, ssch1, rrinvO1, Inv1.
+    iFrame "THSS TIDS SCHS THST TIDT SCHT".
+    iSplit; eauto. iFrame "TidA".
     do 2 iRight. iLeft. iFrame. eauto.
 
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_get_tid :
+  Lemma simF_get_tid `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.get_tid).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.get_tid /RRSI.get_tid.
@@ -679,7 +761,10 @@ Module RRSIA. Section RRSIA.
     cStepsS. iDestruct "ASM" as "[% [% (TidF & Y & T & S & C & PubF)]]"; cSimpl.
     cStepsS; cStepsT.
 
-    iDestruct "IST" as (??????) "(% & TidA & [IST_init | [IST_private | [IST_public | [IST_global_in | IST_global_out]]]])"; des; subst; cycle 3.
+    iDestruct "IST" as (ths tid stid0 ssch0 rrinvO Inv)
+      "(THSS & TIDS & SCHS & THST & TIDT & SCHT & %INVWF & TidA &
+       [IST_init | [IST_private | [IST_public |
+        [IST_global_in | IST_global_out]]]])"; des; subst; cycle 3.
     { iExFalso. iDestruct "IST_global_in" as "(% & Ys & RRIA & TidF' & S')". cSimpl.
       iPoseProof (Tid_Auth_Tid with "[TidA TidF]") as "%Hmtid"; first iFrame.
       eapply elem_of_list_to_map_2 in Hmtid; rewrite elem_of_lookup_imap in Hmtid.
@@ -710,8 +795,13 @@ Module RRSIA. Section RRSIA.
       case_decide; clarify. iPoseProof (YieldToken_both with "Y YIELD2") as "%"; ss. }
     rewrite H in Hmtid0. inv Hmtid0.
 
-    cStepsS. cStepsT. cSimpl. cStepsS. cStepsT. cForcesS. iSplitL "TidF Y T S C PubF"; first iFrame; eauto.
-    cStep. iSplit; eauto. do 6 iExists _. iSplit; eauto. iFrame "TidA". do 2 iRight. iLeft. iFrame; eauto.
+    cGetS "TIDS". cGetT "TIDT".
+    cStepsS. cStepsT. cSimpl. cStepsS. cStepsT.
+    cForcesS. iSplitL "TidF Y T S C PubF"; first iFrame; eauto.
+    cStep. iSplit; eauto.
+    iExists ths, mtid, stid, ssch0, rrinvO, Inv.
+    iFrame "THSS TIDS SCHS THST TIDT SCHT".
+    iSplit; eauto. iFrame "TidA". do 2 iRight. iLeft. iFrame; eauto.
 
     Unshelve. all: ss.
   (*SLOW*)Qed.
@@ -720,9 +810,42 @@ Module RRSIA. Section RRSIA.
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartModSim.
     - rewrite /RRSA.init_cond /init_inv /init_tid /init_pub. unseal RRS.
-      iIntros "(RRI & tid & pub)". rewrite /Ist.
+      iDestruct "INIT" as "(RRI & tid & pub)".
+      iEval (rewrite /state_init_src /=) in "SRC".
+      iEval (rewrite /state_init_tgt /=) in "TGT".
+      assert (SL : state_slice ({[RRS]} : gset string)
+          {[RRSI.v_ths # ([] : RRSI.thpool)↑;
+            RRSI.v_tid # 0↑;
+            RRSI.v_sch # 0↑]} =
+          {[RRSI.v_ths := ([] : RRSI.thpool)↑;
+            RRSI.v_tid := 0↑;
+            RRSI.v_sch := 0↑]}).
+      { apply map_eq. intros k. rewrite state_slice_lookup.
+        destruct (decide (k = RRSI.v_ths)); subst; simpl_map.
+        - case_decide; done.
+        - destruct (decide (k = RRSI.v_tid)); subst; simpl_map.
+          + case_decide; done.
+          + destruct (decide (k = RRSI.v_sch)); subst; simpl_map.
+            * case_decide; done.
+            * repeat case_decide; done.
+      }
+      iEval (rewrite right_id_L SL) in "SRC".
+      iEval (rewrite right_id_L SL) in "TGT".
+      iDestruct "SRC" as "[SRC _]".
+      iEval (rewrite big_sepM_insert) in "SRC"; last simpl_map.
+      iDestruct "SRC" as "[THSS SRC]".
+      iEval (rewrite big_sepM_insert) in "SRC"; last simpl_map.
+      iDestruct "SRC" as "[TIDS SCHS]".
+      iEval (rewrite big_sepM_singleton) in "SCHS".
+      iDestruct "TGT" as "[TGT _]".
+      iEval (rewrite big_sepM_insert) in "TGT"; last simpl_map.
+      iDestruct "TGT" as "[THST TGT]".
+      iEval (rewrite big_sepM_insert) in "TGT"; last simpl_map.
+      iDestruct "TGT" as "[TIDT SCHT]".
+      iEval (rewrite big_sepM_singleton) in "SCHT".
       iExists [], 0, 0, 0, ∅, (existT 0 emp%SAT).
-      iSplit; eauto. ss. iFrame. iLeft. iFrame; eauto.
+      iFrame "THSS TIDS SCHS THST TIDT SCHT tid".
+      iSplit; first done. iLeft. rewrite /Ist_init. iFrame; eauto.
     - iApply simF_init.
     - iApply simF_inner_spawn.
     - iApply simF_spawn.

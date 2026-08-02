@@ -19,11 +19,12 @@ Module MainIA. Section MainIA.
   Local Definition SpinLockA := (LockA.t (↑N) sp_t).
   Local Definition SpinLockMainA := (MainA.t N sp_s).
   Local Definition SpinLockMainI := (SpinLockMainI.t).
-  Local Definition IstFull := (IstProd (IstSB SpinLockMainA.(Mod.scopes) IstTrue) IstEq).
   Local Notation MA := (SpinLockMainA ★ (SpinLockA ★ MemA)).
   Local Notation MI := (SpinLockMainI ★ (SpinLockA ★ MemA)).
+  Local Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
+    (True ∗ IstEq (SpinLockA ★ MemA) STATE)%I.
 
-  Lemma incr_simF :
+  Lemma incr_simF `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MA MI IstFull (fid SpinLockMainHdr.incr).
   Proof using SchInSp_s SchInSp_t MainInSp.
     cStartFunSim. rewrite /SpinLockMainI.incr /incr /sfunN /sfunU.
@@ -75,7 +76,8 @@ Module MainIA. Section MainIA.
     cStep. iFrame. eauto.
   (*SLOW*)Qed.
 
-  Lemma main_simF : ⊢ ISim.sim_fun open MA MI IstFull entry.
+  Lemma main_simF `{STATE : !stateGS Σ} :
+    ⊢ ISim.sim_fun open MA MI IstFull entry.
   Proof using SchInSp_s SchInSp_t MainInSp.
     cStartFunSim. rewrite /SpinLockMainI.main /main /sfunN /sfunU.
     
@@ -122,7 +124,7 @@ Module MainIA. Section MainIA.
       - iExists _; iSplit; [iPureIntro; simpl_sp|]; ss. iApply incr_spawnable.
       - iFrame "W1"; eauto. repeat iSplit; eauto. iExists _; iFrame "Lock"; auto.
     }
-    cStepsT. cCall "IST" as (ret st_src st_tgt) "IST".
+    cStepsT. cCall "IST" as (?) "IST".
     cStepsS. iDestruct "ASM" as "[% [[-> ->] TKN1]]". 
     cStepsT. cStepsS.
     sYieldIR "IST" "TID". sYieldS.
@@ -134,7 +136,7 @@ Module MainIA. Section MainIA.
       - iExists _; iSplit; [iPureIntro; simpl_sp|]; ss. iApply incr_spawnable.
       - iFrame "W2"; eauto. repeat iSplit; eauto. iExists _; iFrame "Lock"; auto.
     }
-    cStepsT. cCall "IST" as (ret st_src st_tgt) "IST".
+    cStepsT. cCall "IST" as (?) "IST".
     cStepsS. iDestruct "ASM" as "[% [[-> ->] TKN2]]". 
     cStepsT. cStepsS.
     sYieldIR "IST" "TID". sYieldS.
@@ -143,7 +145,7 @@ Module MainIA. Section MainIA.
     rewrite /Sch.join.
     cStepsS. simpl_sp. cForceS (_,_,_). cForcesS. iSplitL "TKN1 TID".
     { iFrame. eauto. }
-    cStepsT. cCall "IST" as (ret st_src st_tgt) "IST".
+    cStepsT. cCall "IST" as (?) "IST".
     cStepsS. iDestruct "ASM" as "[TID [% [% [[-> ->] W1]]]]". solve_base_sl_red.
     cStepsS; cStepsT.
     sYieldIR "IST" "TID". sYieldS. rewrite /Sch.join. cStepsT. cStepsS. simpl_sp.
@@ -151,7 +153,7 @@ Module MainIA. Section MainIA.
     (* join thread 2 - incr *)
     cForceS (stid, mtid, _). cForcesS. iSplitL "TID TKN2".
     { iFrame; eauto. }
-    cCall "IST" as (ret st_src st_tgt) "IST".
+    cCall "IST" as (?) "IST".
     cStepsS. iDestruct "ASM" as "[TID [% [% [[-> ->] W2]]]]". solve_base_sl_red. cStepsT.
     cStepsS; cStepsT.
     sYieldIR "IST" "TID".
@@ -196,10 +198,16 @@ Module MainIA. Section MainIA.
 
   Lemma sim : ⊢ ISim.t open MA MI IstFull.
   Proof.
-    cStartModSim.
-    { apply main_simF. }
-    { apply incr_simF. }
-    { iIntros "_"; repeat iExists _; repeat iSplit; eauto. }
+    iApply (ISim_reflR open SpinLockMainA SpinLockMainI
+      (SpinLockA ★ MemA) (λ _, True%I)).
+    - mod_tac.
+    - mod_tac.
+    - intros _. mod_tac.
+    - iIntros (STATE fn) "%Hfn".
+      set_unfold in Hfn; des; subst.
+      + iApply main_simF.
+      + iApply incr_simF.
+    - iIntros (STATE) "SRC TGT". done.
   Qed.
 
   Lemma ctxr :

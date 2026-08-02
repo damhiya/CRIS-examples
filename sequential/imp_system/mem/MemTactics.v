@@ -4,19 +4,17 @@ From CRIS.imp_system.mem Require Export MemHeader MemA.
 
 Section mem.
   Context `{!crisG Γ Σ α β τ _S _I, !memGS}.
+  Context `{!stateGS Σ}.
 
-  Local Definition state : Type := gmap key (option Any.t).
-  Local Definition post (R_s R_t : Type) : Type := state * R_s → state * R_t → iProp Σ.
+  Local Definition post (R_s R_t : Type) : Type := R_s → R_t → iProp Σ.
   Local Definition rel : Type := ∀ R_s R_t : Type,
-    post R_s R_t → bool → bool → state * itree crisE R_s → state * itree crisE R_t → iProp Σ.
+    post R_s R_t → bool → bool → itree crisE R_s → itree crisE R_t → iProp Σ.
 
   Context (fl_s fl_t : gmap fname (option (Any.t → itree crisE Any.t))).
-  Context (Ist : gmap key (option Any.t) → gmap key (option Any.t) → iProp Σ).
+  Context (Ist : iProp Σ).
   Context (R_s R_t : Type).
   Context (RR : post R_s R_t).
   Context (ps pt : bool).
-  Context (st_src st_tgt : state).
-
   Context (sp : specmap).
 
   Lemma wsim_mem_alloc (sz : Z) (msk : emask) k_s k_t E1 E2 g :
@@ -28,11 +26,9 @@ Section mem.
     (∀ blk,
       ([∗ list] i ↦ v ∈ replicate (Z.to_nat sz) Vundef, (blk, Z.of_nat i)%Z ↦ v) -∗
       wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps true
-      (st_src, k_s)
-      (st_tgt, k_t (Vptr (blk, 0%Z))↑)) ⊢
+      k_s (k_t (Vptr (blk, 0%Z))↑)) ⊢
     wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps pt
-      (st_src, k_s)
-      (st_tgt, x <- (trigger (Call MemHdr.alloc.1 [Vint sz]↑));; k_t x).
+      k_s (x <- (trigger (Call MemHdr.alloc.1 [Vint sz]↑));; k_t x).
   Proof using.
     intros Hin [Ht [Hc [Ha [Har Hg]]]] Hsz.
     iIntros "K". cInlineT.
@@ -53,11 +49,9 @@ Section mem.
     img_msk msk →
     (b, ofs) ↦ v' -∗
     (wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps true
-        (st_src, k_s)
-        (st_tgt, k_t (Vint 0)↑)) -∗
+        k_s (k_t (Vint 0)↑)) -∗
     wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps pt
-      (st_src, k_s)
-      (st_tgt, x <- trigger (Call MemHdr.free.1 [Vptr (b, ofs)]↑);; k_t x).
+      k_s (x <- trigger (Call MemHdr.free.1 [Vptr (b, ofs)]↑);; k_t x).
   Proof using.
     intros Hin [Ht [Hc [Ha [Har Hg]]]].
     iIntros "↦ K".
@@ -75,11 +69,9 @@ Section mem.
     (b, ofs) ↦ v' -∗
     ((b, ofs) ↦ v -∗
       wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps true
-        (st_src, k_s)
-        (st_tgt, k_t (Vint 0)↑)) -∗
+        k_s (k_t (Vint 0)↑)) -∗
     wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps pt
-      (st_src, k_s)
-      (st_tgt, x <- trigger (Call MemHdr.store.1 [Vptr (b, ofs); v]↑);; k_t x).
+      k_s (x <- trigger (Call MemHdr.store.1 [Vptr (b, ofs); v]↑);; k_t x).
   Proof using.
     intros Hin [Ht [Hc [Ha [Har Hg]]]].
     iIntros "↦ K".
@@ -97,11 +89,9 @@ Section mem.
     (b, ofs) ↦{q} v -∗
     ((b, ofs) ↦{q} v -∗
       wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps true
-        (st_src, k_s)
-        (st_tgt, k_t v↑)) -∗
+        k_s (k_t v↑)) -∗
     wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps pt
-      (st_src, k_s)
-      (st_tgt, x <- trigger (Call MemHdr.load.1 [Vptr (b, ofs)]↑);; k_t x).
+      k_s (x <- trigger (Call MemHdr.load.1 [Vptr (b, ofs)]↑);; k_t x).
   Proof using.
     intros Hin [Ht [Hc [Ha [Har Hg]]]].
     iIntros "↦ K".
@@ -124,11 +114,9 @@ Section mem.
     (((b, ofs) ↦ if (bool_decide (succ = 1)) then v_new else v) -∗
      E -∗
       wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps true
-        (st_src, k_s)
-        (st_tgt, k_t v↑)) -∗
+        k_s (k_t v↑)) -∗
     wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps pt
-      (st_src, k_s)
-      (st_tgt, x <- trigger (Call MemHdr.cas.1 [Vptr (b, ofs); v_old; v_new]↑);; k_t x).
+      k_s (x <- trigger (Call MemHdr.cas.1 [Vptr (b, ofs); v_old; v_new]↑);; k_t x).
   Proof using.
     intros Hin [Ht [Hc [Ha [Har Hg]]]] Hcmp.
     iIntros "↦ E HE K".
@@ -150,11 +138,9 @@ Section mem.
           (MemA.val_r v1 q0 v1' ∗ MemA.val_r v2 q1 v2' ==∗ E)) -∗
     (E -∗
       wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps true
-        (st_src, k_s)
-        (st_tgt, k_t (Vint succ)↑)) -∗
+        k_s (k_t (Vint succ)↑)) -∗
     wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps pt
-      (st_src, k_s)
-      (st_tgt,
+      k_s (
         x <- trigger (Call MemHdr.cmp.1 [v1; v2]↑);;
         k_t x).
   Proof using.
@@ -173,11 +159,9 @@ Section mem.
         (msk, SModTr.trans_fnsem sp (fsp_some (MemA.cmp), fbody_trivial)))) →
     img_msk msk →
     (wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps true
-        (st_src, k_s)
-        (st_tgt, k_t (Vint (if decide (n1 = n2) then 1 else 0)%Z)↑)) -∗
+        k_s (k_t (Vint (if decide (n1 = n2) then 1 else 0)%Z)↑)) -∗
     wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps pt
-      (st_src, k_s)
-      (st_tgt,
+      k_s (
         x <- trigger (Call MemHdr.cmp.1 [Vint n1; Vint n2]↑);;
         k_t x).
   Proof using.
@@ -202,12 +186,12 @@ Import bi.
 
 Section proofmode.
   Context `{!crisG Γ Σ α β τ _S _I, !memGS}.
+  Context `{!stateGS Σ}.
 
-  Local Definition pmem_state : Type := gmap key (option Any.t).
-  Local Definition pmem_post (R_s R_t : Type) : Type := pmem_state * R_s → pmem_state * R_t → iProp Σ.
+  Local Definition pmem_post (R_s R_t : Type) : Type := R_s → R_t → iProp Σ.
 
   Lemma tac_wsim_mem_load Δ i b ofs q v Δ2
-      fl_s fl_t Ist R_s R_t (RR : pmem_post R_s R_t) ps pt st_src st_tgt sp
+      fl_s fl_t Ist R_s R_t (RR : pmem_post R_s R_t) ps pt sp
       (msk : emask) k_s k_t E1 E2 g :
      fl_t !! fid MemHdr.load =
       Some (Some (SB.sandbox_body
@@ -218,14 +202,12 @@ Section proofmode.
     | Some Δ' =>
       envs_entails Δ' (
         wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps true
-          (st_src, k_s)
-          (st_tgt, k_t v↑))
+          k_s (k_t v↑))
     | None => False
     end →
     envs_entails Δ (
       wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps pt
-        (st_src, k_s)
-        (st_tgt, x <- trigger (Call MemHdr.load.1 [Vptr (b, ofs)]↑);; k_t x)).
+        k_s (x <- trigger (Call MemHdr.load.1 [Vptr (b, ofs)]↑);; k_t x)).
   Proof.
     intros Hin Hmsk Hlook Hcont.
     destruct (envs_simple_replace i false (Esnoc Enil i (((b, ofs) ↦{q} v)%I)) Δ)
@@ -244,7 +226,7 @@ Section proofmode.
   Qed.
 
   Lemma tac_wsim_mem_store Δ i b ofs v v' Δ2
-      fl_s fl_t Ist R_s R_t (RR : pmem_post R_s R_t) ps pt st_src st_tgt sp
+      fl_s fl_t Ist R_s R_t (RR : pmem_post R_s R_t) ps pt sp
       (msk : emask) k_s k_t E1 E2 g :
     fl_t !! fid MemHdr.store =
       Some (Some (SB.sandbox_body
@@ -255,14 +237,12 @@ Section proofmode.
     | Some Δ' =>
       envs_entails Δ' (
         wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps true
-          (st_src, k_s)
-          (st_tgt, k_t (Vint 0)↑))
+          k_s (k_t (Vint 0)↑))
     | None => False
     end →
     envs_entails Δ (
       wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps pt
-        (st_src, k_s)
-        (st_tgt, x <- trigger (Call MemHdr.store.1 [Vptr (b, ofs); v]↑);; k_t x)).
+        k_s (x <- trigger (Call MemHdr.store.1 [Vptr (b, ofs); v]↑);; k_t x)).
   Proof.
     intros Hin Hmsk Hlook Hcont.
     destruct (envs_simple_replace i false (Esnoc Enil i (((b, ofs) ↦ v)%I)) Δ)
@@ -281,7 +261,7 @@ Section proofmode.
   Qed.
 
   Lemma tac_wsim_mem_free Δ i b ofs v' Δ2
-      fl_s fl_t Ist R_s R_t (RR : pmem_post R_s R_t) ps pt st_src st_tgt sp
+      fl_s fl_t Ist R_s R_t (RR : pmem_post R_s R_t) ps pt sp
       (msk : emask) k_s k_t E1 E2 g :
     fl_t !! fid MemHdr.free =
       Some (Some (SB.sandbox_body
@@ -290,12 +270,10 @@ Section proofmode.
     envs_lookup_delete true i Δ = Some (false, ((b, ofs) ↦ v')%I, Δ2) →
     envs_entails Δ2 (
       wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps true
-        (st_src, k_s)
-        (st_tgt, k_t (Vint 0)↑)) →
+        k_s (k_t (Vint 0)↑)) →
     envs_entails Δ (
       wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps pt
-        (st_src, k_s)
-        (st_tgt, x <- trigger (Call MemHdr.free.1 [Vptr (b, ofs)]↑);; k_t x)).
+        k_s (x <- trigger (Call MemHdr.free.1 [Vptr (b, ofs)]↑);; k_t x)).
   Proof.
     rewrite envs_entails_unseal=> Hin Hmsk Hlook Hcont.
     apply envs_lookup_delete_Some in Hlook as [Hlook ->].
@@ -307,7 +285,7 @@ Section proofmode.
   Qed.
 
   Lemma tac_wsim_mem_cas Δ i b ofs v v_old v_new succ E Δ2
-      fl_s fl_t Ist R_s R_t (RR : pmem_post R_s R_t) ps pt st_src st_tgt sp
+      fl_s fl_t Ist R_s R_t (RR : pmem_post R_s R_t) ps pt sp
       (msk : emask) k_s k_t E1 E2 g :
     fl_t !! fid MemHdr.cas =
       Some (Some (SB.sandbox_body
@@ -322,12 +300,10 @@ Section proofmode.
       (((b, ofs) ↦ if (bool_decide (succ = 1)) then v_new else v) -∗
        E -∗
         wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps true
-          (st_src, k_s)
-          (st_tgt, k_t v↑))) →
+          k_s (k_t v↑))) →
     envs_entails Δ (
       wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps pt
-        (st_src, k_s)
-        (st_tgt, x <- trigger (Call MemHdr.cas.1 [Vptr (b, ofs); v_old; v_new]↑);; k_t x)).
+        k_s (x <- trigger (Call MemHdr.cas.1 [Vptr (b, ofs); v_old; v_new]↑);; k_t x)).
   Proof.
     rewrite envs_entails_unseal=> Hin Hmsk Hlook Hcmp Hcont.
     apply envs_lookup_delete_Some in Hlook as [Hlook ->].
@@ -339,7 +315,7 @@ Section proofmode.
   Qed.
 
   Lemma tac_wsim_mem_cmp Δ v1 v2 succ E
-      fl_s fl_t Ist R_s R_t (RR : pmem_post R_s R_t) ps pt st_src st_tgt sp
+      fl_s fl_t Ist R_s R_t (RR : pmem_post R_s R_t) ps pt sp
       (msk : emask) k_s k_t E1 E2 g :
     fl_t !! (fid MemHdr.cmp) =
       Some (Some (SB.sandbox_body
@@ -352,12 +328,10 @@ Section proofmode.
             (MemA.val_r v1 q0 v1' ∗ MemA.val_r v2 q1 v2' ==∗ E)) ∗
       (E -∗
         wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps true
-          (st_src, k_s)
-          (st_tgt, k_t (Vint succ)↑))) →
+          k_s (k_t (Vint succ)↑))) →
     envs_entails Δ (
       wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps pt
-        (st_src, k_s)
-        (st_tgt, x <- trigger (Call MemHdr.cmp.1 [v1; v2]↑);; k_t x)).
+        k_s (x <- trigger (Call MemHdr.cmp.1 [v1; v2]↑);; k_t x)).
   Proof.
     rewrite envs_entails_unseal=> Hin Hmsk Hcmp Hcont.
     rewrite Hcont.
@@ -367,7 +341,7 @@ Section proofmode.
   Qed.
 
   Lemma tac_wsim_mem_cmp_int Δ n1 n2
-      fl_s fl_t Ist R_s R_t (RR : pmem_post R_s R_t) ps pt st_src st_tgt sp
+      fl_s fl_t Ist R_s R_t (RR : pmem_post R_s R_t) ps pt sp
       (msk : emask) k_s k_t E1 E2 g :
     fl_t !! (fid MemHdr.cmp) =
       Some (Some (SB.sandbox_body
@@ -375,12 +349,10 @@ Section proofmode.
     img_msk msk →
     envs_entails Δ (
       wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps true
-        (st_src, k_s)
-        (st_tgt, k_t (Vint (if decide (n1 = n2) then 1 else 0)%Z)↑)) →
+        k_s (k_t (Vint (if decide (n1 = n2) then 1 else 0)%Z)↑)) →
     envs_entails Δ (
       wsim fl_s fl_t Ist (E1, E2) g R_s R_t RR ps pt
-        (st_src, k_s)
-        (st_tgt, x <- trigger (Call MemHdr.cmp.1 [Vint n1; Vint n2]↑);; k_t x)).
+        k_s (x <- trigger (Call MemHdr.cmp.1 [Vint n1; Vint n2]↑);; k_t x)).
   Proof.
     rewrite envs_entails_unseal=> Hin Hmsk Hcont.
     rewrite Hcont.

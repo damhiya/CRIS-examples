@@ -18,12 +18,13 @@ Module NDSNodeIA. Section NDSNodeIA.
   Context (Hnds: (NDSA.sp sp_user ⊤ T get_stid PYIP) ⊆ sp).
   Context (Hnode: (NDSNodeA.sp ⊤) ⊆ sp_user).
 
-  Local Definition IstFull := (IstProd (IstSB (NDSNodeA.t sp).(Mod.scopes) IstTrue) IstEq).
+  Local Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
+    (True ∗ IstEq HybMem.t STATE)%I.
   Local Definition init_cond := NDSNodeA.init_cond.
   Local Definition MA := (NDSNodeA.t sp ★ HybMem.t).
   Local Definition MI := (NDSNodeI.t ★ HybMem.t).
 
-  Lemma simF_main :
+  Lemma simF_main `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MA MI IstFull (fid NDSNodeHdr.f_main).
   Proof using Hschnds Hnds Hnode.
     cStartFunSim. rewrite /NDSNodeI.f_main /f_main.
@@ -67,7 +68,7 @@ Module NDSNodeIA. Section NDSNodeIA.
     }
 
     cStepsS. cStepsS.
-    cCall "IST" as (???) "IST".
+    cCall "IST" as (?) "IST".
     cStepsS. iDestruct "ASM" as "(% & % & % & % & TID & JoinF)"; des; subst; cSimpl.
     cStepsS. cStepsT. ndsYieldGlobalIR "IST" "TID".
     cStepsT. ndsYieldGlobalS. cStepsS.
@@ -97,7 +98,7 @@ Module NDSNodeIA. Section NDSNodeIA.
     cStep. iFrame; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_f :
+  Lemma simF_f `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MA MI IstFull (fid NDSNodeHdr.f).
   Proof using Hschnds Hnds Hnode.
     cStartFunSim. rewrite /NDSNodeI.f /f.
@@ -132,10 +133,17 @@ Module NDSNodeIA. Section NDSNodeIA.
 
   Lemma sim : init_cond ⊢ ISim.t open MA MI IstFull.
   Proof using Hschnds Hnds Hnode.
-    cStartModSim.
-    - eapply simF_main.
-    - eapply simF_f.
-    - iIntros "I". iFrame. do 4 iExists _. iSplit; eauto.
+    iIntros "_".
+    iApply (ISim_reflR open (NDSNodeA.t sp) NDSNodeI.t
+      HybMem.t (λ _ : stateGS Σ, True%I)).
+    - mod_tac.
+    - mod_tac.
+    - intros _. mod_tac.
+    - iIntros (STATE0 fn) "%Hfn".
+      set_unfold in Hfn; des; subst.
+      + iApply simF_main.
+      + iApply simF_f.
+    - iIntros (STATE0) "SRC TGT". done.
   Qed.
 
 End NDSNodeIA. End NDSNodeIA.

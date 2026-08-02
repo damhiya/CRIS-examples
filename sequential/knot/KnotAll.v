@@ -203,7 +203,7 @@ Module KnotAll.
   Import inv_instances.
 
   Local Instance Γ : HRA := ##[invΓ; concΓ; memΓ; knotΓ].
-  Local Instance Σ : GRA := ##[Γ; invΣ].
+  Local Instance Σ : GRA := ##[Γ; invΣ; stateΣ].
 
   Theorem behavioral_refinement :
     ∃ β τ (Hinv : invGS Γ Σ α) (_ : crisG Γ Σ α β τ _ Hinv) (_ : knotGS) (_ : memGS)

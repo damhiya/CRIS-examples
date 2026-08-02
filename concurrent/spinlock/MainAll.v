@@ -139,7 +139,7 @@ Module MainAll.
 
   (* HRA & GRA *)
   Local Instance Γ : HRA := ##[invΓ; concΓ; memΓ; newschΓ; spinlockΓ; spinlockmainΓ].
-  Local Instance Σ : GRA := ##[Γ; invΣ; newschΣ].
+  Local Instance Σ : GRA := ##[Γ; invΣ; newschΣ; stateΣ].
 
   (* tgt Mod ⊆ cancelled Mod *)
   Lemma behavioral_refinement :

@@ -10,12 +10,13 @@ Module CannonMainIA. Section CannonMainIA.
   Context (sp : specmap).
   Context (CannonInMain : CannonA.sp ⊆ sp).
 
-  Definition Ist : ist_type Σ := λ _ _, True%I.
+  Definition Ist (_ : stateGS Σ) : iProp Σ := True%I.
 
   Local Notation MainAMod := (MainA.t 1 sp).
   Local Notation MainIMod := (MainI.t 1).
   
-  Lemma simF_main : ⊢ ISim.sim_fun open MainAMod MainIMod Ist entry.
+  Lemma simF_main `{STATE : !stateGS Σ} :
+    ⊢ ISim.sim_fun open MainAMod MainIMod Ist entry.
   Proof using CannonInMain.
     cStartFunSim. rewrite /MainA.main /MainI.main.
 
@@ -26,7 +27,7 @@ Module CannonMainIA. Section CannonMainIA.
     cStepsT. cForceS (). cForcesS. iFrame; iSplit; eauto.
 
     (* SRC, TGT; cCall "fire" and take a postcondition *)
-    cCall "IST" as (ret st_src st_tgt) "IST".
+    cCall "IST" as (ret) "IST".
     cStepsS. iDestruct "ASM" as "[% %]"; des; subst. cSimpl.
     cStepsT. cStepsS.
     
@@ -41,8 +42,8 @@ Module CannonMainIA. Section CannonMainIA.
   Theorem sim : ⊢ ISim.t open MainAMod MainIMod Ist.
   Proof using CannonInMain.
     cStartModSim.
-    { iIntros "_"; done. }
-    { iApply simF_main. }
+    - done.
+    - iApply simF_main.
   Qed.
 End CannonMainIA.
 

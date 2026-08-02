@@ -16,9 +16,10 @@ Module ClientIA. Section ClientIA.
   Context (Hclient : ClientA.sp N ⊆ sp_user).
   Context (Hsch : SchA.sp sp_user (↑N) ⊆ sp).
 
-  Local Definition IstFull := (IstProd (IstSB (ClientA.t N sp).(Mod.scopes) IstTrue) IstEq).
   Local Definition MA := (ClientA.t N sp ★ IncrA.t ★ MemA.t sp).
   Local Definition MI := (ClientI.t ★ IncrA.t ★ MemA.t sp).
+  Local Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
+    (True ∗ IstEq (IncrA.t ★ MemA.t sp) STATE)%I.
 
   Lemma f_spawnable γ v bofs :
     ⊢ SchA.fn_spawnable sp_user (ClientHdr.thread.1)
@@ -39,7 +40,7 @@ Module ClientIA. Section ClientIA.
     solve_base_sl_red; iSplit; done.
   Qed.
 
-  Lemma incr_simF :
+  Lemma incr_simF `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MA MI IstFull (fid ClientHdr.thread).
   Proof.
     cStartFunSim.
@@ -57,7 +58,7 @@ Module ClientIA. Section ClientIA.
     { iIntros "$"; by iFrame. }
     iIntros (ret_t) "↦ !>"; iExists (tt↑); iSplitR; first done.
     iMod (counter_incr 1 with "[C CA]") as "[C CA]"; iFrame.
-    clear_st. iIntros "!>" (st_src st_tgt) "IST TID ->". cStepsT. sYieldIR "IST" "TID".
+    iIntros "!> IST TID ->". cStepsT. sYieldIR "IST" "TID".
 
     (* tgt inline - faa *)
     cInlineT. cStepsT. rewrite /IncrA.incr.
@@ -67,14 +68,15 @@ Module ClientIA. Section ClientIA.
     { iIntros "$"; by iFrame. }
     iIntros (ret_t) "↦ !>"; iExists (tt↑); iSplitR; first done.
     iMod (counter_incr 1 with "[C CA]") as "[C CA]"; iFrame.
-    clear_st. iIntros "!>" (st_src st_tgt) "IST TID ->". cStepsT. sYields.
+    iIntros "!> IST TID ->". cStepsT. sYields.
 
     sYieldS. cForcesS. iFrame. iSplitL "C".
     { iFrame. replace (v + 1 + 1)%Z with (v + 2)%Z by lia. iFrame. eauto. }
     cStep; iFrame; done.
   Qed.
 
-  Lemma main_simF : ⊢ ISim.sim_fun open MA MI IstFull entry.
+  Lemma main_simF `{STATE : !stateGS Σ} :
+    ⊢ ISim.sim_fun open MA MI IstFull entry.
   Proof.
     cStartFunSim. simpl.
 
@@ -108,7 +110,7 @@ Module ClientIA. Section ClientIA.
       iSplitR; first iApply f_spawnable.
       iFrame "#∗"; eauto.
     }
-    cStepsS. cCall "IST" as (???) "IST".
+    cStepsS. cCall "IST" as (?) "IST".
     cStepsS. iDestruct "ASM" as "[% [[-> ->] Handle]]". cStepsS. cStepsT.
 
     sYields. sYieldS. rewrite /Sch.spawn; cStepsT; cStepsS. simpl_sp.
@@ -117,13 +119,13 @@ Module ClientIA. Section ClientIA.
       iSplitR; first iApply f_spawnable.
       iFrame; eauto.
     }
-    cStepsS. cCall "IST" as (???) "IST".
+    cStepsS. cCall "IST" as (?) "IST".
     cStepsS. iDestruct "ASM" as "[% [[-> ->] Handle2]]". cStepsS. cStepsT.
     sYields. sYieldS.
 
     rewrite /Sch.join; cStepsT; cStepsS. simpl_sp.
     cForceS (_, _, _); cForcesS. iFrame "TID Handle"; iSplit; [eauto|]. cStepsS.
-    cCall "IST" as (ret ??) "IST".
+    cCall "IST" as (?) "IST".
     cStepsS. iDestruct "ASM" as "[TID [% [% [[-> ->] ASM]]]]".
     solve_base_sl_red. iDestruct "ASM" as "[[-> ->] Q]".
     cStepsS. cStepsT. sYields.
@@ -131,7 +133,7 @@ Module ClientIA. Section ClientIA.
 
     rewrite /Sch.join; cStepsT; cStepsS. simpl_sp.
     cForceS (_, _, _); cForcesS. iFrame "TID Handle2"; iSplit; [eauto|]. cStepsS.
-    cCall "IST" as (ret ??) "IST".
+    cCall "IST" as (?) "IST".
     cStepsS. iDestruct "ASM" as "[TID [% [% [[-> ->] ASM]]]]".
     solve_base_sl_red. iDestruct "ASM" as "[[-> ->] Q2]".
     cStepsS. cStepsT. sYields.
@@ -151,10 +153,16 @@ Module ClientIA. Section ClientIA.
 
   Lemma sim : ⊢ ISim.t open MA MI IstFull.
   Proof.
-    cStartModSim.
-    { apply incr_simF. }
-    { apply main_simF. }
-    { iIntros "_"; iExists _, _, _, _; iSplit; eauto. }
+    iApply (ISim_reflR open (ClientA.t N sp) ClientI.t
+      (IncrA.t ★ MemA.t sp) (λ _, True%I)).
+    - mod_tac.
+    - mod_tac.
+    - intros _. mod_tac.
+    - iIntros (STATE fn) "%Hfn".
+      set_unfold in Hfn; des; subst.
+      + iApply incr_simF.
+      + iApply main_simF.
+    - iIntros (STATE) "SRC TGT". done.
   Qed.
 End ClientIA.
 

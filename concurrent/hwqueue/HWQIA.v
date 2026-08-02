@@ -21,19 +21,21 @@ Module HWQPM. Section HWQPM.
   Context (mnh mnp : string).
   Context (sp_mem : specmap).
 
-  Definition Ist : ist_type Σ := λ st_src st_tgt,
-    (∃ (X : gset val),
-      free_id (λ x, x.1 = "hwq" ∧ match (x.2↓↓) with | Some x => x ∉ X | None => True end)%type ∗
-      [∗ set] x ∈ X, ∃ ptr ofs, ⌜x = Vptr (ptr, ofs)⌝ ∗ ∃ v, (ptr, ofs) ↦{1/2} v)%I.
-  Definition IstFull : ist_type Σ :=
-    IstProd (IstSB [mnh] (IstHelp Ist ⊤)) IstEq.
-
   Notation HWQM := (HWQM.t mnh).
   Notation HWQP := (HWQP.t mnp).
   Notation HelpOn := (HelpingOn.t mnh HWQM.jobCode).
   Notation HelpDummy := (HelpingDummy.t mnh).
   Notation MemA := (MemA.t sp_mem).
   Notation ProphA := (ProphecyA.t mnp ∅).
+
+  Definition Ist : iProp Σ :=
+    (∃ (X : gset val),
+      free_id (λ x, x.1 = "hwq" ∧ match (x.2↓↓) with | Some x => x ∉ X | None => True end)%type ∗
+      [∗ set] x ∈ X, ∃ ptr ofs, ⌜x = Vptr (ptr, ofs)⌝ ∗ ∃ v, (ptr, ofs) ↦{1/2} v)%I.
+
+  Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
+    (IstHelp (Ist ∗ IstEq (HWQM ★ HelpOn) STATE) ⊤ ∗
+     IstEq (MemA ★ ProphA) STATE)%I.
 
   Lemma ctxr :
     hinv_ownE ⊤ ∗ free_id top1 ⊢
@@ -45,14 +47,26 @@ Module HWQPM. Section HWQPM.
       ((HWQP ★ HelpDummy) ★ MemA ★ ProphA)
       ((HWQM ★ HelpOn) ★ MemA ★ ProphA)
       IstFull).
-    cStartModSim.
-    { apply simF_new_queue. }
-    { apply simF_enqueue. }
-    { apply simF_dequeue. }
-    { cStartFunSim. cStepsT; ss. }
-    { cStartFunSim. cStepsT; ss. }
-    { iIntros "[HE F]"; iExists ∅, ∅, ∅, ∅; repeat iSplit; eauto.
-      iFrame "HE".
+    iIntros "[HE F]".
+    iApply (ISim_reflR open (HWQM ★ HelpOn) (HWQP ★ HelpDummy)
+      (MemA ★ ProphA)
+      (λ STATE, IstHelp (Ist ∗ IstEq (HWQM ★ HelpOn) STATE) ⊤)).
+    - mod_tac.
+    - mod_tac.
+    - intros _. mod_tac.
+    - iIntros (STATE fn) "%Hfn".
+      rewrite Mod.dom_fnsems_add in Hfn.
+      unfold HWQM.t, HelpingOn.t in Hfn.
+      cbn in Hfn. set_unfold in Hfn; des; subst.
+      + iApply simF_new_queue.
+      + iApply simF_enqueue.
+      + iApply simF_dequeue.
+      + cStartFunSim. cStepsT; ss.
+      + cStartFunSim. cStepsT; ss.
+    - iIntros (STATE) "SRC TGT".
+      rewrite /IstHelp. iFrame "HE".
+      iSplitL "F".
+      {
       iExists ∅; rewrite big_sepS_empty right_id.
       iPoseProof (free_id_split with "F") as "[F ?]"; last iApply (free_id_iff with "F"); cycle 1.
       { intros i; split; [intros Hi; split; first done; exact Hi|].
@@ -63,7 +77,8 @@ Module HWQPM. Section HWQPM.
           destruct (excluded_middle_informative P)
         end; eauto.
       }
-    }
+      }
+      iApply (state_eq_init_same with "SRC TGT").
   Qed.
 End HWQPM. End HWQPM.
 
@@ -71,6 +86,9 @@ Module HWQMA. Section HWQMA.
   Context `{!crisG Γ Σ α β τ Hinv Hsub, !memGS, !prophGS, !hwqGS}.
   Context (mnp mnh : string).
   Context (sp : specmap).
+
+  Definition Ist (STATE : stateGS Σ) : iProp Σ :=
+    state_init_tgt ({[mnh]} : gset string) ∅ STATE.
 
   Lemma ctxr :
     ⊢ ctx_refines
@@ -81,10 +99,27 @@ Module HWQMA. Section HWQMA.
       (HWQM.t mnh ★ ProphecyA.t mnp ∅ ★
         HelpingOff.t mnh HWQM.jobCode)
       HWQA.t
-      (λ _ _, True%I)).
+      Ist).
     iStopProof.
     cStartModSim.
-    { done. }
+    { assert (Hscopes :
+        list_to_set
+          (Mod.scopes
+            (HWQM.t mnh ★ ProphecyA.t mnp ∅ ★
+              HelpingOff.t mnh HWQM.jobCode)) =
+        ({[mnh]} : gset string)).
+      { apply set_eq. intros scope.
+        unfold Mod.add; cbn.
+        unfold HWQM.t, ProphecyA.t, HelpingOff.t; cbn. set_solver. }
+      assert (Hinit :
+        Mod.initial_st
+          (HWQM.t mnh ★ ProphecyA.t mnp ∅ ★
+            HelpingOff.t mnh HWQM.jobCode) = ∅).
+      { unfold Mod.add, HWQM.t, ProphecyA.t, HelpingOff.t; cbn.
+        apply map_eq. intros key. rewrite !lookup_union_with.
+        simpl_map. reflexivity. }
+      iEval (rewrite Hscopes Hinit) in "TGT".
+      iExact "TGT". }
     { cStartFunSim.
       rewrite /HWQA.new_queue. cStepsS. cStepT.
       aStepS (N [n sz]) "[-> %Hsz]".
@@ -98,10 +133,15 @@ Module HWQMA. Section HWQMA.
       cStepsT. cInlineT. cStepsT. rewrite /HelpingOff.run. cStepsT. aUnfoldS.
       aUnfoldT. sYields. sYieldS. rewrite /HWQM.jobCode. cStepsS. cForcesT. iFrame. cStepsT.
       cForceS (inr _). cForcesS. iFrame. sYields.
-      iApply wsim_reset. cCoind CIH g' __ with st_src st_tgt. iIntros "IST".
+      iApply wsim_reset.
+      assert (EX : exists coind_n : nat, True) by (exists 0; exact I).
+      destruct EX as [coind_n _].
+      iAssert (⌜coind_n = coind_n⌝ ∗ Ist STATE)%I with "[IST]" as "LOOP".
+      { iFrame. done. }
+      cCoind CIH g' __ with coind_n. iIntros "[_ IST]".
       aUnfoldT. cStepsT. case_match.
       { cStepsT. cInlineT. cStepsT. rewrite /HelpingOff.help. cStepsT.
-        sYields. cByCoind CIH; iFrame.
+        sYields. specialize (CIH coind_n). cByCoind CIH. iFrame. done.
       }
       cStepsT. sYields. sYieldS. cStep; iFrame. by iFrame.
     }
@@ -111,7 +151,7 @@ Module HWQMA. Section HWQMA.
       aStep. iExists 0; iAuIntro; iAaccIntro "% $ !>" with ""; iSplit.
       { iIntros "$ !>"; by iFrame. }
       iIntros (ret_t) "[% [% [? ?]]] !>"; iExists _; iFrame.
-      iModIntro; clear_st; iIntros (??) "_".
+      iModIntro. iIntros "IST".
       cStepsT. sYieldS. cStep; iFrame. done.
     }
   Qed.

@@ -13,9 +13,9 @@ Module MainIA. Section MainIA.
   
   Local Definition CellioAMod := (CellioA.t).
   Local Definition MainA := (MainA.t sp).
-  Local Definition IstFull := (IstProd (IstSB MainA.(Mod.scopes) IstTrue) IstEq).
+  Local Definition IstFull (_ : stateGS Σ) : iProp Σ := True%I.
 
-  Lemma simF_cb :
+  Lemma simF_cb `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MainA (MainI.t ★ CellioAMod) IstFull
         (fid MainHdr.input_cb).
   Proof using.
@@ -24,7 +24,7 @@ Module MainIA. Section MainIA.
     cStepsS. cStepsT. cStep. cStep. cStep. iSplit; et.
   Qed. 
 
-  Lemma simF_main :
+  Lemma simF_main `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MainA (MainI.t ★ CellioAMod) IstFull entry.
   Proof using sp_foo sp_cb.
     cStartFunSim. unfold MainA.main, MainI.main.
@@ -34,8 +34,8 @@ Module MainIA. Section MainIA.
     cInlineT. cStepsT. iDestruct "GRT" as "->".
     cStep. cStepsS. cStepsT. rename ret into i.
 
-    cBind (λ '(sts,ls) '(stt,stk), IstFull sts stt ∗ ll_points_to stk ls)%I "IST"
-      as (st_src ? st_tgt ?) "[IST PT]".
+    cBind (λ ls stk, IstFull STATE ∗ ll_points_to stk ls)%I "IST"
+      as (? ?) "[IST PT]".
     {
       destruct (Z.le_dec 0 i); cycle 1.
       { rewrite !unfold_iter. case_match; try nia.
@@ -45,21 +45,21 @@ Module MainIA. Section MainIA.
       iAssert (ll_points_to Vnullptr []) as "PT"; et.
       iRevert "PT". rewrite bi.intuitionistically_elim. iIntros "PT".
       generalize ([]: list Z) as ls, Vnullptr as stk. i.
-      iStopProof. revert ls stk st_src st_tgt. induction n; i; iIntros "[IST PT]".
+      iStopProof. revert ls stk. induction n; i; iIntros "[IST PT]".
       { rewrite !unfold_iter. cStepsS. cStepsT. cStep. et. }
       rewrite !unfold_iter. cStepsT. cStepsS. cSimpl.
 
       cInlineT. cStepsT. cForceT ls. cStepsT. cForceT. iSplitL "PT"; et. cStepsT. cSimpl.
-      cCall "IST" as (ret ? ?) "IST".
+      cCall "IST" as (ret) "IST".
       cStepsS. cStepsT. destruct Any.downcast; [|cStepsS; ss].
       cStepsS. cStepsT. iDestruct "GRT" as (??) "[-> [PH PT]]".
       replace (S n - 1)%Z with (n: Z) by nia.
       rewrite -IHn. iFrame. et.
     }
 
-    cStepsT. cStepsS. cSimpl. cCall "IST" as (? ? ?) "IST". cStepsS. cStepsT.
+    cStepsT. cStepsS. cSimpl. cCall "IST" as (?) "IST". cStepsS. cStepsT.
     destruct Any.downcast; [|cStepsS; ss]. cStepsS. cStepsT.
-    iStopProof. clear_st. revert r_t st_s' st_t'. induction r_s; i; iIntros "[PT IST]".
+    iStopProof. revert r_t. induction r_s; i; iIntros "[PT IST]".
     { rewrite !unfold_iter. cStepsS. cStepsT. cInlineT. cStepsT.
       cForceT []. cStepsT. cForceT. iFrame. cStepsT. cStep. iFrame. et. }
     rewrite !unfold_iter. cStepsS. cStepsT.
@@ -71,7 +71,7 @@ Module MainIA. Section MainIA.
   Lemma sim : ⊢ ISim.t open MainA (MainI.t ★ CellioAMod) IstFull.
   Proof using sp_foo sp_cb.
     cStartModSim.
-    { iIntros "_". unfold IstFull, IstProd. repeat (iExists ∅). ss. }
+    { done. }
     { iApply simF_cb; eauto. }
     { iApply simF_main; eauto. }
   Qed.

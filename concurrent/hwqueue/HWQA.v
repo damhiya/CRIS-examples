@@ -35,7 +35,9 @@ Module HWQA. Section HWQA.
   Definition dequeue : fbody := λ arg,
     {{{ ∀∀ (γq : gname),
         ∃ q n sz, ⌜arg = [q]↑⌝ ∗ is_hwq n N sz γq q }}}
-      <<{ ∀∀ (ls : list valO), hwq_cont γq ls, ∃∃ ret, ∃ l ls', ⌜ret = l↑ ∧ ls = l :: ls'⌝ ∗ hwq_cont γq ls' }>> @ N
+      <<{ ∀∀ (ls : list valO), hwq_cont γq ls,
+          ∃∃ ret, ∃ (l : val) (ls' : list valO),
+            ⌜ret = (l : val)↑ ∧ ls = l :: ls'⌝ ∗ hwq_cont γq ls' }>> @ N
     {{{ emp }}} @ N.
 
   Definition fnsems : fnsemmap :=

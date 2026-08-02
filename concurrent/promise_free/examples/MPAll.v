@@ -120,7 +120,7 @@ Module MPAll.
   Import inv_instances.
 
   Local Instance Γ : HRA := ##[invΓ; concΓ; histΓ; atomicΓ; sysΓ; one_shotΓ].
-  Local Instance Σ : GRA := ##[Γ; invΣ].
+  Local Instance Σ : GRA := ##[Γ; invΣ; stateΣ].
 
   Theorem behavioral_refinement :
     ∃ β τ (Hinv : invGS Γ Σ α) (_ : crisG Γ Σ α β τ _ Hinv) (_ : histGS) (_ : sysGS)

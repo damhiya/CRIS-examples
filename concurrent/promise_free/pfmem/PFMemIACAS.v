@@ -17,7 +17,8 @@ Section CAS.
   Local Definition MA := (PFMemA.t sp).
   Local Definition MI := (PFMemI.t syn size).
 
-  Lemma simF_cas : ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.cas).
+  Lemma simF_cas `{STGS : !stateGS Σ} :
+    ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.cas).
   Proof.
     (* prologue *)
     cStartFunSim.
@@ -25,8 +26,10 @@ Section CAS.
     destruct _q as [[[[[[[[[[[[[tid loc] old] new] ordr] ordw] 𝓥] γ] ζ'] Vb] tx] ζn] mode] Pr].
     cStepsS.
     iDestruct "ASM" as "[-> [[-> [%RLXR [%RLXW %COMPARABLE]]] [TV [SN [PT [AW [PR #CMP]]]]]]]".
-    iDestruct "IST" as "[%gl [%ths [%Vcut [[-> [%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]]] [HA [TA HFA]]]]]]". cSimpl.
-    cStepsT.
+    iDestruct "IST" as (gl ths Vcut)
+      "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [HFA CONFIG]]]]".
+    cSimpl. cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
+    cGetT "CONFIG". subst config_any. cStepsT.
 
     (* conditions *)
     iPoseProof (tview_both_valid with "TA TV") as "%IN".
@@ -134,7 +137,7 @@ Section CAS.
     clear n. iClear "CMP".
     inv STEP; ss. clear EVENT. inv STEP0; inv LOCAL; ss.
     { (* success case*)
-      cStepsT.
+      cStepsT. cPutT "CONFIG".
       assert (TRW : Time.lt tsr tsw).
       { inv LOCAL1. inv READABLE.
         inv LOCAL2. inv WRITE; ss. inv ADD; ss. inv ADD0; ss.
@@ -287,7 +290,7 @@ Section CAS.
         }
       }
       cForceS (Val.one ↑). cStepsS. cForceS (Val.one ↑). cStepsS. cForceS.
-      iSplitR "HA HFA TA".
+      iSplitR "HA HFA TA CONFIG".
       { iSplit; first done. iFrame "PR TV".
         inv LOCAL1; ss.
         unshelve (iExists Val.one, _, ζn, tsr, from, _, valr); eauto.
@@ -457,9 +460,8 @@ Section CAS.
       }
       cStepsS. cStep.
       iSplit; auto.
-      iFrame "HA HFA TA".
+      iFrame "HA HFA TA CONFIG".
       iPureIntro; ss.
-      split; first done.
       split.
       { inv LOCAL1; inv LOCAL2; ss; intros ?????.
         erewrite Memory.add_o; eauto. des_if.
@@ -493,7 +495,7 @@ Section CAS.
       }
     }
     { (* fail case *)
-      cStepsT.
+      cStepsT. cPutT "CONFIG".
       iAssert (∃ ζ_read,
         ⌜Cell.le ζ' ζ_read
         ∧ ∀ ts, Cell.get ts ζ_read =
@@ -526,9 +528,9 @@ Section CAS.
       iMod ((tview_auth_update ths (IdentMap.add tid (existT lang st2, lc2) ths)) with "TA TV")
         as "[TA TV]"; ss.
 
-      iAssert (Ist st_src _) with "[HA TA HFA]" as "IST".
-      { iExists _, (IdentMap.add _ _ _), Vcut. iFrame "HFA HA TA".
-        iPureIntro; split; first refl.
+      iAssert (Ist STGS) with "[HA TA HFA CONFIG]" as "IST".
+      { iExists _, (IdentMap.add _ _ _), Vcut. iFrame "HFA HA TA CONFIG".
+        iPureIntro.
         split.
         { inv LOCAL1; ss. }
         split.

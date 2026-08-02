@@ -14,16 +14,16 @@ Module MutGIA. Section MutGIA.
   Context (FInPure : MutFA.SpF ⊆ SpPure).
   Context (PureInSp : SpPure ⊆ Sp).
 
-  Definition Ist : gmap key (option Any.t) → gmap key (option Any.t) → iProp Σ :=
-    (λ _ _, True)%I.
+  Definition Ist (_ : stateGS Σ) : iProp Σ := True%I.
 
   Local Definition MutGAMod := (MutGA.t Sp ★ APCA.t SpPure Sp).
   Local Definition MutGIMod := (MutGI.t ★ APCA.t SpPure Sp).
-  Local Definition IstFull := (IstProd (IstSB (MutGA.t Sp).(Mod.scopes) Ist) IstEq).
+  Local Notation IstFull :=
+    (λ STATE, (Ist STATE ∗ IstEq (APCA.t SpPure Sp) STATE)%I).
   
   (*************)
 
-  Lemma simF_mutg:
+  Lemma simF_mutg `{STATE : !stateGS Σ}:
     ⊢ ISim.sim_fun open MutGAMod MutGIMod IstFull (fid MutHdr.mutg).
   Proof using _crisG APCInSp FInPure PureInSp.
     cStartFunSim. rewrite /MutGI.gF.
@@ -63,7 +63,7 @@ Module MutGIA. Section MutGIA.
     rewrite /APC. cForceS 1. cStepsS.
 
     (* SRC, TGT : cCall mutg using APC tactic *)
-    cStepsT. apcCall "IST" as (???) "ISTPOST"; eauto.
+    cStepsT. apcCall "IST" as (?) "ISTPOST"; eauto.
     { instantiate (1:=0). eapply OrdArith.lt_from_nat. nia. }
     { instantiate (1:=_q). eapply Ord.lt_le_lt; eauto. eapply OrdArith.lt_from_nat. nia. }
     { iFrame. iPureIntro. esplits; eauto; [nia|refl]. }
@@ -86,9 +86,17 @@ Module MutGIA. Section MutGIA.
   Lemma sim:
     MutGA.init_cond ⊢ ISim.t open MutGAMod MutGIMod IstFull.
   Proof.
-    cStartModSim.
-    - iApply simF_mutg.
-    - iIntros "C". iFrame. do 4 iExists _. iPureIntro; esplits; eauto; set_solver.
+    iIntros "C".
+    iApply (ISim_reflR open (MutGA.t Sp) MutGI.t
+      (APCA.t SpPure Sp) Ist).
+    - mod_tac.
+    - mod_tac.
+    - intros _. mod_tac.
+    - iIntros (STATE fn) "%Hfn".
+      repeat rewrite Mod.dom_fnsems_add in Hfn.
+      set_unfold in Hfn; des; subst.
+      iApply simF_mutg.
+    - iIntros (STATE) "SRC TGT". done.
   Qed.
 End MutGIA.
 

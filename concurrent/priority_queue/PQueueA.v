@@ -131,9 +131,10 @@ Module PQueueIA. Section PQueueIA.
   (* Local Definition sp_stack : specmap := SchA.sp ∅ (↑(stackN N)). *)
   Local Definition PQueueA := PQueueA.t ★ (StackA.t ★ SchI.t ★ MemA.t sp).
   Local Definition PQueueI := PQueueI.t ★ (StackA.t ★ SchI.t ★ MemA.t sp).
-  Local Definition IstFull := IstProd (IstSB (Mod.scopes (PQueueA.t)) IstTrue) IstEq.
+  Local Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
+    (True ∗ IstEq (StackA.t ★ SchI.t ★ MemA.t sp) STATE)%I.
 
-  Lemma new_simF :
+  Lemma new_simF `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open PQueueA PQueueI IstFull (fid PQueueHdr.new).
   Proof.
     cStartFunSim. rewrite /PQueueI.new /PQueueA.new. cStepsS.
@@ -172,7 +173,7 @@ Module PQueueIA. Section PQueueIA.
     rewrite {5}Z.sub_diag.
     iAssert (⌜var ≤ range⌝)%I as "#Hvar"; first (iPureIntro; lia).
     generalize var. clear var. iIntros (var).
-    iInduction (var) as [|var] forall (st_src st_tgt).
+    iInduction (var) as [|var].
     { aUnfoldT. cStepsT. appendRetS. sYields. sYieldS.
       iDestruct "↦queue" as "[%entries [% ↦queues]]". rewrite Z.sub_0_r.
       iAssert ([∗ list] i ↦ v ∈ entries,
@@ -238,7 +239,7 @@ Module PQueueIA. Section PQueueIA.
     }
   Qed.
 
-  Lemma add_simF :
+  Lemma add_simF `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open PQueueA PQueueI IstFull (fid PQueueHdr.add).
   Proof.
     cStartFunSim. rewrite /PQueueA.add /PQueueI.add. cStepsS; cStepsT.
@@ -270,11 +271,11 @@ Module PQueueIA. Section PQueueIA.
       { iIntros "!> %k %y %Hky % s". rewrite list_lookup_total_insert_ne //. }
       { s. rewrite list_lookup_total_insert // -Hlen'; lia. }
     }
-    clear_st; iIntros "!>" (st_src st_tgt) "IST". cStepsT. iDestruct "GRT" as "->". cStepsT.
+    iIntros "!> IST". cStepsT. iDestruct "GRT" as "->". cStepsT.
     sYields. sYieldS. cStep; iFrame. auto.
   Qed.
 
-  Lemma remove_min_simF :
+  Lemma remove_min_simF `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open PQueueA PQueueI IstFull
         (fid PQueueHdr.remove_min).
   Proof.
@@ -293,7 +294,7 @@ Module PQueueIA. Section PQueueIA.
     iAssert (⌜range ≤ length entries⌝)%I as "#Hrange"; first by subst.
     replace (queueofs + 1)%Z with (queueofs + (length entries - range) + 1)%Z by lia.
     generalize range at 2 8 9 10. subst range. iIntros (var).
-    iInduction (var) as [|var'] forall (st_src st_tgt).
+    iInduction (var) as [|var'].
     { aUnfoldS. rewrite Nat.sub_0_r decide_True //.
       aUnfoldT. sYields. sYieldS. cNormS. sYieldS. by cStep; iFrame.
     }
@@ -334,7 +335,7 @@ Module PQueueIA. Section PQueueIA.
       auto.
     }
 
-    iModIntro. clear_st; iIntros (st_src st_tgt) "IST". cStepsT. iDestruct "GRT" as "->".
+    iModIntro. iIntros "IST". cStepsT. iDestruct "GRT" as "->".
     set (caseb :=
       match queue !!! index with
       | [] => true
@@ -352,7 +353,7 @@ Module PQueueIA. Section PQueueIA.
       cStepsS. subst index.
       replace (queueofs + _ + 1 + 1)%Z with (queueofs + (length entries - var')%nat + 1)%Z by lia.
       replace (S (length entries - S var')) with (length entries - var') by lia.
-      iApply ("IHvar'" $! st_src st_tgt with "[] IST"); iFrame; eauto.
+      iApply ("IHvar'" with "[] IST"); iFrame; eauto.
       iPureIntro; lia.
     }
 
@@ -368,11 +369,17 @@ Module PQueueIA. Section PQueueIA.
 
   Lemma sim : ⊢ ISim.t open PQueueA PQueueI IstFull.
   Proof.
-    cStartModSim.
-    { apply new_simF. }
-    { apply add_simF. }
-    { apply remove_min_simF. }
-    { iIntros "_"; repeat iExists _; iPureIntro; ss. }
+    iApply (ISim_reflR open PQueueA.t PQueueI.t
+      (StackA.t ★ SchI.t ★ MemA.t sp) (λ _, True%I)).
+    - mod_tac.
+    - mod_tac.
+    - intros _. mod_tac.
+    - iIntros (STATE fn) "%Hfn".
+      set_unfold in Hfn; des; subst.
+      + iApply new_simF.
+      + iApply add_simF.
+      + iApply remove_min_simF.
+    - iIntros (STATE) "SRC TGT". done.
   Qed.
 End PQueueIA.
 Section ctxr.

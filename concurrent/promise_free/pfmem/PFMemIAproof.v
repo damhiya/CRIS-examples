@@ -1,4 +1,4 @@
-Require Import CRIS.common.CRIS.
+From CRIS.common Require Import CRIS.
 From CRIS.promise_free.pfmem Require Import PFMemHeader PFMemI PFMemA.
 From CRIS.promise_free.algebra Require Import HistoryRA AtomicRA.
 From CRIS.promise_free.gpfsl Require Import base.
@@ -72,12 +72,10 @@ Module PFMemIA. Section PFMemIA.
       Memory.accessible loc m →
       Time.le t ((View.rlx Vcut) loc).
 
-  Definition Ist : ist_type Σ :=
-    λ st_s st_t,
-      (∃ gl ths Vcut,
+  Definition Ist (STATE : stateGS Σ) : iProp Σ :=
+    (∃ gl ths Vcut,
         let m := Global.memory gl in
-        ⌜st_t = {[PFMemI.v_config # (Configuration.mk ths gl)↑]}
-        ∧ view_na Vcut m
+        ⌜view_na Vcut m
         ∧ Memory.closed_view Vcut m
         ∧ Configuration.wf (Configuration.mk ths gl)
         ∧ wf_prealloc m
@@ -86,7 +84,7 @@ Module PFMemIA. Section PFMemIA.
         ∗ hist_auth (Memory.cut Vcut m)
         ∗ tview_auth ths (* authorative resource for thread views *)
         ∗ hist_freeable_auth m (* authorative resource for tokens of free *)
-      )%I.
+        ∗ PFMemI.v_config ↦tgt (Configuration.mk ths gl)↑)%I.
 
   Definition init_cond : iProp Σ :=
     hist_auth (Memory.init size) ∗

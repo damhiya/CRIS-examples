@@ -17,11 +17,15 @@ Section StackIM.
   Local Notation SchI := (CFilter.filter (Helping.exports mn) SchI.t).
   Local Notation HelpingOn := (HelpingOn.t mn StackM.jobCode).
   Local Notation HelpingDummy := (HelpingDummy.t mn).
-  Local Notation StackM := ((StackM.t mn ★ HelpingOn) ★ MemA ★ SchI).
+  Local Notation StackHelpM := (StackM.t mn ★ HelpingOn).
+  Local Notation StackM := (StackHelpM ★ MemA ★ SchI).
   Local Notation StackI := ((CFilter.filter (Helping.exports mn) StackI.t ★ HelpingDummy) ★ MemA ★ SchI).
-  Local Notation Ist := (IstProd (IstSB [mn] (IstHelp IstTrue ⊤)) IstEq).
+  Local Notation Ist :=
+    (λ STATE,
+      (IstHelp (IstEq StackHelpM STATE) ⊤ ∗
+       IstEq (MemA ★ SchI) STATE)%I).
 
-  Lemma pop_simF :
+  Lemma pop_simF `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open StackM StackI Ist (fid StackHdr.pop).
   Proof.
     cStartFunSim. rewrite /StackI.pop /StackM.pop /yield_iter. cStepsS; cStepsT.
@@ -29,7 +33,7 @@ Section StackIM.
 
     (* Coinduction starts here *)
     iApply wsim_reset.
-    cCoind CIH g' __ with st_src st_tgt. iIntros "[#Hinv IST] /=".
+    cCoind CIH g' __ with γs. iIntros "[#Hinv IST] /=".
     aUnfoldT. rewrite {1}/StackI._pop. cHideT. sYields.
 
     (* Stack load *)
@@ -150,8 +154,9 @@ Section StackIM.
       iMod ("close" with "[//]") as "[_ > close]". iModIntro.
 
       (* Helpee's Atomic Assume *)
-      aUnfoldS. cStepsS. iApply wsim_yield_namespace_src. rewrite {3}/StackM.jobCode.
-      cStepsS. clear dependent stack_rep offer_rep l.
+      aUnfoldS. cStepsS. iApply wsim_yield_namespace_src.
+      replace_s; [rewrite /StackM.jobCode; reflexivity|].
+      cNormS. cStepsS. clear dependent stack_rep offer_rep l.
       iInv "Hinv" with "[IST]"
         as "[IST [%stack_rep [%offer_rep [%l [Hs [H↦ [Hlist Hoffer]]]]]]]" "close2".
       { iFrame. solve_ndisj. }

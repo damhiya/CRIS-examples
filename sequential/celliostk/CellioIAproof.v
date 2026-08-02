@@ -11,14 +11,13 @@ Module CellioIA. Section CellioIA.
 
   Context (sp : specmap).
   
-  Definition IstFull : ist_type Σ :=
-    (IstProd (IstSB CellioA.t.(Mod.scopes) IstTrue) IstEq).
-
   Local Definition MemA := MemA.t sp.
   Local Definition CellioIMod := (CellioI.t ★ MemA).
   Local Definition CellioAMod := (CellioA.t ★ MemA).
+  Local Notation IstFull :=
+    (λ STATE, (True ∗ IstEq MemA STATE)%I).
 
-  Lemma simF_new :
+  Lemma simF_new `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open CellioAMod CellioIMod IstFull (fid CellioHdr.new).
   Proof using.
     cStartFunSim. rewrite /CellioI.new /new.
@@ -28,14 +27,14 @@ Module CellioIA. Section CellioIA.
     cForceS. iSplit; et. cStepsS. cStep. iFrame. et.
   Qed.
 
-  Lemma simF_push :
+  Lemma simF_push `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open CellioAMod CellioIMod IstFull (fid CellioHdr.push).
   Proof using.
     cStartFunSim. rewrite /CellioI.push /push.
 
     cStepsS. destruct Any.downcast; cStepsS; des_ifs. cStepsS. cStepsT. 
 
-    cCall "IST" as (???) "IST".
+    cCall "IST" as (?) "IST".
     cStepsS. cStepsT.
     destruct Any.downcast; cStepsS; des_ifs. cStepsT. rename z into v_new.
 
@@ -49,7 +48,7 @@ Module CellioIA. Section CellioIA.
     cStepsS. cStep. iFrame. et.
   (*SLOW*)Qed.
   
-  Lemma simF_pop :
+  Lemma simF_pop `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open CellioAMod CellioIMod IstFull (fid CellioHdr.pop).
   Proof using.
     cStartFunSim. rewrite /pop /CellioI.pop.
@@ -74,10 +73,18 @@ Module CellioIA. Section CellioIA.
   Lemma sim :
     CellioA.init_cond ⊢ ISim.t open CellioAMod CellioIMod IstFull.
   Proof using.
-    cStartModSim.
-    - iApply simF_new.
-    - iApply simF_push.
-    - iApply simF_pop.
-    - rewrite /init_cond /=. iIntros "_". repeat iExists _. et.
+    iIntros "INIT".
+    iApply (ISim_reflR open CellioA.t CellioI.t MemA
+      (λ _ : stateGS Σ, True%I)).
+    - mod_tac.
+    - mod_tac.
+    - intros _. mod_tac.
+    - iIntros (STATE fn) "%Hfn".
+      repeat rewrite Mod.dom_fnsems_add in Hfn.
+      set_unfold in Hfn; des; subst.
+      + iApply simF_new.
+      + iApply simF_push.
+      + iApply simF_pop.
+    - iIntros (STATE) "SRC TGT". rewrite /init_cond /=. done.
   Qed.
 End CellioIA. End CellioIA.

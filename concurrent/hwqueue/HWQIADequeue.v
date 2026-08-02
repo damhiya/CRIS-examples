@@ -21,12 +21,10 @@ Section HWQPM.
   Context (mnh mnp : string).
   Context (sp_mem : specmap).
 
-  Definition Ist : ist_type Σ := λ st_src st_tgt,
+  Definition Ist : iProp Σ :=
     (∃ (X : gset val),
       free_id (λ x, x.1 = "hwq" ∧ match (x.2↓↓) with | Some x => x ∉ X | None => True end)%type ∗
       [∗ set] x ∈ X, ∃ ptr ofs, ⌜x = Vptr (ptr, ofs)⌝ ∗ ∃ v, (ptr, ofs) ↦{1/2} v)%I.
-  Definition IstFull : ist_type Σ :=
-    IstProd (IstSB [mnh] (IstHelp Ist ⊤)) IstEq.
 
   Notation HWQM := (HWQM.t mnh).
   Notation HWQP := (HWQP.t mnp).
@@ -35,7 +33,11 @@ Section HWQPM.
   Notation MemA := (MemA.t sp_mem).
   Notation ProphA := (ProphecyA.t mnp ∅).
 
-  Lemma simF_dequeue :
+  Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
+    (IstHelp (Ist ∗ IstEq (HWQM ★ HelpOn) STATE) ⊤ ∗
+     IstEq (MemA ★ ProphA) STATE)%I.
+
+  Lemma simF_dequeue `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open
       ((HWQM ★ HelpOn) ★ MemA ★ ProphA) ((HWQP ★ HelpDummy) ★ MemA ★ ProphA)
       IstFull (fid HWQHdr.dequeue).
@@ -45,7 +47,7 @@ Section HWQPM.
     iDestruct "Hinv" as (γb γi γc γs γh blk ->) "#Inv". cStepsT. aAddY. sYields.
 
     iApply wsim_reset.
-    cCoind CIH g __ with st_src st_tgt. iIntros "[#Inv IST]".
+    cCoind CIH g __ with γq. iIntros "[#Inv IST]".
     set (tgt_out := λ _ : (), _) at 2.
     aUnfoldT. rewrite {1}/tgt_out. sYields.
 
@@ -93,7 +95,7 @@ Section HWQPM.
           end) as Hcont_i1 by (destruct cont as [i1 _|_]; lia).
     revert Hn Hcont_i1. rename n into idx. generalize (back `min` sz) at 1 4 6 as n.
     intros n Hn Hcont_i1.
-    iInduction n as [|n] "IH_loop" forall (st_src st_tgt Hn Hcont_i1).
+    iInduction n as [|n] "IH_loop" forall (Hn Hcont_i1).
     { aUnfoldT. rewrite {1}/tgt_in. sYields. cByCoind CIH. iFrame. eauto.
     }
     aUnfoldT. rewrite {2}/tgt_in. cStepsT.

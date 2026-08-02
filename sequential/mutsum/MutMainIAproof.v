@@ -14,22 +14,22 @@ Module MutMainIA. Section MutMainIA.
   Context (FInPure : MutFA.SpF ⊆ SpPure).
   Context (PureInSp : SpPure ⊆ Sp).
 
-  Definition Ist : gmap key (option Any.t) → gmap key (option Any.t) → iProp Σ :=
-    (λ _ _, True)%I.
+  Definition Ist (_ : stateGS Σ) : iProp Σ := True%I.
 
   Local Definition MutMainAMod := ((MutMainA.t true Sp) ★ APCA.t SpPure Sp).
   Local Definition MutMainIMod := ((MutMainI.t) ★ APCA.t SpPure Sp).
-  Local Definition IstFull := (IstProd (IstSB (MutMainA.t true Sp).(Mod.scopes) Ist) IstEq).
+  Local Notation IstFull :=
+    (λ STATE, (Ist STATE ∗ IstEq (APCA.t SpPure Sp) STATE)%I).
   
   (*************)
 
-  Lemma simF_main:
+  Lemma simF_main `{STATE : !stateGS Σ}:
     ⊢ ISim.sim_fun open MutMainAMod MutMainIMod IstFull entry.
   Proof using APCInSp FInPure PureInSp.
     cStartFunSim.
 
     (* SRC: precondition *)
-    cStepsS. iDestruct "IST" as "%"; des; cSimpl.
+    cStepsS. cSimpl.
 
     (* SRC: handle pure (APC) *)
     rewrite /MutMainI.mainF /MutMainA.main_body /pure.
@@ -41,12 +41,11 @@ Module MutMainIA. Section MutMainIA.
     cStepsS. rewrite /APC. cForceS 1. cStepsS.
 
     (* SRC, TGT: cCall mutg using APC tactic *)
-    cStepsT. apcCall "" as (???) "ISTPOST"; eauto.
+    cStepsT. apcCall "IST" as (?) "ISTPOST"; eauto.
     { instantiate (1:=0). eapply OrdArith.lt_from_nat. nia. }
     { instantiate (1:=10). eapply OrdArith.lt_from_nat. nia. }
     { instantiate (1:=10). iSplit; eauto. 
       { iPureIntro. esplits; eauto; [unfold mut_max; nia|refl]. }
-      { do 4 iExists _. iSplit; iPureIntro; esplits; eauto; unfold_mod; ss. }
     }
     iDestruct "ISTPOST" as "[IST ->]".
     
@@ -63,9 +62,17 @@ Module MutMainIA. Section MutMainIA.
   Theorem sim:
     MutMainA.init_cond ⊢ ISim.t open MutMainAMod MutMainIMod IstFull.
   Proof.
-    cStartModSim.
-    - iApply simF_main.
-    - iIntros "C". iFrame. do 4 iExists _; esplits; eauto.
+    iIntros "C".
+    iApply (ISim_reflR open (MutMainA.t true Sp) MutMainI.t
+      (APCA.t SpPure Sp) Ist).
+    - mod_tac.
+    - mod_tac.
+    - intros _. mod_tac.
+    - iIntros (STATE fn) "%Hfn".
+      repeat rewrite Mod.dom_fnsems_add in Hfn.
+      set_unfold in Hfn; des; subst.
+      iApply simF_main.
+    - iIntros (STATE) "SRC TGT". done.
   Qed.
 
   Theorem ctxr:
@@ -86,18 +93,24 @@ Module MutMainIA. Section MutMainIA.
         (MutMainA.t false Sp ★ APCC.t Sp).
   Proof using APCInSp FInPure PureInSp.
     iApply (main_adequacy _ _
-      (IstProd (IstSB MutMainA.scopes IstEq) IstEq)).
-    iStopProof. cStartModSim.
-    { cStartFunSim.
+      (λ STATE, (True ∗ IstEq (APCC.t Sp) STATE)%I)).
+    iApply (ISim_reflR open (MutMainA.t false Sp) (MutMainA.t true Sp)
+      (APCC.t Sp) (λ _ : stateGS Σ, True%I)).
+    - mod_tac.
+    - set_unfold; naive_solver.
+    - intros. mod_tac.
+    - iIntros (STATE fn) "%Hfn".
+      repeat rewrite Mod.dom_fnsems_add in Hfn.
+      set_unfold in Hfn; des; subst.
+      cStartFunSim.
       cStepsS. cForcesT.
-      iDestruct "IST" as "%"; des; cSimpl. cStepsT.
+      cSimpl. cStepsT.
       rewrite /MutMainA.main_body /pure /SModTr.trans_fnsem /SModTr.HoareFun. cStepsT.
       cSimpl. cStepsT. cInlineT. cForcesT.
       iDestruct "GRT" as "(% & %)". subst. cSimpl. iSplitR; et.
       cStepsT. cForcesT. iSplitR; et.
-      cStepsT. cStepsS. cStep. rewrite /ist_with_eq /IstProd. iSplit; eauto.
-    }
-    { rewrite /IstProd. iIntros "_". do 4 iExists _. eauto. }
+      cStepsT. cStepsS. cStep. iDestruct "IST" as "[_ IST]". iFrame; eauto.
+    - iIntros (STATE) "SRC TGT". done.
   Unshelve. all: et.
   Qed.
 

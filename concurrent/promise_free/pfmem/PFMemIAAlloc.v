@@ -131,12 +131,16 @@ Section alloc.
     }
   (*SLOW*)Qed.
 
-  Lemma simF_alloc : ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.alloc).
+  Lemma simF_alloc `{STATE : !stateGS Σ} :
+    ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.alloc).
   Proof using.
     cStartFunSim. rewrite /PFMemI.alloc.
     cStepsS. destruct _q as [[tid sz] V].
     iDestruct "ASM" as "[-> [-> TV]]".
-    iDestruct "IST" as "[%gl [%ths [%Vcut [[-> [%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]]] [HA [TA FA]]]]]]".
+    iDestruct "IST" as (gl ths Vcut)
+      "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [FA CONFIG]]]]".
+    cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
+    cGetT "CONFIG". subst config_any.
     rewrite /PFMemI.check_ident.
     cStepsT.
     iPoseProof (tview_both_valid with "TA TV") as "%F"; des; clarify. rewrite F. cStepsT.
@@ -147,11 +151,12 @@ Section alloc.
     cStepsT. remember (Configuration.mk (IdentMap.add _ _ _) _) as config'.
     iPoseProof (tview_auth_update with "TA TV") as "> [TA TV]"; ss.
     iMod (hist_freeable_auth_alloc with "FA") as "[F FA]"; eauto. { inv WF; ss. }
-    iAssert (Ist st_src _) with "[HA TA FA]" as "IST".
+    cPutT "CONFIG".
+    iAssert (Ist STATE) with "[HA TA FA CONFIG]" as "IST".
     { iExists gl2,
         (Configuration.threads config'),
         (View.join Vcut (View.alloc_view_singleton loc sz)). iSplitR.
-      { iPureIntro; split; first eauto. splits.
+      { iPureIntro; splits.
         { intros loc1 ???? FIND Acc.
           inv LOCAL0; hexploit (Memory.alloc_accessible3); eauto.
           { inv WF; inv GL_WF; eauto. }

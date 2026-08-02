@@ -17,13 +17,16 @@ Section fence.
   Definition MA := (PFMemA.t sp).
   Definition MI := (PFMemI.t syn size).
 
-  Lemma simF_fence : ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.fence).
+  Lemma simF_fence `{STATE : !stateGS Σ} :
+    ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.fence).
   Proof.
     cStartFunSim.
     cStepsS. destruct _q as [[[tid ordr] ordw] V].
     iDestruct "ASM" as "[-> [[-> %] TV]]". cStepsT.
-    iDestruct "IST" as "[%gl [%ths [%Vcut [[-> [%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]]] [HA [TA FA]]]]]]".
-    cStepsT. rewrite /PFMemI.check_ident.
+    iDestruct "IST" as (gl ths Vcut)
+      "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [FA CONFIG]]]]".
+    cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
+    cGetT "CONFIG". subst config_any. cStepsT. rewrite /PFMemI.check_ident.
     des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
     cStepsT. destruct _q as [config' STEP].
     inv STEP. s in STEP0. inv STEP0; [inv LOCAL|].
@@ -38,13 +41,14 @@ Section fence.
     assert (gl2 = gl) by (subst gl2; destruct gl; ss).
     rewrite H0. clear H0. set (lc2:=_: Local.t).
 
-    cStepsT. set (st_tgt:={[_ := _]}).
+    cStepsT.
 
     iPoseProof (tview_both_valid with "TA TV") as "%IN". des. subst V.
 
     iMod ((tview_auth_update ths (IdentMap.add tid (existT lang st2, lc2) ths)) with "TA TV") as "[TA TV]"; eauto.
 
-    iAssert (Ist st_src st_tgt)%I with "[HA FA TA]" as "IST".
+    cPutT "CONFIG".
+    iAssert (Ist STATE)%I with "[HA FA TA CONFIG]" as "IST".
     { iFrame. iPureIntro; esplits; eauto.
       { hexploit (@PFConfiguration.step_future ThreadEvent.get_machine_event); eauto.
         { econs; eauto. econs; eauto.

@@ -1,4 +1,4 @@
-Require Import CRIS.common.CRIS.
+From CRIS.common Require Import CRIS.
 From CRIS.scheduler Require Import SchHeader SchI SchA SchTactics.
 From CRIS.promise_free.algebra Require Import HistoryRA AtomicRA.
 From CRIS.promise_free.system Require Import SystemHeader SystemA SystemTactics.
@@ -21,8 +21,12 @@ Section StackIM.
   Local Definition MI :=
     ((CFilter.filter (Helping.exports mn) StackI.t ★
         HelpingDummy.t mn) ★ SysF) ★ SchF.
-  Local Notation Ist :=
-    (IstProd (IstSB [mn] (IstHelp IstTrue ⊤)) IstEq).
+  Local Definition StackHelpM :=
+    StackM.t mn (SystemA.sp sp_user (↑stackN)) ★
+      HelpingOn.t mn StackM.jobCode.
+  Local Definition Ist (STATE : stateGS Σ) : iProp Σ :=
+    (IstHelp (IstEq StackHelpM STATE) ⊤ ∗
+      IstEq (SysF ★ SchF) STATE)%I.
 
   Lemma target_record_prim target :
     target_record target -∗
@@ -59,7 +63,7 @@ Section StackIM.
     Time.lt from to.
   Proof. inversion ADD; done. Qed.
 
-  Lemma pop_simF :
+  Lemma pop_simF `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MA MI Ist (fid StackHdr.pop).
   Proof.
     cStartFunSim. rewrite /StackI.pop /StackM.pop /stack_atomic_fun.
@@ -68,7 +72,7 @@ Section StackIM.
     cStepsS. iDestruct "ASM" as "[%stack [-> [#HANDLE TV]]]".
     cStepsT.
     iApply wsim_reset.
-    cCoind CIH g' __ with st_src st_tgt V.
+    cCoind CIH g' __ with V.
     iIntros "[#HANDLE [IST TV]] /=".
     aUnfoldT. rewrite /StackI.pop_once. cHideT. sYields.
     rewrite /stack_handle.
@@ -78,7 +82,7 @@ Section StackIM.
     destruct STACK as [-> STACK_BASE].
     cStepsT.
     sYield. cStepsT.
-    iEval (rewrite IstHelp_nested_equiv) in "IST".
+    iEval (rewrite /Ist IstHelp_nested_equiv) in "IST".
     iInv "Hinv" with "[IST]" as "[IST INV]" "ACC";
       first by iFrame.
     iEval (rewrite stack_inv'_eq; solve_base_sl_red) in "INV".
@@ -124,7 +128,7 @@ Section StackIM.
     destruct (decide (head_loc = stack_loc >> 2)) as [Hempty|Hnonempty].
     - subst head_loc. cStepsT. case_decide; last contradiction.
       cStepsT. sYield. cStepsT.
-      iEval (rewrite IstHelp_nested_equiv) in "IST".
+      iEval (rewrite /Ist IstHelp_nested_equiv) in "IST".
       iInv "Hinv" with "[IST]" as "[IST INV]" "ACC";
         first by iFrame.
       iEval (rewrite stack_inv'_eq; solve_base_sl_red) in "INV".
@@ -299,7 +303,7 @@ Section StackIM.
         cStepsS. cStepsT. cStep. iFrame "IST". done. }
     - cStepsT. case_decide; first contradiction.
       cStepsT. sYield. cStepsT.
-      iEval (rewrite IstHelp_nested_equiv) in "IST".
+      iEval (rewrite /Ist IstHelp_nested_equiv) in "IST".
       iInv "Hinv" with "[IST]" as "[IST INV]" "ACC";
         first by iFrame.
       iEval (rewrite stack_inv'_eq; solve_base_sl_red) in "INV".
@@ -391,7 +395,7 @@ Section StackIM.
       iPoseProof (view_at_view_mon_pred
         (view_at (AtomicSeen stack_loc γh ζread))
         _ _ H12 with "SNh1") as "#SNh2".
-      iEval (rewrite IstHelp_nested_equiv) in "IST".
+      iEval (rewrite /Ist IstHelp_nested_equiv) in "IST".
       iInv "Hinv" with "[IST]" as "[IST INV]" "ACC";
         first by iFrame.
       iEval (rewrite stack_inv'_eq; solve_base_sl_red) in "INV".
@@ -475,7 +479,7 @@ Section StackIM.
         iPoseProof (view_at_view_mon_pred
           (view_at (AtomicSeen (stack_loc >> 1) γslot ζo_seen))
           _ _ Hcur03 with "SNo") as "#SNo3".
-        iEval (rewrite IstHelp_nested_equiv) in "IST".
+        iEval (rewrite /Ist IstHelp_nested_equiv) in "IST".
         iInv "Hinv" with "[IST]" as "[IST INV]" "ACC";
           first by iFrame.
         iEval (rewrite stack_inv'_eq; solve_base_sl_red) in "INV".
@@ -550,7 +554,7 @@ Section StackIM.
           cByCoind CIH. iFrame "HANDLE4 IST TV WINV". }
         { cStepsT. case_decide; first contradiction.
           cStepsT. sYield. cStepsT.
-          iEval (rewrite IstHelp_nested_equiv) in "IST".
+          iEval (rewrite /Ist IstHelp_nested_equiv) in "IST".
           iInv "Hinv" with "[IST]" as "[IST INV]" "ACC";
             first by iFrame.
           iEval (rewrite stack_inv'_eq; solve_base_sl_red) in "INV".
@@ -731,7 +735,7 @@ Section StackIM.
             assert (Hvalue5 : View.le Vvalue (TView.cur V5)) by
               (etrans; [exact Hvaluepub|exact Hovrw]).
             cStepsT. sYield. cStepsT. sYield. cStepsT.
-            iEval (rewrite IstHelp_nested_equiv) in "IST".
+            iEval (rewrite /Ist IstHelp_nested_equiv) in "IST".
             iInv "OfferInv" with "[IST]" as "[IST OINV]" "OACC";
               first by iFrame.
             iEval (solve_base_sl_red) in "OINV".

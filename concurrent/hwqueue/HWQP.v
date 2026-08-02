@@ -111,7 +111,8 @@ Module HWQIP. Section HWQIP.
   Context `{!crisG Γ Σ α β τ Hinv Hsub, !concGS}.
   Context (mn : string).
 
-  Local Definition IstFull := IstProd (IstSB (Mod.scopes (HWQP.t mn)) IstEq) IstEq.
+  Local Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
+    (IstEq (HWQP.t mn) STATE ∗ IstEq (ProphecyI.t mn) STATE)%I.
   Lemma ctxr :
     ⊢ ctx_refines
         (HWQI.t ★ ProphecyI.t mn)
@@ -119,8 +120,25 @@ Module HWQIP. Section HWQIP.
   Proof using.
     iApply (main_adequacy _ _ IstFull).
     iStopProof.
-    cStartModSim.
-    { cStartFunSim.
+    iIntros "_".
+    iApply (ISim_reflR open (HWQP.t mn) HWQI.t (ProphecyI.t mn)
+      (IstEq (HWQP.t mn))).
+    - unfold HWQP.t, HWQI.t; cbn. set_solver.
+    - set (trans := λ x : option (emask * (option fspec_rel * fbody)),
+          map_snd (SModTr.trans_fnsem ∅) <$> x).
+      change (dom (trans <$> HWQP.fnsems mn) ⊆
+        dom (trans <$> HWQI.fnsems)).
+      intros fn Hfn.
+      rewrite (dom_fmap trans (HWQP.fnsems mn)) in Hfn.
+      rewrite (dom_fmap trans HWQI.fnsems).
+      unfold HWQP.fnsems in Hfn. unfold HWQI.fnsems.
+      rewrite !dom_insert_L !dom_empty_L in Hfn.
+      rewrite !dom_insert_L !dom_empty_L. set_solver.
+    - intros _. mod_tac.
+    - iIntros (STATE fn) "%Hfn".
+      unfold HWQP.t in Hfn. cbn in Hfn.
+      set_unfold in Hfn; des; subst.
+    + cStartFunSim.
       cStepsS. destruct Any.downcast as [sz|]; cStepsS; ss. cStepsT.
       rewrite /HWQP.new_queue /HWQI.new_queue.
       cStepsS. cStepsT. sYieldRR "IST".
@@ -128,18 +146,18 @@ Module HWQIP. Section HWQIP.
       destruct sz as [|[sz| | ] [|]]; cStepsS; ss. cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
-      iApply wsim_call; iFrame; clear_st; iIntros (ret st_src st_tgt) "IST".
+      iApply wsim_call; iFrame; iIntros (ret) "IST".
       cStepsS; cStepsT; destruct Any.downcast as [|]; cStepsS; ss. cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
       destruct v as [ | [blk ofs] | ]; cStepsS; ss; cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
-      iApply wsim_call; iFrame; clear_st; iIntros (? st_src st_tgt) "IST".
+      iApply wsim_call; iFrame; iIntros (?) "IST".
       cStepsS; cStepsT; destruct Any.downcast as [|]; cStepsS; ss. cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
-      iApply wsim_call; iFrame; clear_st; iIntros (? st_src st_tgt) "IST".
+      iApply wsim_call; iFrame; iIntros (?) "IST".
       cStepsS; cStepsT; destruct Any.downcast as [|]; cStepsS; ss. cStepsT.
       sYieldRR "IST".
       sYieldS.
@@ -147,7 +165,7 @@ Module HWQIP. Section HWQIP.
       replace 0 with (Z.to_nat sz - Z.to_nat sz) by lia.
       assert (Z.to_nat sz ≤ Z.to_nat sz) as Hsz by lia.
       revert Hsz. generalize (Z.to_nat sz) at 1 5 8 as n.
-      clear_st. intros n Hn. iInduction n as [|n] "IH_loop" forall (Hn st_src st_tgt).
+      intros n Hn. iInduction n as [|n] "IH_loop" forall (Hn).
       { replace (Z.to_nat sz - 0) with (Z.to_nat sz) by lia.
         unfoldIterEqS. unfoldIterEqT.
         rewrite Nat.ltb_irrefl.
@@ -161,19 +179,18 @@ Module HWQIP. Section HWQIP.
       cStepsS. cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
-      iApply wsim_call; iFrame; clear_st; iIntros (? st_src st_tgt) "IST".
+      iApply wsim_call; iFrame; iIntros (?) "IST".
       cStepsS. cStepsT. destruct Any.downcast; cStepsS; ss. cStepsT.
       replace (S (Z.to_nat sz - S n)) with (Z.to_nat sz - n) by lia.
       iApply "IH_loop"; iFrame. by iPureIntro; lia.
-    }
-    { cStartFunSim. cStepsS. cStepsT. destruct Any.downcast; cStepsS; ss. cStepsT.
+    + cStartFunSim. cStepsS. cStepsT. destruct Any.downcast; cStepsS; ss. cStepsT.
       rewrite /HWQI.enqueue. cStepsS. cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS. destruct pargs as [[[? ?] v]|]; last cStepsS; ss.
       cStepsS. cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
-      iApply wsim_call; iFrame; clear_st; iIntros (? st_src st_tgt) "IST".
+      iApply wsim_call; iFrame; iIntros (?) "IST".
       cStepsS; cStepsT; destruct Any.downcast as [|]; cStepsS; ss. cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
@@ -181,10 +198,10 @@ Module HWQIP. Section HWQIP.
       destruct pargs; cStepsS; ss. cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
-      iApply wsim_call; iFrame; clear_st; iIntros (? st_src st_tgt) "IST".
+      iApply wsim_call; iFrame; iIntros (?) "IST".
       cStepsS; cStepsT; destruct Any.downcast as [|]; cStepsS; ss. cStepsT.
       destruct pargs; cStepsS; ss. cStepsT.
-      iApply wsim_call; iFrame; clear_st; iIntros (? st_src st_tgt) "IST".
+      iApply wsim_call; iFrame; iIntros (?) "IST".
       cStepsS; cStepsT; destruct Any.downcast as [|]; cStepsS; ss. cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
@@ -195,25 +212,23 @@ Module HWQIP. Section HWQIP.
       { cStepsS; cStepsT.
         sYieldRR "IST".
         sYieldS. cStepsS.
-        iApply wsim_reset.
-        iStopProof. revert st_src; combine_quant st_tgt; eapply wsim_coind.
-        intros ??? []; iIntros "IST". destruct_quant CIH.
+        iApply wsim_reset. cNormS; cNormT.
+        cCoind CIH g' __ with v. iIntros "IST".
         unfoldIterEqS; unfoldIterEqT.
         cStepsS; cStepsT.
         sYieldRR "IST".
         sYieldS. cStepsS.
-        cByCoind CIH. iFrame.
+        specialize (CIH v). cByCoind CIH. iFrame.
       }
       cStepsS; cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
-      iApply wsim_call; iFrame; clear_st; iIntros (? st_src st_tgt) "IST".
+      iApply wsim_call; iFrame; iIntros (?) "IST".
       cStepsS; cStepsT; destruct Any.downcast as [|]; cStepsS; ss. cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
       cStep. iFrame. done.
-    }
-    { cStartFunSim.
+    + cStartFunSim.
       cStepsS. destruct Any.downcast as [q|]; cStepsS; ss. cStepsT.
       rewrite /HWQI.dequeue /HWQP.dequeue.
       cStepsS; cStepsT.
@@ -222,23 +237,20 @@ Module HWQIP. Section HWQIP.
       destruct pargs as [[qblk qofs]|]; last cStepsS; ss. cStepsS; cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
-      iApply wsim_reset. iStopProof. revert st_src. combine_quant st_tgt.
-      eapply wsim_coind. iIntros (g _ CIH [st_tgt st_src]) "IST". destruct_quant CIH.
-      match goal with | |- context [ITree.iter ?a ?b] => set (src := a) end.
-      unfoldIterEqS.
-      match goal with | |- context [ITree.iter ?a ?b] => set (tgt := a) end.
-      unfoldIterEqT. rewrite {1}/src {1}/tgt.
+      iApply wsim_reset. cNormS; cNormT.
+      cCoind CIH g __ with qblk qofs. iIntros "IST".
+      unfoldIterEqS. unfoldIterEqT.
       cStepsS. cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
-      iApply wsim_call; iFrame; clear_st; iIntros (? st_src st_tgt) "IST".
+      iApply wsim_call; iFrame; iIntros (?) "IST".
       cStepsS. cStepsT. destruct Any.downcast; cStepsS; ss. cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
       destruct pargs as [x0|]; last cStepsS; ss. cStepsS; cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
-      iApply wsim_call; iFrame; clear_st; iIntros (? st_src st_tgt) "IST".
+      iApply wsim_call; iFrame; iIntros (?) "IST".
       cStepsS. cStepsT. destruct Any.downcast; cStepsS; ss. cStepsT.
       sYieldRR "IST".
       sYieldS. cStepsS.
@@ -254,12 +266,12 @@ Module HWQIP. Section HWQIP.
       iEval (match goal with | |- context [ITree.iter ?a ?b] => set (src2 := a) end).
       set (a := i) at 2.
       iEval (match goal with | |- context [ITree.iter ?a a] => set (tgt2 := a) end). subst a.
-      iInduction i as [|i] "IH" forall (st_src st_tgt Hi).
+      iInduction i as [|i] "IH" forall (Hi).
       { unfoldIterEqS; unfoldIterEqT.
         rewrite {1}/src2 {1}/tgt2.
         cStepsS; cStepsT.
         sYieldRR "IST".
-        sYieldS. cStepsS. cByCoind CIH. iFrame.
+        sYieldS. cStepsS. specialize (CIH qblk qofs). cByCoind CIH. iFrame.
       }
       unfoldIterEqS. unfoldIterEqT. rewrite {2}/src2 {2}/tgt2.
       cStepsS; cStepsT.
@@ -272,7 +284,7 @@ Module HWQIP. Section HWQIP.
       sYieldRR "IST".
       sYieldS.
       cStepsS; cStepsT.
-      iApply wsim_call; iFrame; clear_st; iIntros (? st_src st_tgt) "IST".
+      iApply wsim_call; iFrame; iIntros (?) "IST".
       cStepsS. cStepsT. destruct Any.downcast; cStepsS; ss. cStepsT.
       destruct (decide (v1 = Vint 0)) as [->|Hv1].
       { cStepsS; cStepsT.
@@ -289,13 +301,13 @@ Module HWQIP. Section HWQIP.
       sYieldRR "IST".
       sYieldS.
       cStepsS; cStepsT.
-      iApply wsim_call; iFrame; clear_st; iIntros (? st_src st_tgt) "IST".
+      iApply wsim_call; iFrame; iIntros (?) "IST".
       cStepsS. cStepsT. destruct Any.downcast; cStepsS; ss. cStepsT.
       cInlineS. rewrite /ProphecyI.new; cStepsS.
       sYieldRR "IST".
       sYieldS.
       cStepsS.
-      iApply wsim_call; iFrame; clear_st; iIntros (? st_src st_tgt) "IST".
+      iApply wsim_call; iFrame; iIntros (?) "IST".
       cStepsS. cStepsT. destruct Any.downcast; cStepsS; ss. cStepsT.
       sYieldRR "IST".
       sYieldS.
@@ -311,7 +323,7 @@ Module HWQIP. Section HWQIP.
         cStep. iFrame. done.
       }
       repeat case_match; clarify; sYieldS; cStepsS; ss.
-    }
-    iIntros "_"; iExists _, _, _, _. repeat iSplit; eauto.
+    - iIntros (STATE) "SRC TGT".
+      iApply (state_eq_init_same with "SRC TGT").
   (*SLOW*)Qed.
 End HWQIP. End HWQIP.

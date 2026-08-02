@@ -19,11 +19,15 @@ Section StackIM.
   Local Notation SchI := (CFilter.filter (Helping.exports mn) SchI.t).
   Local Notation HelpingOn := (HelpingOn.t mn StackM.jobCode).
   Local Notation HelpingDummy := (HelpingDummy.t mn).
-  Local Notation StackM := ((StackM.t mn ★ HelpingOn) ★ MemA ★ SchI).
+  Local Notation StackHelpM := (StackM.t mn ★ HelpingOn).
+  Local Notation StackM := (StackHelpM ★ MemA ★ SchI).
   Local Notation StackI := ((CFilter.filter (Helping.exports mn) StackI.t ★ HelpingDummy) ★ MemA ★ SchI).
-  Local Notation Ist := (IstProd (IstSB [mn] (IstHelp IstTrue ⊤)) IstEq).
+  Local Notation Ist :=
+    (λ STATE,
+      (IstHelp (IstEq StackHelpM STATE) ⊤ ∗
+       IstEq (MemA ★ SchI) STATE)%I).
 
-  Lemma push_simF :
+  Lemma push_simF `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open StackM StackI Ist (fid StackHdr.push).
   Proof.
     cStartFunSim. rewrite /StackI.push /StackM.push. cStepsS; cStepsT.
@@ -35,7 +39,7 @@ Section StackIM.
 
     (* Coinduction starts here *)
     iApply wsim_reset.
-    cCoind CIH g' __ with st_src st_tgt. iIntros "[#Hinv [IST Help]] /=".
+    cCoind CIH g' __ with req_id. iIntros "[#Hinv [IST Help]] /=".
     aUnfoldT. rewrite {1}/StackI._push. cStepsT. cHideT. sYields.
 
     (* load *)
@@ -73,7 +77,9 @@ Section StackIM.
          helps from other threads), the pusher does its own job *)
       sYieldS. prependRetT tt.
       iApply (wsim_helping_pend_try_run with "Help [-]").
-      aUnfoldS. rewrite {3}/StackM.jobCode. sYieldS. cStepsS.
+      aUnfoldS.
+      replace_s; [rewrite /StackM.jobCode; reflexivity|].
+      cNormS. sYieldS. cStepsS.
       iCombine "Hs ASM" gives %[->%Excl_included%leibniz_equiv _]%auth_both_valid_discrete.
       iMod (own_update_2 with "Hs ASM") as "[Hs Hl]".
       { eapply auth_update, option_local_update, (exclusive_local_update _ (Excl _)). done. }

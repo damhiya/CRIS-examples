@@ -73,7 +73,7 @@ End CannonAux.
 Module CannonAll.
   Import inv_instances.
   Local Instance Γ : HRA := ##[invΓ; concΓ; cannonΓ].
-  Local Instance Σ : GRA := ##[Γ; invΣ].
+  Local Instance Σ : GRA := ##[Γ; invΣ; stateΣ].
 
   Theorem behavioral_refinement :
     ∃ β τ (Hinv : invGS Γ Σ α) (_ : crisG Γ Σ α β τ _ Hinv) (_ : cannonGS) src_res,

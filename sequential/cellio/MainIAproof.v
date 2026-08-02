@@ -14,18 +14,18 @@ Module MainIA. Section MainIA.
 
   Local Definition CellioA := (CellioA.t).
   Local Definition MainA := (MainA.t sp).
-  Local Definition IstFull := (IstProd (IstSB MainA.(Mod.scopes) IstTrue) IstEq).
+  Local Definition IstFull (_ : stateGS Σ) : iProp Σ := True%I.
 
-  Lemma simF_start :
+  Lemma simF_start `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MainA (MainI.t ★ CellioA) IstFull entry.
   Proof using sp_start.
     cStartFunSim. unfold MainI.start, MainA.start.
     cStepsS. rewrite sp_start. cStepsS. cForceS _q. cStepsS. cForceS arg. cStepsS.
-    cForceS. iFrame. cStepsS. cStepsT. cCall "IST" as (? ? ?) "IST".
+    cForceS. iFrame. cStepsS. cStepsT. cCall "IST" as (?) "IST".
     cStepsS. cForcesS. iSplit; et. cStepsT. cStep. iSplit; et.
   Qed.
   
-  Lemma simF_main :
+  Lemma simF_main `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open MainA (MainI.t ★ CellioA) IstFull
         (funid MainAS.main).
   Proof using sp_input sp_foo.
@@ -40,7 +40,7 @@ Module MainIA. Section MainIA.
 
     (* Call Input() simultaneously *)
     cStepsT. rewrite sp_input.
-    cCall "IST" as (ret st_src st_tgt) "IST".
+    cCall "IST" as (ret) "IST".
     destruct Any.downcast as [v|]; [|cStepsS; ss].
 
     (* Take cell(i) *)
@@ -48,7 +48,7 @@ Module MainIA. Section MainIA.
 
     (* Call Foo.foo() simultaneously *)
     cStepsT. cStepsS. rewrite sp_foo.
-    cCall "IST" as (r1 st_src st_tgt) "IST".
+    cCall "IST" as (r1) "IST".
     destruct Any.downcast; [|cStepsS; ss].
     cStepsT. cInlineT.
     (* Give cell(i) *)
@@ -69,8 +69,7 @@ Module MainIA. Section MainIA.
   Lemma sim : ⊢ ISim.t open MainA (MainI.t ★ CellioA) IstFull.
   Proof using sp_start sp_input sp_foo.
     cStartModSim.
-    - iIntros "_". unfold IstFull, IstProd.
-      iExists ∅, ∅, ∅, ∅. ss.
+    - done.
     - iApply simF_start; eauto.
     - iApply simF_main; eauto.
   Qed.

@@ -21,12 +21,10 @@ Section HWQPM.
   Context (mnh mnp : string).
   Context (sp_mem : specmap).
 
-  Definition Ist : ist_type Σ := λ st_src st_tgt,
+  Definition Ist : iProp Σ :=
     (∃ (X : gset val),
       free_id (λ x, x.1 = "hwq" ∧ match (x.2↓↓) with | Some x => x ∉ X | None => True end)%type ∗
       [∗ set] x ∈ X, ∃ ptr ofs, ⌜x = Vptr (ptr, ofs)⌝ ∗ ∃ v, (ptr, ofs) ↦{1/2} v)%I.
-  Definition IstFull : ist_type Σ :=
-    IstProd (IstSB [mnh] (IstHelp Ist ⊤)) IstEq.
 
   Notation HWQM := (HWQM.t mnh).
   Notation HWQP := (HWQP.t mnp).
@@ -35,10 +33,14 @@ Section HWQPM.
   Notation MemA := (MemA.t sp_mem).
   Notation ProphA := (ProphecyA.t mnp ∅).
 
+  Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
+    (IstHelp (Ist ∗ IstEq (HWQM ★ HelpOn) STATE) ⊤ ∗
+     IstEq (MemA ★ ProphA) STATE)%I.
+
   Lemma big_lemma (γe γs : gname) (ls : list val) (slots : gmap nat slot_data)
       (p : list nat) (N : namespace)
-      (Irun : ist_type Σ)
-      msks n sz blk γh γc γi γb fl_s fl_t g ps pt st_src st_tgt :
+      (Irun : iProp Σ) `{STATE : !stateGS Σ}
+      msks n sz blk γh γc γi γb fl_s fl_t g ps pt :
     fl_s !! funid (Helping.help mnh) =
       Some (Some (SB.sandbox_body
         (msk_scp (HelpingOn.scopes mnh) msk_true,
@@ -47,28 +49,28 @@ Section HWQPM.
     NoDup p →
     (∀ i, i ∈ p → was_committed <$> slots !! i = Some false) →
     (□ hinv N γh (syn_inv_hwq sz γb γi γe γc γs blk : GTerm.t n)) -∗
-    (Irun st_src st_tgt) -∗
+    Irun -∗
     own γs (● (of_slot_data <$> slots) : slotUR) -∗
     ([∗ map] i ↦ d ∈ slots, per_slot_own γe γs i d) -∗
     own γe (● (Excl' ls)) -∗
-      wsim fl_s fl_t IstFull (↑N, ↑N) g unit unit
+      wsim fl_s fl_t (IstFull STATE) (↑N, ↑N) g unit unit
         (λ rs rt, winv (↑N, ↑N) ∗
-          (Irun rs.1 rt.1) ∗
+          Irun ∗
           own γs (● (of_slot_data <$> map_imap (helped p) slots) : slotUR) ∗
           ([∗ map] i ↦ d ∈ map_imap (helped p) slots, per_slot_own γe γs i d) ∗
           own γe (● (Excl' (ls ++ get_values slots p)))
         )
         ps pt 
-        (st_src, SB.sandbox msks (SModTr.trans ∅
+        (SB.sandbox msks (SModTr.trans ∅
           (ITree.iter (λ _,
             'b : bool <- trigger (Choose bool);;
             if b 
             then trigger (Call (Helping.help mnh) ((Some N)↑));;; Ret (inl ()) 
             else Ret (inr ())) ())))
-        (st_tgt, Ret ()).
+        (Ret ()).
   Proof.
     intros Hf. revert p. iIntros (p).
-    iInduction p as [|e p] "IH" forall (st_src st_tgt ps pt slots ls);
+    iInduction p as [|e p] "IH" forall (ps pt slots ls);
       iIntros (HNoDup Ha) "#Hinv Hist Hs● Hbig He●".
     { aUnfoldS. cNormS. case_match; cStepsS; ss.
       cForceS false. cStep.
@@ -108,9 +110,9 @@ Section HWQPM.
     rewrite insert_delete_insert /update_slot Hn insert_delete_insert.
     assert (∀ i : nat, i ∈ p → was_committed <$> <[e:=(l, Help γ, w)]> slots !! i = Some false) as HHH.
     { intros i Hi. rewrite lookup_insert_ne; [ by apply Ha1 | by set_solver ]. }
-    iSpecialize ("IH" $! _ st_tgt true false _ _ HNoDup HHH with "Hinv Hist [$] [$] [$]").
+    iSpecialize ("IH" $! true false _ _ HNoDup HHH with "Hinv Hist [$] [$] [$]").
     appendRetS; appendRetT. iApply wsim_bind. iSplitL "IH"; first iApply "IH". s.
-    iIntros (????) "[W [Hs● [Hbig [He● ?]]]]". cStep.
+    iIntros (??) "[W [Hs● [Hbig [He● ?]]]]". cStep.
     assert (map_imap (helped p) (<[e:=(l, Help γ, w)]> slots)
             = map_imap (helped (e :: p)) slots) as Heq.
     { apply map_eq. intros i. destruct (decide (i = e)) as [->|Hi_not_n].
@@ -125,7 +127,7 @@ Section HWQPM.
     rewrite Heq. iFrame. rewrite -app_assoc /= get_values_not_in //; iFrame.
   Qed.
 
-  Lemma simF_enqueue :
+  Lemma simF_enqueue `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open
       ((HWQM ★ HelpOn) ★ MemA ★ ProphA) ((HWQP ★ HelpDummy) ★ MemA ★ ProphA)
       IstFull (fid HWQHdr.enqueue).
@@ -183,8 +185,8 @@ Section HWQPM.
       destruct Z.ltb eqn: Hlt.
       { apply Z.ltb_lt in Hlt; lia. }
       sYields.
-      iApply wsim_reset. iStopProof. revert st_src. combine_quant st_tgt.
-      eapply wsim_coind. iIntros (? ? CIH [st_src st_tgt]) "[? IST]". destruct_quant CIH. s.
+      iApply wsim_reset.
+      cCoind CIH g __ with req_id. iIntros "[Tkn IST]".
       aUnfoldT. sYields. cByCoind CIH. iFrame.
     }
     (* We now have a reserved slot [i], which is still free. *)
@@ -201,7 +203,7 @@ Section HWQPM.
     { (* We access the atomic update and commit the element. *)
       sYieldS.
       prependRetT tt. iApply (wsim_helping_pend_try_run with "Tkn [-]").
-      aUnfoldS. sYieldS. rewrite {3}/HWQM.jobCode. cStepsS. iRename "ASM" into "He◯".
+      aUnfoldS. sYieldS. rewrite /HWQM.jobCode. cStepsS. iRename "ASM" into "He◯".
       iDestruct (sync_elts with "He● He◯") as %<-.
       set (l := Vptr (qblk, qofs)).
       iMod (update_elts _ _ _ (elts ++ [l]) with "He● He◯") as "[He● He◯]".
@@ -377,7 +379,7 @@ Section HWQPM.
     destruct bs as [|b blocks].
     { (* We access the atomic update and commit the element. *)
       sYieldS. prependRetT tt; iApply (wsim_helping_pend_try_run with "Tkn [-]").
-      aUnfoldS; rewrite {3}/HWQM.jobCode; sYieldS.
+      aUnfoldS; rewrite /HWQM.jobCode; sYieldS.
       cStepsS. iRename "ASM" into "He◯".
       iDestruct (sync_elts with "He● He◯") as %<-.
       iMod (update_elts _ _ _ (elts ++ [Vptr (qblk, qofs)]) with "He● He◯") as "[He● He◯]".
@@ -554,7 +556,7 @@ Section HWQPM.
       (* We then commit at our index. *)
       sYieldS.
       prependRetT tt; iApply (wsim_helping_pend_try_run with "Tkn [-]").
-      aUnfoldS; sYieldS; rewrite {3}/HWQM.jobCode; cStepsS.
+      aUnfoldS; sYieldS; rewrite /HWQM.jobCode; cStepsS.
       iRename "ASM" into "He◯".
       iDestruct (sync_elts with "He● He◯") as %<-.
       iMod (update_elts _ _ _ (elts ++ [Vptr (qblk, qofs)]) with "He● He◯") as "[He● He◯]".
@@ -578,14 +580,15 @@ Section HWQPM.
       iMod ("Close" with "[//]") as "[_ > Close]".
       prependRetT tt. iApply wsim_bind. iSplitL "Hs● Hbig He● IST".
       { iApply (big_lemma _ _ _ _ _ _
-          (IstHelp (IstProd (IstSB [mnh] Ist) IstEq) (⊤ ∖ ↑N))
+          (IstHelp ((Ist ∗ IstEq (HWQM ★ HelpOn) STATE) ∗
+            IstEq (MemA ★ ProphA) STATE) (⊤ ∖ ↑N))
           with "[$] [$] Hs● Hbig He●");
           [by simpl_map|apply HNoDup|..].
         intros k Hk. destruct (decide (k = i)) as [->|Hk_not_i].
         + exfalso. apply Hi, Hk.
         + rewrite lookup_insert_ne; last done. apply Hb_valid2, Hk.
       }
-      clear_st. iIntros (st_src [] st_tgt []) "[? [IST [Hs● [Hbig He●]]]]".
+      iIntros (??) "[? [IST [Hs● [Hbig He●]]]]".
       iApply wsim_fold; iFrame.
       (* And then we can close the invariant. *)
       iMod ("Close" with "[-IST Hwriting_tok_i] IST") as "IST /=".
@@ -930,7 +933,7 @@ Section HWQPM.
         { rewrite Hi /= in Hname_tok_i. by inversion Hname_tok_i. }
         prependRetT tt; iApply (wsim_helping_pend_try_run with "HAU [-]").
         (* We run our atomic update ourself. *)
-        aUnfoldS; sYieldS; rewrite {3}/HWQM.jobCode; cStepsS. iRename "ASM" into "He◯".
+        aUnfoldS; sYieldS; rewrite /HWQM.jobCode; cStepsS. iRename "ASM" into "He◯".
         pose (elts := map (get_value slots deqs) pref ++ rest).
         iDestruct (sync_elts with "He● He◯") as %<-.
         iMod (update_elts _ _ _ (elts ++ [Vptr (qblk, qofs)]) with "He● He◯") as "[He● He◯]".

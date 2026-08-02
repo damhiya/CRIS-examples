@@ -10,7 +10,7 @@ Module MPIA. Section MPIA.
   Context `{!crisG Γ Σ α β τ _S _I, _HIST: !histGS, _ATOMIC: !atomicG, _SYS: !sysGS, _ONESHOT: !one_shotG}.
   Local Existing Instances one_shot_inG.
 
-  Definition Ist : ist_type Σ := λ _ _, emp%I.
+  Definition Ist (_ : stateGS Σ) : iProp Σ := emp%I.
 
   Context (sp_s sp_user : specmap).
   Context (SchInSpS : (SystemA.sp sp_user ⊤) ⊆ sp_s).
@@ -18,7 +18,10 @@ Module MPIA. Section MPIA.
 
   Local Definition MA := (MPA.t sp_s ★ SystemA.t sp_user ⊤ sp_s ★ PFMemA.t sp_s).
   Local Definition MI := (MPI.t      ★ SystemA.t sp_user ⊤ sp_s ★ PFMemA.t sp_s).
-  Local Definition IstFull := (IstProd (IstSB (Mod.scopes (MPA.t sp_s)) Ist) IstEq).
+  Local Definition CommonA :=
+    SystemA.t sp_user ⊤ sp_s ★ PFMemA.t sp_s.
+  Local Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
+    (Ist STATE ∗ IstEq CommonA STATE)%I.
 
   Lemma mp2_spawnable : ⊢ SystemA.fspec_spawnable sp_user MPHdr.mp2.1 MPA.mp2_precondition.
   Proof.
@@ -29,7 +32,8 @@ Module MPIA. Section MPIA.
     iFrame. iSplit; [done|iIntros (??) "[$ [% [-> [% $]]]]"]; eauto.
   Qed.
 
-  Lemma simF_mp : ⊢ ISim.sim_fun open MA MI IstFull entry.
+  Lemma simF_mp `{STATE : !stateGS Σ} :
+    ⊢ ISim.sim_fun open MA MI IstFull entry.
   Proof using SchInSpS HMP.
     cStartFunSim. rewrite /MPI.mp /MPA.mp.
     cStepsS. iDestruct "ASM" as "[-> TV]". rewrite /MPA.mp /MPI.mp; cStepsS; cStepsT.
@@ -37,7 +41,7 @@ Module MPIA. Section MPIA.
     iApply wsim_system_yield_ir; ss.
     { cSimpl; auto. }
     iFrame "TV IST".
-    iIntros (??) "IST TV".
+    iIntros "IST TV".
 
     (* alloc *)
     cStepsT. cInlineT. cForceT (1%positive, 0, 2, _). cForcesT. iFrame. iSplit; eauto.
@@ -49,15 +53,13 @@ Module MPIA. Section MPIA.
     iApply wsim_system_yield_ir; ss.
     { cSimpl; auto. }
     iFrame "TV IST".
-    clear dependent st_src st_tgt.
-    iIntros (??) "IST TV". cStepsT.
+    iIntros "IST TV". cStepsT.
 
     (* yield *)
     iApply wsim_system_yield_ir; ss.
     { cSimpl; auto. }
     iFrame "TV IST".
-    clear dependent st_src st_tgt.
-    iIntros (??) "IST TV". cStepsT.
+    iIntros "IST TV". cStepsT.
 
     (* write *)
     cInlineT.
@@ -74,8 +76,7 @@ Module MPIA. Section MPIA.
     iApply wsim_system_yield_ir; ss.
     { cSimpl; auto. }
     iFrame "TV IST".
-    clear dependent st_src st_tgt.
-    iIntros (??) "IST TV".
+    iIntros "IST TV".
 
     (* write *)
     cStepsT. cInlineT.
@@ -90,8 +91,7 @@ Module MPIA. Section MPIA.
     iApply wsim_system_yield_ir; ss.
     { cSimpl; auto. }
     iFrame "TV IST".
-    clear dependent st_src st_tgt.
-    iIntros (??) "IST TV".
+    iIntros "IST TV".
 
     (* spawn *)
     iMod (own_alloc Pending) as "[%γ O]"; ss.
@@ -119,19 +119,18 @@ Module MPIA. Section MPIA.
       iSplitR; first iApply mp2_spawnable.
       iExists γ; iSplit; eauto. rewrite shift_0; eauto.
     }
-    cStepsS. cStepsT. cCall "IST" as (ret st_src st_tgt) "IST".
+    cStepsS. cStepsT. cCall "IST" as (ret) "IST".
     cStepsS. iDestruct "ASM" as "[% [-> [TV [-> ->]]]]".
     cStepsT. cStepsS. iApply wsim_reset. clear Hle3 H.
 
-    cCoind CIH g' __ with st_src st_tgt V3. iIntros "[#[I SN] [FA [P [IST TV]]]]"; s.
-    unfoldIterCS. cStepsS. unfoldIterCT.
+    cCoind CIH g' __ with V3. iIntros "[#[I SN] [FA [P [IST TV]]]]"; s.
+    rewrite {1}unfold_iterC. cStepsS. rewrite {1}unfold_iterC.
 
     (* yield *)
     cStepsT.
     iApply wsim_system_yield_ir; ss. { cSimpl; auto. }
     iFrame "TV IST".
-    clear dependent st_src st_tgt.
-    iIntros (??) "IST TV".
+    iIntros "IST TV".
 
     cStepsT. cInlineT.
     iInv "I" as "INV" "ACC".
@@ -156,8 +155,7 @@ Module MPIA. Section MPIA.
 
       iApply wsim_system_yield_ir; ss. { cSimpl; auto. }
       iFrame "TV IST".
-      clear dependent st_src st_tgt.
-      iIntros (??) "IST TV".
+      iIntros "IST TV".
 
       cStepsT. des.
       hexploit (H1 (Cell.max_ts ζ'')); first done; rewrite Cell.singleton_get.
@@ -168,8 +166,7 @@ Module MPIA. Section MPIA.
 
       iApply wsim_system_yield_ir; ss. { cSimpl; auto. }
       iFrame "TV IST".
-      clear dependent st_src st_tgt.
-      iIntros (??) "IST TV".
+      iIntros "IST TV".
       cStepsT.
 
       iApply wsim_system_yield_src. cForceS false. cStepsS.
@@ -207,22 +204,19 @@ Module MPIA. Section MPIA.
         (* yield *)
         iApply wsim_system_yield_ir; ss. { cSimpl; auto. }
         iFrame "TV IST".
-        clear dependent st_src st_tgt.
-        iIntros (??) "IST TV".
+        iIntros "IST TV".
         cStepsT.
 
         (* yield *)
         iApply wsim_system_yield_ir; ss. { cSimpl; auto. }
         iFrame "TV IST".
-        clear dependent st_src st_tgt.
-        iIntros (??) "IST TV".
+        iIntros "IST TV".
         cStepsT.
 
         (* yield *)
         iApply wsim_system_yield_ir; ss. { cSimpl; auto. }
         iFrame "TV IST".
-        clear dependent st_src st_tgt.
-        iIntros (??) "IST TV".
+        iIntros "IST TV".
         cStepsT.
 
         (* non-atomic load here *)
@@ -238,8 +232,7 @@ Module MPIA. Section MPIA.
         cStepsT.
         iApply wsim_system_yield_ir; ss. { cSimpl; auto. }
         iFrame "TV IST".
-        clear dependent st_src st_tgt.
-        iIntros (??) "IST TV".
+        iIntros "IST TV".
         cStepsT.
 
         destruct v'; ss. eapply Z.eqb_eq in Hval'; subst.
@@ -266,15 +259,13 @@ Module MPIA. Section MPIA.
         (* yield *)
         iApply wsim_system_yield_ir; ss. { cSimpl; auto. }
         iFrame "TV IST".
-        clear dependent st_src st_tgt.
-        iIntros (??) "IST TV".
+        iIntros "IST TV".
         cStepsT.
 
         (* yield *)
         iApply wsim_system_yield_ir; ss. { cSimpl; auto. }
         iFrame "TV IST".
-        clear dependent st_src st_tgt.
-        iIntros (??) "IST TV".
+        iIntros "IST TV".
         cStepsT.
 
         iApply wsim_system_yield_src. cForceS false. cStepsS.
@@ -285,7 +276,8 @@ Module MPIA. Section MPIA.
   Unshelve. all: try exact 1%Qp; try exact ⊤.
   (*SLOW*)Qed.
 
-  Lemma simF_mp2 : ⊢ ISim.sim_fun open MA MI IstFull (fid MPHdr.mp2).
+  Lemma simF_mp2 `{STATE : !stateGS Σ} :
+    ⊢ ISim.sim_fun open MA MI IstFull (fid MPHdr.mp2).
   Proof using SchInSpS HMP.
     cStartFunSim. rewrite /sfunU /sfunN /MPI.mp2.
     cStepsS. destruct _q as [tid stid].
@@ -300,15 +292,13 @@ Module MPIA. Section MPIA.
     (* yield *)
     iApply wsim_system_yield_ir; ss. { cSimpl; ss. }
     iFrame "TV IST".
-    clear dependent st_src st_tgt.
-    iIntros (??) "IST TV".
+    iIntros "IST TV".
     cStepsT.
 
     (* yield *)
     iApply wsim_system_yield_ir; ss. { cSimpl; ss. }
     iFrame "TV IST".
-    clear dependent st_src st_tgt.
-    iIntros (??) "IST TV".
+    iIntros "IST TV".
     cStepsT.
 
     (* write to data *)
@@ -323,8 +313,7 @@ Module MPIA. Section MPIA.
     (* yield *)
     iApply wsim_system_yield_ir; ss. { cSimpl; ss. }
     iFrame "TV IST".
-    clear dependent st_src st_tgt.
-    iIntros (??) "IST TV".
+    iIntros "IST TV".
     cStepsT.
 
     (* open invariant *)
@@ -365,7 +354,7 @@ Module MPIA. Section MPIA.
     }
 
     iApply wsim_system_yield_ir; ss. { cSimpl; ss. }
-    iFrame "tv IST". clear dependent st_src st_tgt; iIntros (st_src st_tgt) "IST TID".
+    iFrame "tv IST". iIntros "IST TID".
     cStepsT.
 
     iApply (wsim_system_yield_src with "[-]"). cStepsS. cForcesS.
@@ -375,10 +364,18 @@ Module MPIA. Section MPIA.
 
   Lemma sim : ⊢ ISim.t open MA MI IstFull.
   Proof.
-    cStartModSim.
-    { iApply simF_mp2. }
-    { iApply simF_mp. }
-    { iIntros "_"; repeat iExists _; repeat iSplit; eauto. }
+    rewrite /MA /MI.
+    iApply (ISim_reflR open (MPA.t sp_s) MPI.t CommonA Ist).
+    - mod_tac.
+    - mod_tac.
+    - intros _. mod_tac.
+    - iIntros (STATE fn) "%Hfn".
+      unfold MPA.t in Hfn. cbn in Hfn.
+      set_unfold in Hfn; des; subst.
+      + iApply simF_mp2.
+      + iApply simF_mp.
+    - iIntros (STATE) "SRC TGT".
+      done.
   Qed.
 End MPIA.
 Section ctxr.

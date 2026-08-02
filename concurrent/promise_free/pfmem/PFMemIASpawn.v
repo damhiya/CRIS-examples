@@ -17,31 +17,35 @@ Section spawn.
   Definition MA := (PFMemA.t sp).
   Definition MI := (PFMemI.t syn size).
 
-  Lemma simF_spawn : ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.spawn).
+  Lemma simF_spawn `{STATE : !stateGS Σ} :
+    ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.spawn).
   Proof.
     cStartFunSim. rewrite /PFMemI.spawn. cStepsS. destruct _q as [tid V].
     iDestruct "ASM" as "[-> [-> TV]]".
-    iDestruct "IST" as "[% [% [% [[-> [% [% [%WF [% [%PFG %PFL]]]]]] [HA [TA HFA]]]]]]".
+    iDestruct "IST" as (gl ths Vcut)
+      "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [HFA CONFIG]]]]".
+    cStepsT.
+    set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
+    cGetT "CONFIG". subst config_any.
     cStepsT. destruct _q as [tid_new Hnin].
     iPoseProof (tview_both_valid with "TA TV") as "[% [% [%FIND %]]]"; rewrite FIND. cStepsT.
     subst V.
     iMod (tview_auth_alloc _ tid_new with "TA") as "[TA TVnew]"; eauto.
     { rewrite IdentMap.mem_find in Hnin; des_ifs; eauto. }
     cForceS (tid_new↑). cStepsS. cForceS (tid_new↑). cStepsS.
-    remember {[_ := _]} as st_tgt'.
-    iAssert (Ist st_src st_tgt')%I with "[- TV TVnew]" as "IST".
-    { iExists _, _, _; iSplit; first iPureIntro.
-      { split; first subst; ss.
-        split; eauto.
-        split; eauto.
-        split.
-        { inv WF; econs; ss. eapply Threads.spawn_wf; eauto. }
-        split; ss.
-        split; ss.
-        intros ???; rewrite IdentMap.gsspec; des_ifs; last by apply PFL.
-        case; intros -> <-; econs; ss.
-      }
-      iFrame.
+    cPutT "CONFIG".
+    iAssert (Ist STATE)%I with "[- TV TVnew]" as "IST".
+    { iExists _, _, _; iSplit; cycle 1.
+      { iFrame. }
+      iPureIntro.
+      split; eauto.
+      split; eauto.
+      split.
+      { inv WF; econs; ss. eapply Threads.spawn_wf; eauto. }
+      split; ss.
+      split; ss.
+      intros ???; rewrite IdentMap.gsspec; des_ifs; last by apply PFL.
+      case; intros -> <-; econs; ss.
     }
     cForceS. iSplitR "IST".
     { iFrame. eauto. }

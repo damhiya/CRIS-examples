@@ -5,16 +5,15 @@ From CRIS.hybrid_mem Require Import MemHdr MemLib HybridMem NonDetMem.
 Module MemHN. Section MemHN.
   Context `{!crisG Γ Σ α β τ _S _I, _MEM: !memGS}.
 
-  Definition Ist : gmap key (option Any.t) → gmap key (option Any.t) → iProp Σ :=
-    λ st_src st_tgt,
-      (∃ (mem: Mem.t),
-      ⌜st_src = {[NonDetMem.v_mem # mem↑]} ∧ st_tgt = {[HybMem.v_mem # mem↑]}⌝)%I.
+  Definition Ist (STATE : stateGS Σ) : iProp Σ :=
+    (∃ mem : Mem.t,
+      NonDetMem.v_mem ↦src mem↑ ∗ HybMem.v_mem ↦tgt mem↑)%I.
 
   Local Definition NonDetMem := NonDetMem.t.
   Local Definition HybMem := HybMem.t.
-  Local Definition IstFull := (IstProd (IstSB NonDetMem.(Mod.scopes) Ist) IstEq).
+  Local Definition IstFull := Ist.
 
-  Lemma simF_alloc :
+  Lemma simF_alloc `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.alloc).
   Proof using.
     cStartFunSim. rewrite /HybMem.alloc /NonDetMem.alloc.
@@ -23,18 +22,19 @@ Module MemHN. Section MemHN.
     cStepsS. cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
     cStepsS; cStepsT.
-    iDestruct "IST" as (? ? ? ?) "%". des; cSimpl. des_ifs; cycle 1.
+    iDestruct "IST" as (mem) "[MEMS MEMT]".
+    cSimpl. des_ifs; cycle 1.
     { cStepsS. ss. }
-    cForceT false. cStepsT.
+    cForceT false. cStepsT. cGetS "MEMS". cGetT "MEMT".
 
     cStepsT. cStepsS.
     cStepsS. cForceS _q. cStepsS.
+    cPutS "MEMS". cPutT "MEMT".
 
-    cStep. iSplit; [eauto|].
-    iPureIntro. repeat (esplits; eauto).
+    cStep. iSplit; first done. iExists _. iFrame.
   (* SLOW *)Qed.
 
-  Lemma simF_free :
+  Lemma simF_free `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.free).
   Proof using.
     cStartFunSim. rewrite /HybMem.free /NonDetMem.free.
@@ -43,16 +43,16 @@ Module MemHN. Section MemHN.
     cStepsS; cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
     cStepsS; cStepsT.
-    iDestruct "IST" as (? ? ? ?) "%". des. cSimpl.
+    iDestruct "IST" as (mem) "[MEMS MEMT]". cSimpl.
 
-    cStepsS. cForceT false. cStepsT. cStepsT.
-    cStepsS. cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
+    cForceT false. cGetS "MEMS". cGetT "MEMT".
+    cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
-    cStepsS. cStepsT. cStep. iSplit; [eauto|].
-    iPureIntro. repeat (esplits; eauto).
+    cStepsS. cStepsT. cPutS "MEMS". cPutT "MEMT".
+    cStep. iSplit; first done. iExists _. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_load :
+  Lemma simF_load `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.load).
   Proof using.
     cStartFunSim. rewrite /HybMem.load /NonDetMem.load.
@@ -61,18 +61,17 @@ Module MemHN. Section MemHN.
     cStepsS; cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
     cStepsS; cStepsT.
-    iDestruct "IST" as (? ? ? ?) "%". des. cSimpl.
+    iDestruct "IST" as (mem) "[MEMS MEMT]". cSimpl.
 
-    cStepsS. cStepsS. cStepsS. 
-    cForceT false. cStepsT. cStepsT.
+    cForceT false. cGetS "MEMS". cGetT "MEMT".
+    cStepsS.
     rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
     cStepsS; cStepsT.
-    cStep. iSplit; [eauto|].
-    iPureIntro. repeat (esplits; eauto).
+    cStep. iSplit; first done. iExists _. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_store :
+  Lemma simF_store `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.store).
   Proof using.
     cStartFunSim. rewrite /HybMem.store /NonDetMem.store.
@@ -81,19 +80,18 @@ Module MemHN. Section MemHN.
     cStepsS; cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
     cStepsS; cStepsT.
-    iDestruct "IST" as (? ? ? ?) "%". des; cSimpl.
+    iDestruct "IST" as (mem) "[MEMS MEMT]". cSimpl.
 
     destruct v.
-    cStepsS. cStepsS.
-    cForceT false. cStepsT. cStepsT.
+    cForceT false. cGetS "MEMS". cGetT "MEMT".
+    cStepsS.
     rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
-    cStepsS; cStepsT.
-    cStep. iSplit; [eauto|].
-    iPureIntro. repeat (esplits; eauto).
+    cStepsS; cStepsT. cPutS "MEMS". cPutT "MEMT".
+    cStep. iSplit; first done. iExists _. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_cmp :
+  Lemma simF_cmp `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.cmp).
   Proof using.
     cStartFunSim. rewrite /HybMem.cmp /NonDetMem.cmp.
@@ -102,19 +100,18 @@ Module MemHN. Section MemHN.
     cStepsS; cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
     cStepsS; cStepsT.
-    iDestruct "IST" as (? ? ? ?) "%". des; cSimpl.
+    iDestruct "IST" as (mem) "[MEMS MEMT]". cSimpl.
 
     destruct v.
-    cStepsS. cStepsS.
-    cForceT false. cStepsT. cStepsT.
+    cForceT false. cGetS "MEMS". cGetT "MEMT".
+    cStepsS.
     rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
     cStepsS; cStepsT.
-    cStep. iSplit; [eauto|].
-    iPureIntro. repeat (esplits; eauto).
+    cStep. iSplit; first done. iExists _. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_cas :
+  Lemma simF_cas `{STATE : !stateGS Σ} :
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.cas).
   Proof using.
     cStartFunSim. rewrite /HybMem.cas /NonDetMem.cas.
@@ -127,12 +124,12 @@ Module MemHN. Section MemHN.
     destruct v. destruct v0.
     cStepsS. cStepsS.
     cForceT false. cStepsT.
-    cCall "IST" as (???) "IST". cStepsS. cStepsT.
+    cCall "IST" as (?) "IST". cStepsS. cStepsT.
     rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
 
     cStepsS; cStepsT.
-    cCall "IST" as (???) "IST". cStepsS. cStepsT.
+    cCall "IST" as (?) "IST". cStepsS. cStepsT.
     rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
 
@@ -140,7 +137,7 @@ Module MemHN. Section MemHN.
     des_ifs; cycle 1.
     { cStepsS. cStepsT. cStep. iSplit; eauto. } 
     cStepsS. cStepsT. 
-    cCall "IST" as (???) "IST". cStepsS. cStepsT.
+    cCall "IST" as (?) "IST". cStepsS. cStepsT.
     rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
 
@@ -151,10 +148,13 @@ Module MemHN. Section MemHN.
   Lemma sim : ⊢ ISim.t open NonDetMem HybMem IstFull.
   Proof using.
     cStartModSim.
-    - rewrite /IstFull /HybMem /NonDetMem. unfold_mod. s. 
-      iIntros "_". iPureIntro. repeat (esplits; ss).
-      + instantiate (1 := ∅). instantiate (1 := Mem.empty). ss.
-      + ss.
+    - iPoseProof (state_init_src_acc _ _ NonDetMem.v_mem with "SRC") as
+        (ovs) "(%Hsrc & MEMS & _)".
+      { set_solver. }
+      iPoseProof (state_init_tgt_acc _ _ HybMem.v_mem with "TGT") as
+        (ovt) "(%Htgt & MEMT & _)".
+      { set_solver. }
+      simpl_map. subst ovs ovt. iExists Mem.empty. iFrame.
     - iApply simF_alloc.
     - iApply simF_free.
     - iApply simF_load.

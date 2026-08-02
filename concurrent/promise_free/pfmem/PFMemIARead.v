@@ -18,7 +18,7 @@ Section read.
   Definition MA := (PFMemA.t sp).
   Definition MI := (PFMemI.t syn size).
 
-  Lemma simF_read :
+  Lemma simF_read `{STGS : !stateGS Σ} :
     ⊢ ISim.sim_fun open MA MI PFMemIA.Ist (fid PFMemHdr.read).
   Proof.
     cStartFunSim.
@@ -27,8 +27,10 @@ Section read.
       cStepsS.
       destruct f as [[[[[tid loc] ord] val] q] 𝓥]. unfoldPrePost.
       iDestruct "ASM" as "[-> [-> [PT TV]]]". cStepsT.
-      iDestruct "IST" as "[%gl [%ths [%Vcut [[-> [%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]]] [HA [TA FA]]]]]]".
-      cStepsT. cStepsT.
+      iDestruct "IST" as (gl ths Vcut)
+        "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [FA CONFIG]]]]".
+      cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
+      cGetT "CONFIG". subst config_any. cStepsT. cStepsT.
       rewrite /PFMemI.check_ident.
       des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
       cStepsT. destruct _q as [[[e val'] config'] [EVREAD STEP]].
@@ -72,7 +74,7 @@ Section read.
       }
       (* VALID READ *)
       inv STEP; inv LOCAL. des_ifs. clear n.
-      cStepsT.
+      cStepsT. cPutT "CONFIG".
       iPoseProof (tview_both_valid with "TA TV") as "%F"; des; subst.
       rewrite F in Heq; inv Heq.
 
@@ -106,8 +108,7 @@ Section read.
       { rewrite Memory.get_memory_cell in CELL_GET'; des_ifs. }
       destruct EQ as [H2 [H4 [H5 H6]]]; subst.
       
-      remember ({[_ := _]}) as st_tgt.
-      iAssert (Ist st_src st_tgt)%I with "[HA FA TA]" as "IST".
+      iAssert (Ist STGS)%I with "[HA FA TA CONFIG]" as "IST".
       { iFrame. iPureIntro; esplits; eauto.
         { hexploit (@PFConfiguration.step_future ThreadEvent.get_machine_event); eauto.
           { econs; eauto. econs; eauto.
@@ -147,8 +148,10 @@ Section read.
     { destruct f as [[[[[[[[[[tid loc] ord] ζ] ζ'] t] γ] q] mode] 𝓥] Vb].
       cStepsS.
       iDestruct "ASM" as "[-> [[-> %ORDRLX] [SEEN [PT TV]]]]".
-      iDestruct "IST" as "[%gl [%ths [%Vcut [[-> [%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]]] [HA [TA FA]]]]]]".
-      cStepsT. cStepsT.
+      iDestruct "IST" as (gl ths Vcut)
+        "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [FA CONFIG]]]]".
+      cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
+      cGetT "CONFIG". subst config_any. cStepsT. cStepsT.
       rewrite /PFMemI.check_ident.
       des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
       cStepsT. destruct _q as [[[e v] config'] [EVREAD STEP]].
@@ -163,7 +166,7 @@ Section read.
       }
       (* VALID READ *)
       inv STEP; inv LOCAL. des_ifs. clear n.
-      cStepsT. rewrite /alist_upd /_alist_upd /=.
+      cStepsT. cPutT "CONFIG". rewrite /alist_upd /_alist_upd /=.
       (* 1. we don't need to update hist and points to *)
       (* 2. we do need to udpate seen *)
       (* 3. we do need to update 𝓥 *)
@@ -231,8 +234,7 @@ Section read.
 
         iMod ((tview_auth_update ths (IdentMap.add tid (existT lang st2, lc2) ths)) with "TA TV") as "[TA TV]"; eauto.
 
-        remember ({[_ := _]}) as st_tgt.
-        iAssert (Ist st_src st_tgt)%I with "[HA FA TA]" as "IST".
+        iAssert (Ist STGS)%I with "[HA FA TA CONFIG]" as "IST".
         { iFrame. iPureIntro; esplits; eauto.
           { hexploit (@PFConfiguration.step_future ThreadEvent.get_machine_event); eauto.
             { econs; eauto. econs; eauto.
@@ -303,7 +305,10 @@ Section read.
         }
         iClear "R".
 
-        set (lc2 := _: Local.t) at 4.
+        set (lc2 := Local.mk
+          (TView.read_tview (Local.tview lc1) loc ts released ord)
+          (Local.promises lc1) (Local.reserves lc1)
+          (Local.free_promises lc1) (Local.tid lc1)).
         iAssert (@{TView.cur (Local.tview lc2)} loc sn⊒{γ} ζ'')%I with "[RR SEEN]" as "SEEN".
         { rewrite AtomicSeen_eq /AtomicSeen_def /=.
           iDestruct "SEEN" as "[[%SEENALLOC %SEEN] [_ [%GOODHIST [%Vna' [%VNATV NA]]]]]".
@@ -311,7 +316,7 @@ Section read.
           { do 2 eapply AllocView.join_l; eauto. }
           { i. destruct (decide (t0 = ts)).
             { subst. rewrite /seen_local.
-              set (V := View.join _ _).
+              set (V := TView.cur (Local.tview lc2)).
               enough (View.le (View.singleton loc ts) V).
               { subst V. inv H1. ss.
                 eapply TimeMap.singleton_inv. ii.
@@ -379,8 +384,7 @@ Section read.
 
         iMod ((tview_auth_update ths (IdentMap.add tid (existT lang st2, lc2) ths)) with "TA TV") as "[TA TV]"; eauto.
 
-        remember ({[_ := _]}) as st_tgt.
-        iAssert (Ist st_src st_tgt)%I with "[HA FA TA]" as "IST".
+        iAssert (Ist STGS)%I with "[HA FA TA CONFIG]" as "IST".
         { iFrame. iPureIntro; esplits; eauto.
           { hexploit (@PFConfiguration.step_future ThreadEvent.get_machine_event); eauto.
             { econs; eauto. econs; eauto.

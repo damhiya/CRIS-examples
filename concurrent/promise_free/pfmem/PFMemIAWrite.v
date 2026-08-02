@@ -17,15 +17,18 @@ Section write.
   Definition MA := (PFMemA.t sp).
   Definition MI := (PFMemI.t syn size).
 
-  Lemma simF_write : ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.write).
+  Lemma simF_write `{STATE : !stateGS Σ} :
+    ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.write).
   Proof.
     cStartFunSim.
     cStepS. destruct _q as [p|[p|[]]].
     { (* non-atomic write *)
       destruct p as [[[[tid loc] val] ord] 𝓥]. cStepsS.
       iDestruct "ASM" as "[-> [-> [PT TV]]]". cSimpl.
-      iDestruct "IST" as "[%gl [%ths [%Vcut [[-> [%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]]] [HA [TA FA]]]]]]".
-      cStepsT. cStepsT.
+      iDestruct "IST" as (gl ths Vcut)
+        "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [FA CONFIG]]]]".
+      cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
+      cGetT "CONFIG". subst config_any. cStepsT. cStepsT.
       rewrite /PFMemI.check_ident.
       des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
       cStepsT. destruct _q as [[e config'] [EVWRITE STEP]].
@@ -69,7 +72,7 @@ Section write.
       }
       (* VALID WRITE *)
       inv STEP; inv LOCAL. des_ifs. clear n.
-      cStepsT.
+      cStepsT. cPutT "CONFIG".
       iPoseProof (tview_both_valid with "TA TV") as "%F"; des; subst.
       rewrite F in Heq; inv Heq.
       rewrite own_loc_eq /own_loc_def.
@@ -100,7 +103,7 @@ Section write.
       iMod (hist_freeable_auth_write with "FA") as "FA"; eauto. { inv WF; ss. }
       remember (IdentMap.add _ _ _) as ths2.
 
-      iAssert (Ist st_src _) with "[HA TA FA]" as "IST".
+      iAssert (Ist STATE) with "[HA TA FA CONFIG]" as "IST".
       { iExists gl2, ths2, (View.join (View.singleton loc to) Vcut). iFrame "HA". iSplitR.
         { iPureIntro; esplits; eauto.
           { intros loc' ???? GET.
@@ -207,8 +210,10 @@ Section write.
     (* Atomic write *)
     { destruct p as [[[[[[[[[[[[tid loc] val] ord] 𝓥] γ] ζ'] Vb] tx] ζ] mode] q] tx']. cStepsS.
       iDestruct "ASM" as "[-> [[-> %ORDRLX] [SEEN [PT [TV WRITE]]]]]". cSimpl.
-      iDestruct "IST" as "[%gl [%ths [%Vcut [[-> [%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]]] [HA [TA FA]]]]]]".
-      cStepsT. cStepsT.
+      iDestruct "IST" as (gl ths Vcut)
+        "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [FA CONFIG]]]]".
+      cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
+      cGetT "CONFIG". subst config_any. cStepsT. cStepsT.
       rewrite /PFMemI.check_ident.
       des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
       cStepsT. destruct _q as [[e config'] [EVWRITE STEP]].
@@ -258,7 +263,7 @@ Section write.
       }
       (* VALID WRITE *)
       inv STEP; inv LOCAL. des_ifs. clear n.
-      cStepsT.
+      cStepsT. cPutT "CONFIG".
       iPoseProof (AtomicPtsToX_AtomicSeen_latest with "PT SEEN") as "%LE".
       rewrite AtomicPtsToX_eq /AtomicPtsToX_def {2}/view_at.
       iDestruct "PT" as "[% [% [-> [[%SYNC %SYNC2] [HIST [AA AW]]]]]]". ss.
@@ -365,7 +370,7 @@ Section write.
       instantiate (1:=lc2). instantiate (1:=st2).
       iMod (hist_freeable_auth_write with "FA") as "FA"; eauto. { inv WF; ss. }
       remember (IdentMap.add _ _ _) as ths2.
-      iAssert (Ist st_src _) with "[HA TA FA]" as "IST".
+      iAssert (Ist STATE) with "[HA TA FA CONFIG]" as "IST".
       { iExists gl2, ths2, _. iFrame "HA". iSplitR.
         { iPureIntro; esplits; eauto.
           { intros loc' ???? GET.
