@@ -343,7 +343,7 @@ Section free.
     iDestruct "IST" as (gl ths Vcut)
       "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [FA CONFIG]]]]".
     cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
-    cGetT "CONFIG". subst config_any. cStepsT.
+    subst config_any. cStepsT.
     rewrite /PFMemI.check_ident.
     cStepsT. des_ifs.
     { cStepsT. destruct _q as [[e config'] [TEV STEP]].
@@ -359,7 +359,7 @@ Section free.
         iMod (hist_freeable_auth_free with "[F FA]") as "FA"; eauto; [inv WF; ss|iFrame|].
         iMod (hist_auth_free_vs with "[HA OLV]") as "HA"; eauto; [inv WF; ss|iFrame|].
         { subst. rewrite Nat2Z.id. done. }
-        cPutT "CONFIG". cStep. iSplit; eauto. clear EVENT n.
+        cStepsT. cStep. iSplit; eauto. clear EVENT n.
         unfold Ist. iExists gl2, (IdentMap.add tid (existT lang st2, lc2) ths), Vcut.
         iFrame.
         iPureIntro.

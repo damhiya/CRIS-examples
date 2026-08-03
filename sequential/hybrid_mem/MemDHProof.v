@@ -436,14 +436,14 @@ Module MemDH. Section MemDH.
       case_bool_decide as SIZE; cycle 1.
       { ss. rewrite /triggerUB. cStepsS; ss. }
       destruct SIZE as [SIZE2 SIZE3].
-      cStepsS. cGetS "MEMS". cGetT "MEMT".
+      cStepsS.
       cForceS (Z.to_nat (Mem.next_loc mem_tgt - Mem.next_loc mem_src)). cStepsS.
       set (nloc := Mem.next_loc mem_tgt).
       replace (Mem.next_loc mem_src + Z.of_nat (Z.to_nat (nloc - Mem.next_loc mem_src)))%Z with nloc by nia.
       assert (NLOC: ∀ loc (LOC: (loc >= nloc)%Z), mem_res loc = None).
       { i. destruct (NEXT loc (ltac:(nia))). ss. }
 
-      cStepsT. cPutS "MEMS". cPutT "MEMT". cStepsT. cStep. iSplitR; [eauto|].
+      cStepsT. cStep. iSplitR; [eauto|].
       iExists _, _, _. fold nloc.
       iFrame "MEMS MEMT".
       iSplitR.
@@ -620,7 +620,7 @@ Module MemDH. Section MemDH.
     case_bool_decide as SIZE'; cycle 1.
     { exfalso. nia. }
     destruct SIZE' as [SIZE2 SIZE3].
-    cStepsT. cGetT "MEMT".
+    cStepsT.
     cForceS (Mem.next_loc mem_tgt). cStepsS.
     iPoseProof (mem_ra_alloc_next with "B") as ">[B W]"; eauto.
 
@@ -640,7 +640,7 @@ Module MemDH. Section MemDH.
     { destruct H4. eauto. }
     set (nloc := Mem.next_loc mem_tgt). cStepsS.
 
-    cPutT "MEMT". cStepsT. cStep. iSplitR; [eauto|].
+    cStepsT. cStep. iSplitR; [eauto|].
     iExists _, _, _.
     iFrame "MEMS MEMT".
     iSplitR.
@@ -821,7 +821,7 @@ Module MemDH. Section MemDH.
     cStepsS. cStepsT.
     destruct _q; cycle 1.
     { (* physical memory *)
-      cStepsS. cStepsS. cGetS "MEMS". cGetT "MEMT". cStepsS. rename v into loc.
+      cStepsS. rename v into loc.
       hexploit (SIM loc). intro SIM0.
       unfold not_allocated, alloc_by_spec, alloc_by_impl in SIM0.
       rewrite /Mem.free.
@@ -830,7 +830,7 @@ Module MemDH. Section MemDH.
         |destruct SIMsp as [v0 [Hra [Hsrc Htgt]]]
         |destruct SIMimpl as [v0 [Hra [Hsrc Htgt]]]];
         des_ifs; cStepsS; des_ifs.
-      cStepsT. cPutS "MEMS". cPutT "MEMT". cStepsT.
+      cStepsT.
       cStep. iSplit; eauto.
 
       iExists _, _, _.
@@ -861,13 +861,13 @@ Module MemDH. Section MemDH.
     }
 
     (* logical memory *)
-    cStepsS. cGetT "MEMT".
+    cStepsS.
     iDestruct "ASM" as (?) "POINTS".
     rename v into loc.
 
     iPoseProof (mem_ra_lookup_point with "[B POINTS]") as "%P"; [eauto|iFrame|].
     des. rewrite /Mem.free.
-    rewrite P0. cStepsT. cPutT "MEMT". cStepsT.
+    rewrite P0. cStepsT.
 
     iPoseProof (mem_ra_free with "[B POINTS]") as ">P"; iFrame.
 
@@ -933,7 +933,7 @@ Module MemDH. Section MemDH.
     cStepsS. cStepsT.
     destruct _q; cycle 1.
     { (* physical memory *)
-      cStepsS. cStepsS. cGetS "MEMS". cGetT "MEMT". cStepsS.
+      cStepsS.
       rename v into loc.
       hexploit (SIM loc). intro SIM0.
       unfold not_allocated, alloc_by_spec, alloc_by_impl in SIM0.
@@ -950,7 +950,7 @@ Module MemDH. Section MemDH.
     }
 
     (* logical memory *)
-    cStepsS. cGetT "MEMT". destruct _q as [v0 q]. cStepsS.
+    cStepsS. destruct _q as [v0 q]. cStepsS.
     rename v into loc.
     hexploit (SIM loc). intro SIM0.
     unfold not_allocated, alloc_by_spec, alloc_by_impl in SIM0.
@@ -994,14 +994,14 @@ Module MemDH. Section MemDH.
     cStepsS.
     destruct _q; cycle 1.
     { (* physical memory *)
-      cStepsS. cGetS "MEMS". cGetT "MEMT". cStepsS.
+      cStepsS.
       hexploit (SIM loc). intro SIM0.
       unfold not_allocated, alloc_by_spec, alloc_by_impl in SIM0.
       unfold Mem.store in *.
       des; des_ifs.
       - cStepsS. ss.
       - cStepsS. ss.
-      - cStepsT. cStepsS. cPutS "MEMS". cPutT "MEMT". cStepsT.
+      - cStepsT. cStepsS.
       cStep. iSplit; [eauto|].
 
       iExists _, _, _.  
@@ -1036,7 +1036,7 @@ Module MemDH. Section MemDH.
     }
 
     (* logical memory *)
-    cStepsS. cGetT "MEMT". iDestruct "ASM" as ( ? )  "ASM".
+    cStepsS. iDestruct "ASM" as (?) "ASM".
     iPoseProof (mem_ra_lookup_point with "[B ASM]") as "%POINT"; [eauto|iFrame|].
     
     hexploit (SIM loc). intro SIM0.
@@ -1046,7 +1046,7 @@ Module MemDH. Section MemDH.
     iPoseProof (mem_ra_store with "[B ASM]") as ">[B P]"; [eauto|iFrame|].
     cForcesS. iSplitL "P"; eauto. cStepsS.
 
-    cStepsT. rewrite /Mem.store SIM2. cStepsT. cPutT "MEMT". cStepsT.
+    cStepsT. rewrite /Mem.store SIM2. cStepsT.
     cStep. iSplit; [eauto|].
 
     iExists _, _, _.  
@@ -1126,7 +1126,7 @@ Module MemDH. Section MemDH.
     cStepsS.
     destruct _q.
     { (* logical memory *)
-      cStepsS. cGetT "MEMT". destruct _q as [[v0 q0] [v1 q1]]. cStepsS.
+      cStepsS. destruct _q as [[v0 q0] [v1 q1]]. cStepsS.
       iDestruct "ASM" as "[%COMP ASM]". des.
 
       iPoseProof (mem_ra_cmp with "[B ASM]") as "%CMP"; eauto; [iFrame|].
@@ -1141,7 +1141,7 @@ Module MemDH. Section MemDH.
       iFrame. iSplit; eauto.
     }
 
-    cStepsS. cGetS "MEMS". cGetT "MEMT". cStepsS.
+    cStepsS.
     destruct (Mem.vcmp mem_src arg0 arg1) eqn:S; cycle 1.
     { cStepsS; des_ifs. }
     rename b into f.
@@ -1200,7 +1200,7 @@ Module MemDH. Section MemDH.
     destruct _q as [[[v_cur succ] [v0 q0]] [v1 q1]]. cStepsS.
     iDestruct "ASM" as "(%CMP & CUR & CMP0 & CMP1)". cStepsT.
 
-    cInlineT. cStepsT. cGetT "MEMT".
+    cInlineT. cStepsT.
     iPoseProof (mem_ra_lookup_point with "[B CUR]") as "%PT"; [eauto|iFrame|]. des.
     pose proof (SIM loc) as SIMCUR.
     unfold not_allocated, alloc_by_spec, alloc_by_impl in SIMCUR.
@@ -1209,14 +1209,14 @@ Module MemDH. Section MemDH.
     2: { destruct SIMimpl as [v2 [Hra _]]. rewrite Hra in PT. inv PT. }
     destruct SIMsp as [v2 [SIM0 [SIM1 SIM2]]].
     rewrite /Mem.load PT0. cStepsT.
-    cInlineT. cStepsT. cGetT "MEMT".
+    cInlineT. cStepsT.
     iPoseProof (mem_ra_cmp with "[B CUR CMP0 CMP1]") as "%CP"; eauto; [iFrame|].
     rewrite CP. cStepsT.
 
     repeat case_bool_decide; simplify_eq.
-    - cStepsT. cInlineT. cStepsT. cGetT "MEMT". rewrite /Mem.store PT0. cStepsT.
+    - cStepsT. cInlineT. cStepsT. rewrite /Mem.store PT0. cStepsT.
       iPoseProof (mem_ra_store with "[B CUR]") as ">[B P]"; [eauto|iFrame|].
-      cPutT "MEMT". cStepsT.
+      cStepsT.
       cForcesS. iSplitR "B MEMS MEMT"; iFrame. cStepsS.
       cStep.
       iSplit; eauto.

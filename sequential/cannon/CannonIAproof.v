@@ -26,11 +26,11 @@ Module CannonIA. Section CannonIA.
     (* already fired *)
     { iExFalso. iApply FiredBall; iFrame. }
 
-    cStepsS. cStepsT. cGetT "LV".
+    cStepsS. cStepsT.
     change (1 `div` 1)%Z with 1%Z.
 
     (* SRC, TGT: print 1 *)
-    cStep. cPutT "LV".
+    cStep. cStepsT.
 
     (* prove postcondition & the IST - Ready * Ball = Shot *)
     cStepsS. cForcesS. iSplitR; eauto. cStep.

@@ -28,7 +28,7 @@ Section write.
       iDestruct "IST" as (gl ths Vcut)
         "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [FA CONFIG]]]]".
       cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
-      cGetT "CONFIG". subst config_any. cStepsT. cStepsT.
+      subst config_any. cStepsT.
       rewrite /PFMemI.check_ident.
       des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
       cStepsT. destruct _q as [[e config'] [EVWRITE STEP]].
@@ -72,7 +72,7 @@ Section write.
       }
       (* VALID WRITE *)
       inv STEP; inv LOCAL. des_ifs. clear n.
-      cStepsT. cPutT "CONFIG".
+      cStepsT.
       iPoseProof (tview_both_valid with "TA TV") as "%F"; des; subst.
       rewrite F in Heq; inv Heq.
       rewrite own_loc_eq /own_loc_def.
@@ -213,7 +213,7 @@ Section write.
       iDestruct "IST" as (gl ths Vcut)
         "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [FA CONFIG]]]]".
       cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
-      cGetT "CONFIG". subst config_any. cStepsT. cStepsT.
+      subst config_any. cStepsT.
       rewrite /PFMemI.check_ident.
       des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
       cStepsT. destruct _q as [[e config'] [EVWRITE STEP]].
@@ -263,7 +263,7 @@ Section write.
       }
       (* VALID WRITE *)
       inv STEP; inv LOCAL. des_ifs. clear n.
-      cStepsT. cPutT "CONFIG".
+      cStepsT.
       iPoseProof (AtomicPtsToX_AtomicSeen_latest with "PT SEEN") as "%LE".
       rewrite AtomicPtsToX_eq /AtomicPtsToX_def {2}/view_at.
       iDestruct "PT" as "[% [% [-> [[%SYNC %SYNC2] [HIST [AA AW]]]]]]". ss.

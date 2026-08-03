@@ -32,7 +32,7 @@ Section wsim.
     cCoind CIH g' Hgg' with p_src p_tgt. iIntros "[IST [TV KTR]] /=".
     rewrite {2 3}unfold_iterC.
 
-    cStepsS. des_if; cStepS; ss.
+    cStepsS. des_if; [cNormS|cStepS; ss].
     cStepsT. rewrite Hmsk. cStepsT. destruct _q as [[|]|]; cycle 2.
     { cStepsT.
       cForceS (Some false). cStepsS.
@@ -42,14 +42,15 @@ Section wsim.
     }
     { cStepsT. rewrite Hspt. cStepsT. rewrite Hcall. cStepsT.
       cForceS (Some true). cStepsS. rewrite Hsps /=.
-      cStepS. des_if; cStepS; ss. cForceS (tid, stid, V).
-      cStepS. des_if; cStepS; ss. cForceS.
-      cStepS. des_if; cStepS; ss. cForceS.
+      cNormS. des_if; [cNormS|cStepS; ss]. cForceS (tid, stid, V).
+      cNormS. des_if; [cNormS|cStepS; ss]. cForceS.
+      cNormS. des_if; [cNormS|cStepS; ss]. cForceS.
       iFrame "TV". iSplit; eauto.
-      cStepS. des_if; cStepS; ss.
+      cNormS. des_if; [cNormS|cStepS; ss].
       cCall "IST" as (ret) "IST".
-      cStepS. des_if; cStepS; ss.
-      cStepS. des_if; cStepsS; ss. iDestruct "ASM" as "[-> [-> V]]".
+      cNormS. des_if; [cNormS|cStepS; ss].
+      cStepS. des_if; cStepsS; ss.
+      iDestruct "ASM" as "[-> [-> V]]".
       cStepsS. cStepsT. cByCoind CIH. iFrame.
     }
     cForceS (Some false). cStepsS. cStepsT.

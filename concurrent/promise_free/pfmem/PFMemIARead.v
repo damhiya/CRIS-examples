@@ -30,7 +30,7 @@ Section read.
       iDestruct "IST" as (gl ths Vcut)
         "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [FA CONFIG]]]]".
       cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
-      cGetT "CONFIG". subst config_any. cStepsT. cStepsT.
+      subst config_any. cStepsT.
       rewrite /PFMemI.check_ident.
       des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
       cStepsT. destruct _q as [[[e val'] config'] [EVREAD STEP]].
@@ -74,7 +74,7 @@ Section read.
       }
       (* VALID READ *)
       inv STEP; inv LOCAL. des_ifs. clear n.
-      cStepsT. cPutT "CONFIG".
+      cStepsT.
       iPoseProof (tview_both_valid with "TA TV") as "%F"; des; subst.
       rewrite F in Heq; inv Heq.
 
@@ -151,7 +151,7 @@ Section read.
       iDestruct "IST" as (gl ths Vcut)
         "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [FA CONFIG]]]]".
       cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
-      cGetT "CONFIG". subst config_any. cStepsT. cStepsT.
+      subst config_any. cStepsT.
       rewrite /PFMemI.check_ident.
       des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
       cStepsT. destruct _q as [[[e v] config'] [EVREAD STEP]].
@@ -166,7 +166,7 @@ Section read.
       }
       (* VALID READ *)
       inv STEP; inv LOCAL. des_ifs. clear n.
-      cStepsT. cPutT "CONFIG". rewrite /alist_upd /_alist_upd /=.
+      cStepsT. rewrite /alist_upd /_alist_upd /=.
       (* 1. we don't need to update hist and points to *)
       (* 2. we do need to udpate seen *)
       (* 3. we do need to update 𝓥 *)

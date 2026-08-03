@@ -93,10 +93,10 @@ Module StackIA. Section StackIA.
       (⇓sbox(msk_s) (⇓smod(sp_s) (stack_atomic_fun P body Q))) itt.
   Proof.
     iIntros "SIM". rewrite /stack_atomic_fun.
-    cStepS. case_match; cStepsS; ss. case_match; cStepsS; ss.
+    cNormS. case_match; cStepsS; ss. case_match; cStepsS; ss.
     iPoseProof ("SIM" with "ASM") as "SIM".
     appendRetT. wbind _ "SIM" as ([ret_s x2_s] ret_t) ">[W [Q RR]]".
-    cStepS; case_match; cStepsS; ss. iApply wsim_fold; iFrame.
+    cNormS; case_match; cStepsS; ss. iApply wsim_fold; iFrame.
     cForceS. iFrame. cStep; iFrame.
   Qed.
 

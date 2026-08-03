@@ -44,7 +44,6 @@ Module SingleCoinPA. Section SingleCoinPA.
     iDestruct "IST" as (l_s l_t) "[COINS [%EQ [F [AUTH PL]]]]".
     cStepsS. iDestruct "ASM" as "[-> ->]". cSimpl.
 
-    cStepsT. cGetT "COINS". cPutT "COINS".
     cStepsT. cInlineT. cForceT (proph_coins (length l_t), coin_proph).
     cStepsT. cForceT ((proph_coins (length l_t))↑). cStepsT.
     iPoseProof (ProphecyRA.free_id_split_singleton _ (proph_coins (length l_t)) with "F") as "[F1 F2]".
@@ -97,7 +96,7 @@ Module SingleCoinPA. Section SingleCoinPA.
     iDestruct "IST" as (l_s l_t) "[COINS [%EQ [F [AU PL]]]]".
     iPoseProof (coin_both_valid with "AU C") as "%NTH".
 
-    cStepsT. cGetT "COINS".
+    cStepsT.
     assert (idx < length l_s) by (eapply lookup_lt_Some; eauto).
     destruct (l_t !! idx) as [o|] eqn : LTN; cycle 1.
     { apply lookup_ge_None in LTN; lia. }
@@ -114,7 +113,7 @@ Module SingleCoinPA. Section SingleCoinPA.
     }
     { (* before initialization *)
       eapply elem_of_list_split_length in LTN; destruct LTN as [l1 [l2 [-> ->]]].
-      cStepsT. cPutT "COINS".
+      cStepsT.
       rewrite take_app Nat.sub_diag /= app_nil_r firstn_all drop_app.
       rewrite drop_ge; [|lia]; rewrite /= Nat.sub_succ_l // Nat.sub_diag /= drop_0.
       iPoseProof (big_sepL_app with "PL") as "[PL1 [P PL2]]".

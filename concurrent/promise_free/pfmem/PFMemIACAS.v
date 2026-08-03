@@ -29,7 +29,7 @@ Section CAS.
     iDestruct "IST" as (gl ths Vcut)
       "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [HFA CONFIG]]]]".
     cSimpl. cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
-    cGetT "CONFIG". subst config_any. cStepsT.
+    subst config_any. cStepsT.
 
     (* conditions *)
     iPoseProof (tview_both_valid with "TA TV") as "%IN".
@@ -137,7 +137,7 @@ Section CAS.
     clear n. iClear "CMP".
     inv STEP; ss. clear EVENT. inv STEP0; inv LOCAL; ss.
     { (* success case*)
-      cStepsT. cPutT "CONFIG".
+      cStepsT.
       assert (TRW : Time.lt tsr tsw).
       { inv LOCAL1. inv READABLE.
         inv LOCAL2. inv WRITE; ss. inv ADD; ss. inv ADD0; ss.
@@ -495,7 +495,7 @@ Section CAS.
       }
     }
     { (* fail case *)
-      cStepsT. cPutT "CONFIG".
+      cStepsT.
       iAssert (∃ ζ_read,
         ⌜Cell.le ζ' ζ_read
         ∧ ∀ ts, Cell.get ts ζ_read =
@@ -637,7 +637,7 @@ Section CAS.
         iFrame "HIST AA PTA". iSplit; first done.
         des. iSplit; done.
       }
-      cStepS. cStep.
+      cStep.
       iFrame. done.
     }
     Unshelve. all: auto.

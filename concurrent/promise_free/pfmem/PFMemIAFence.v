@@ -26,7 +26,7 @@ Section fence.
     iDestruct "IST" as (gl ths Vcut)
       "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [FA CONFIG]]]]".
     cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
-    cGetT "CONFIG". subst config_any. cStepsT. rewrite /PFMemI.check_ident.
+    subst config_any. cStepsT. rewrite /PFMemI.check_ident.
     des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
     cStepsT. destruct _q as [config' STEP].
     inv STEP. s in STEP0. inv STEP0; [inv LOCAL|].
@@ -47,7 +47,7 @@ Section fence.
 
     iMod ((tview_auth_update ths (IdentMap.add tid (existT lang st2, lc2) ths)) with "TA TV") as "[TA TV]"; eauto.
 
-    cPutT "CONFIG".
+    cStepsT.
     iAssert (Ist STATE)%I with "[HA FA TA CONFIG]" as "IST".
     { iFrame. iPureIntro; esplits; eauto.
       { hexploit (@PFConfiguration.step_future ThreadEvent.get_machine_event); eauto.

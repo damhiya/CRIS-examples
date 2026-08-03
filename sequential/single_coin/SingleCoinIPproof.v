@@ -13,7 +13,7 @@ Module SingleCoinIP. Section SingleCoinIP.
 
   Local Definition Ist (STATE : stateGS Σ) : iProp Σ :=
     (∃ (l : list (option bool)),
-      v_coins ↦src l↑ ∗ v_coins ↦tgt l↑)%I.
+      SingleCoinP.v_coins ↦src l↑ ∗ SingleCoinI.v_coins ↦tgt l↑)%I.
 
   Local Definition IstFull :=
     (λ STATE, (Ist STATE ∗ IstEq (ProphecyI.t mn) STATE)%I).
@@ -25,9 +25,8 @@ Module SingleCoinIP. Section SingleCoinIP.
     iDestruct "IST" as "[IST EQ]".
     iDestruct "IST" as (l) "[COINSS COINST]".
     cStepsS. cStepsT. destruct Any.downcast; cStepsS; last case_match; cStepsS; ss.
-    cGetS "COINSS". cGetT "COINST". cStepsS. cStepsT.
-    cPutS "COINSS". cPutT "COINST".
-    cStepsT. cStepsS. cInlineS. rewrite /ProphecyI.new. cStepsS. cStep.
+    cStepsS. cStepsT.
+    cInlineS. rewrite /ProphecyI.new. cStepsS. cStep.
     iSplit; eauto. iSplitR "EQ".
     - iExists (l ++ [None]). iFrame.
     - iFrame.
@@ -40,12 +39,12 @@ Module SingleCoinIP. Section SingleCoinIP.
     iDestruct "IST" as "[IST EQ]".
     iDestruct "IST" as (l) "[COINSS COINST]".
     cStepsS. cStepsT. destruct (Any.downcast arg); cStepsS; last case_match; cStepsS; ss.
-    cGetS "COINSS". cGetT "COINST". cStepsS. cStepsT. des_ifs.
+    cStepsS. cStepsT. des_ifs.
     { cStep; eauto. iSplit; eauto.
       iSplitR "EQ"; last iFrame. iExists l. iFrame.
     }
     { cStepsT. cForceS _q. cStepsS. rewrite /v_coins /SingleCoinP.v_coins.
-      cPutS "COINSS". cPutT "COINST". cStepsS.
+      cStepsS. cStepsT.
       cInlineS. rewrite /ProphecyI.new. cStepsS. cStep. iSplit; eauto.
       iSplitR "EQ"; last iFrame. iExists _. iFrame.
     }

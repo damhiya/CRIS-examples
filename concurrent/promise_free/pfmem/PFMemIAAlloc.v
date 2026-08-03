@@ -140,7 +140,7 @@ Section alloc.
     iDestruct "IST" as (gl ths Vcut)
       "[[%CUT [%CUTCL [%WF [%WF2 [%PFG %PFL]]]]] [HA [TA [FA CONFIG]]]]".
     cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
-    cGetT "CONFIG". subst config_any.
+    subst config_any.
     rewrite /PFMemI.check_ident.
     cStepsT.
     iPoseProof (tview_both_valid with "TA TV") as "%F"; des; clarify. rewrite F. cStepsT.
@@ -151,7 +151,7 @@ Section alloc.
     cStepsT. remember (Configuration.mk (IdentMap.add _ _ _) _) as config'.
     iPoseProof (tview_auth_update with "TA TV") as "> [TA TV]"; ss.
     iMod (hist_freeable_auth_alloc with "FA") as "[F FA]"; eauto. { inv WF; ss. }
-    cPutT "CONFIG".
+    cStepsT.
     iAssert (Ist STATE) with "[HA TA FA CONFIG]" as "IST".
     { iExists gl2,
         (Configuration.threads config'),
@@ -237,7 +237,7 @@ Section alloc.
       f_equal. apply Cell.ext; intros ts.
       rewrite Cell.init_get Cell.singleton_get; des_ifs.
     }
-    cStepS. cStep.
+    cStep.
     subst config'; iFrame. done.
   Unshelve. all: eauto.
   (*SLOW*)Qed.

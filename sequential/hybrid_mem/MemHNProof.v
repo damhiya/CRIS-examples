@@ -25,12 +25,8 @@ Module MemHN. Section MemHN.
     iDestruct "IST" as (mem) "[MEMS MEMT]".
     cSimpl. des_ifs; cycle 1.
     { cStepsS. ss. }
-    cForceT false. cStepsT. cGetS "MEMS". cGetT "MEMT".
-
-    cStepsT. cStepsS.
-    cStepsS. cForceS _q. cStepsS.
-    cPutS "MEMS". cPutT "MEMT".
-
+    cForceT false. cStepsT. cStepsS.
+    cForceS _q. cStepsS.
     cStep. iSplit; first done. iExists _. iFrame.
   (* SLOW *)Qed.
 
@@ -45,10 +41,10 @@ Module MemHN. Section MemHN.
     cStepsS; cStepsT.
     iDestruct "IST" as (mem) "[MEMS MEMT]". cSimpl.
 
-    cForceT false. cGetS "MEMS". cGetT "MEMT".
+    cForceT false.
     cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
-    cStepsS. cStepsT. cPutS "MEMS". cPutT "MEMT".
+    cStepsS. cStepsT. rewrite Heq. cStepsT.
     cStep. iSplit; first done. iExists _. iFrame.
   (*SLOW*)Qed.
 
@@ -63,11 +59,11 @@ Module MemHN. Section MemHN.
     cStepsS; cStepsT.
     iDestruct "IST" as (mem) "[MEMS MEMT]". cSimpl.
 
-    cForceT false. cGetS "MEMS". cGetT "MEMT".
+    cForceT false.
     cStepsS.
     rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
-    cStepsS; cStepsT.
+    cStepsS; cStepsT. rewrite Heq. cStepsT.
     cStep. iSplit; first done. iExists _. iFrame.
   (*SLOW*)Qed.
 
@@ -83,11 +79,11 @@ Module MemHN. Section MemHN.
     iDestruct "IST" as (mem) "[MEMS MEMT]". cSimpl.
 
     destruct v.
-    cForceT false. cGetS "MEMS". cGetT "MEMT".
+    cForceT false.
     cStepsS.
     rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
-    cStepsS; cStepsT. cPutS "MEMS". cPutT "MEMT".
+    cStepsS; cStepsT. rewrite Heq. cStepsT.
     cStep. iSplit; first done. iExists _. iFrame.
   (*SLOW*)Qed.
 
@@ -103,11 +99,11 @@ Module MemHN. Section MemHN.
     iDestruct "IST" as (mem) "[MEMS MEMT]". cSimpl.
 
     destruct v.
-    cForceT false. cGetS "MEMS". cGetT "MEMT".
+    cForceT false.
     cStepsS.
     rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
-    cStepsS; cStepsT.
+    cStepsS; cStepsT. rewrite Heq. cStepsT.
     cStep. iSplit; first done. iExists _. iFrame.
   (*SLOW*)Qed.
 

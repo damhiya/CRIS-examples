@@ -89,7 +89,7 @@ Module MapIM. Section MapIM.
     iDestruct "IST" as "[IST MEMEQ]".
     iDestruct "IST" as "[(SIZES & MAPS & HPTR) | (P' & IST)]"; cycle 1.
     { iExFalso. iApply (pending_unique with "P P'"). }
-    subst. cStepsS. cPutS "SIZES". cStepsS.
+    subst. cStepsS.
 
     (* SRC: prove the postcond of init *)
     cForceS (Vundef ↑).
@@ -104,7 +104,6 @@ Module MapIM. Section MapIM.
 
     (* TGT: handle the postcond of alloc *)
     cStepsT. iDestruct "GRT" as "[-> [%b [-> PTS]]]". cStepsT.
-    cPutT "HPTR". cStepsT.
 
     (* prepare and start an induction *)
     replace (replicate sz Vundef) with (replicate (sz - sz) (Vint 0) ++ replicate sz Vundef); cycle 1.
@@ -166,16 +165,15 @@ Module MapIM. Section MapIM.
     iDestruct "IST" as "[IST MEMEQ]".
     iDestruct "IST" as "[(SIZES & MAPS & HPTR) | (P & IST)]";
       [|iDestruct "IST" as (bofs f sz) "(SIZES & MAPS & HPTR & M)"].
-    { cStepsS. cGetS "SIZES". cStepsS. rewrite /assume. cStepsS. nia. }
-    cStepsS. cGetS "SIZES". cStepsS. rewrite /assume. cStepsS.
-    cGetS "MAPS". cStepsS.
+    { cStepsS. rewrite /assume. cStepsS. nia. }
+    cStepsS. rewrite /assume. cStepsS.
     destruct bofs as [blk ofs].
     
     (* SRC: prove the postcond of get *)
     cForceS. cForceS. iSplitL "". { eauto. }
 
     (* TGT : compute the input to load *)
-    cStepsT. cGetT "HPTR". cStepsT.
+    cStepsT.
     unfold scale_int. case_match; cycle 1.
     { exfalso. eapply n. eapply Z.divide_factor_r. }
     cStepsT. rewrite Z_div_mult; try nia.
@@ -203,13 +201,12 @@ Module MapIM. Section MapIM.
     iDestruct "IST" as "[IST MEMEQ]".
     iDestruct "IST" as "[(SIZES & MAPS & HPTR) | (P & IST)]";
       [|iDestruct "IST" as (bofs f sz) "(SIZES & MAPS & HPTR & M)"].
-    { cGetS "SIZES". cStepsS. rewrite /assume; cStepsS. nia. }
+    { cStepsS. rewrite /assume; cStepsS. nia. }
     destruct bofs as [blk ofs].
-    cGetS "SIZES". cStepsS. rewrite /assume. cStepsS.
-    cGetS "MAPS". cStepsS. cPutS "MAPS". cStepsS.
+    cStepsS. rewrite /assume. cStepsS.
 
     (* TGT : compute the input to store *)
-    cStepsT. cGetT "HPTR". cStepsT. unfold scale_int. case_match; cycle 1.
+    cStepsT. unfold scale_int. case_match; cycle 1.
     { exfalso. eapply n. eapply Z.divide_factor_r. }
     rewrite Z_div_mult; try nia.
     s. cStepsT.

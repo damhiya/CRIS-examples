@@ -214,7 +214,7 @@ Module RRSNodeIA. Section RRSNodeIA.
       - destruct _q. }
 
     iEval (rewrite /state_cell_src /state_cell_tgt /=) in "TIDS TIDT".
-    cGetT "TIDT".
+    cStepsT.
     iAssert (IstFull STATE) with "[TIDS TIDT CLOSEEQ]" as "IST".
     { iSplit; first done. iApply ("CLOSEEQ" with "[$TIDS $TIDT]"). }
     cStepsT. rewrite /mjoin /option_join.

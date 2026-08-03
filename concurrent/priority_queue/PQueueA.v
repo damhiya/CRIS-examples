@@ -346,7 +346,7 @@ Module PQueueIA. Section PQueueIA.
     { set (case := match queue !!! index with | [] => Vundef | v :: _ => v end).
       assert (case = Vundef) as Heq by (subst case caseb; destruct (_ !!! _) as [|[?|?|]?]; ss).
       subst case; rewrite Heq.
-      sYields. sYieldS. cStepS.
+      sYields. sYieldS. cNormS.
       set (case := match queue !!! index with | Vint _ as v :: _ => _ | _ => _ end).
       replace case with ((inl (S index)) : nat + val); cycle 1.
       { subst case caseb; destruct (queue !!! index) as [|[?|?|]?]; ss. }

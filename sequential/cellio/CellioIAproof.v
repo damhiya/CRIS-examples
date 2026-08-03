@@ -36,7 +36,7 @@ Module CellioIA. Section CellioIA.
     iPoseProof (cell_auth_get with "CELL AUTH") as "<-".
     iMod (cell_auth_set with "CELL AUTH") as "(CELL & AUTH)".
 
-    cPutT "CV". cForcesS. iSplitL "CELL"; eauto.
+    cStepsT. cForcesS. iSplitL "CELL"; eauto.
 
     cStep.
     iSplit; first done.
@@ -55,7 +55,7 @@ Module CellioIA. Section CellioIA.
 
     iPoseProof (cell_auth_get with "CELL AUTH") as "<-".
 
-    cStepsT. cGetT "CV".
+    cStepsT.
 
     (* Give cell(x) *)
     cForcesS. iSplitL "CELL"; eauto.

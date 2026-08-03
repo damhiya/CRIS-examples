@@ -47,7 +47,6 @@ Section SystemIA.
     subst.
 
     cStepsT. rewrite /SystemI.get_tid. cStepsT.
-    cGetT "TID_TGT". cStepsT.
     cInlineT. cForceT (_, _, _). cForcesT.
     iDestruct "TA" as "[TA TVS]".
     rewrite big_sepM_delete //. iDestruct "TVS" as "[$ TVS]"; eauto.

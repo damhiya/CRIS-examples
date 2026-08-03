@@ -107,12 +107,9 @@ Module NDSIA. Section sim.
       iExFalso. iApply (PendingShot_false with "[P S]"); iFrame. }
 
     iDestruct "IST_init" as "(% & P' & Pub)"; des; subst; cSimpl.
-    cPutS "SCHS". cPutT "SCHT".
     cStepsS. cStepsT. cSimpl.
-    cGetS "THSS". cGetT "THST".
     cStepsS. cStepsT. simpl_sp.
-    rewrite ConcInSp.
-    
+
     cForceS ((fn, tt↑↑)↑).
     cStepsS. cSpawn as (stid_new).
     cStepsS. cForceS (false, pre, post). cStepsS.
@@ -143,9 +140,7 @@ Module NDSIA. Section sim.
     { iIntros "Y T W". iFrame. iExists _. iSplit; eauto. rewrite /Public. unseal NDS. iFrame; eauto. }
 
     cStepsS.
-    cPutS "THSS". cPutT "THST".
     cStepsS. cStepsT.
-    cPutS "TIDS". cPutT "TIDT".
     cStepsS. cStepsT.
     rewrite /SModTr.HoareYield.
     rewrite ConcInSp.
@@ -208,9 +203,7 @@ Module NDSIA. Section sim.
     iPoseProof (Shot_match with "S S'") as "%"; subst.
 
     cStepsS. cStepsT.
-    cGetS "THSS". cGetT "THST".
     cStepsS. cStepsT.
-    cGetS "TIDS". cGetT "TIDT".
     cStepsS. cStepsT.
     rewrite !list_lookup_fmap !H /=. cStepsS. cStepsT.
     rewrite ConcInSp.
@@ -339,13 +332,10 @@ Module NDSIA. Section sim.
       rewrite !list_lookup_fmap H0 in Hmtid0. inv Hmtid0.
 
       cStepsS. cStepsT.
-      cGetS "THSS". cGetT "THST".
       cStepsS. cStepsT.
-      cGetS "TIDS". cGetT "TIDT".
       cStepsS. cStepsT.
       rewrite ?list_lookup_fmap H0 /=.
       cStepsS. cStepsT.
-      cPutS "THSS". cPutT "THST".
       cStepsS. cStepsT.
 
       iCombine "TidA TidF"
@@ -515,13 +505,10 @@ Module NDSIA. Section sim.
       rewrite !list_lookup_fmap H0 in Hmtid0. inv Hmtid0.
 
       cStepsS. cStepsT.
-      cGetS "THSS". cGetT "THST".
       cStepsS. cStepsT.
-      cGetS "TIDS". cGetT "TIDT".
       cStepsS. cStepsT.
       rewrite ?list_lookup_fmap H0 /=.
       cStepsS. cStepsT.
-      cPutS "THSS". cPutT "THST".
       cStepsS. cStepsT.
 
       iCombine "TidA TidF"
@@ -629,7 +616,6 @@ Module NDSIA. Section sim.
     rewrite !list_lookup_fmap H in Hmtid0. inv Hmtid0.
 
     cStepsS. cStepsT.
-    cGetS "THSS". cGetT "THST".
     cStepsS. cStepsT. cSimpl. simpl_sp.
 
     (* System spawn precondition *)
@@ -664,12 +650,11 @@ Module NDSIA. Section sim.
     { iIntros "Y T W". iFrame " Y T W ASM JoinF1 TidF' Spawn".
       iExists fn. rewrite length_fmap. subst mtid_new. iFrame. iPureIntro; esplits; eauto. }
     cStepsS.
-    cPutS "THSS". cPutT "THST".
     cStepsS. cStepsT.
     cForceS (mtid_new↑). cStepsS.
     cForceS. iSplitL "JoinF2 T Y TidF S C PubF".
     { iExists _; iSplit; eauto. iFrame; eauto. }
-    cStepS. cStep.
+    cStep.
 
     iSplit; eauto.
     iExists (ths ++ [(tid_new, None, user_post)]), _, _, ssch0.
@@ -736,7 +721,6 @@ Module NDSIA. Section sim.
     rewrite !list_lookup_fmap H in Hmtid0. inv Hmtid0.
 
     cStepsS. cStepsT.
-    cGetS "THSS". cGetT "THST".
     cStepsS. cStepsT.
 
     (* GetTid reasoning *)
@@ -744,7 +728,6 @@ Module NDSIA. Section sim.
     cForcesS; iFrame "TID". cStepsS.
     cStepsT. cStep.
     cStepsS. iDestruct "ASM" as "[-> TID]". cStepsS. cStepsT.
-    cGetS "TIDS". cGetT "TIDT".
     cStepsS. cStepsT.
     iPoseProof (Tid_Auth_Tid with "[TidA TidF]") as "%Hmtid"; first iFrame.
     eapply elem_of_list_to_map_2 in Hmtid; rewrite elem_of_lookup_imap in Hmtid.
@@ -757,7 +740,6 @@ Module NDSIA. Section sim.
     destruct _q as [[tidn stidn] Htidn]. unshelve cForceS (exist _ (tidn, stidn) _); last cStepS.
     { ss. revert Htidn; rewrite ?list_lookup_fmap; destruct (ths !! tidn) as [[[? ?] ?]|]; ss. }
     cStepsS. cStepsT.
-    cPutS "TIDS". cPutT "TIDT".
     cStepsS. cStepsT.
 
     (* HoareYield *)
@@ -885,7 +867,6 @@ Module NDSIA. Section sim.
     rewrite !list_lookup_fmap H in Hmtid0. inv Hmtid0.
 
     cStepsS. cStepsT.
-    cGetS "SCHS". cGetT "SCHT".
     cStepsS. cStepsT.
 
     (* HoareYield *)
@@ -1000,7 +981,6 @@ Module NDSIA. Section sim.
     rewrite !list_lookup_fmap H in Hmtid0. inv Hmtid0.
     
     cStepsS. cStepsT.
-    cGetS "THSS". cGetT "THST".
     cStepsS. cStepsT.
 
     rewrite ?list_lookup_fmap.
@@ -1077,7 +1057,6 @@ Module NDSIA. Section sim.
     apply elem_of_list_to_map_2 in Hin; rewrite elem_of_lookup_imap in Hin.
     destruct Hin as [? [? [EQ Hin]]]; symmetry in EQ; inv EQ.
 
-    cGetS "TIDS". cGetT "TIDT".
     cStepsS. cForcesS. iFrame. iSplit; eauto.
     cStepsT. cStep.
 

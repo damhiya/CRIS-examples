@@ -49,7 +49,6 @@ Section SystemIA.
       subst.
 
       cStepsT. rewrite /SystemI.get_tid. cStepsT.
-      cGetT "TID_TGT". cStepsT.
       cInlineT. rewrite /PFMemA.write_spec.
       cForceT (meta0 (_, loc, val, ord, V))%cris.
       cForcesT. iFrame.
@@ -94,7 +93,6 @@ Section SystemIA.
       subst.
 
       cStepsT. rewrite /SystemI.get_tid. cStepsT.
-      cGetT "TID_TGT". cStepsT.
       cInlineT.
       cForceT (meta1 (tid_cur, loc, val, ord, V, γ, ζ', Vb, tx, ζ, mode, q, tx'))%cris.
       iDestruct "TA" as "[TA TVS]".

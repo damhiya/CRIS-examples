@@ -20,7 +20,7 @@ Module SystemIA. Section SystemIA.
   Definition Ist (STGS : stateGS Σ) : iProp Σ :=
       (∃ (tid : Ident.t) (tids : gmap Ident.t (TView.t * nat)),
         let tids' : gmap Ident.t nat := snd <$> tids in
-        SystemI.v_tid ↦src tid↑ ∗ SystemI.v_tids ↦src tids'↑ ∗
+        SystemA.v_tid ↦src tid↑ ∗ SystemA.v_tids ↦src tids'↑ ∗
         SystemI.v_tid ↦tgt tid↑ ∗ SystemI.v_tids ↦tgt tids'↑ ∗
         tview_sys_auth tids ∗
         ([∗ map] i ↦ stid ∈ (snd <$> delete tid tids),
@@ -91,10 +91,10 @@ Module SystemIA. Section SystemIA.
     }
     subst.
 
-    cStepsT. cStepsS. cGetS "TID_SRC". cGetT "TID_TGT".
+    cStepsT. cStepsS.
     cStepsS. cStepsT.
     set (tids_any := (((snd <$> tids : gmap Ident.t nat)↑) : Any.t)).
-    cGetS "TIDS_SRC". cGetT "TIDS_TGT". subst tids_any.
+    subst tids_any.
     cStepsS. cStepsT.
 
     (* Calling PFMemHdr.spawn *)
@@ -113,6 +113,7 @@ Module SystemIA. Section SystemIA.
       rewrite discrete_fun_singleton_op discrete_fun_singleton_valid in WF; done.
     }
     cStepsT.
+    cStepsS.
 
     unshelve (cForceS (exist _ tid_new _)).
     { ss; rewrite lookup_fmap Hnew //. }
@@ -128,8 +129,6 @@ Module SystemIA. Section SystemIA.
     cForceS. iSplitL "TVS_new PRE Hspawn".
     { iIntros "? ? ?". iExists _, _, _, _, _, _, _. iFrame. iSplit; eauto. }
     cStepsS.
-    cPutS "TIDS_SRC". cPutT "TIDS_TGT".
-
     cForcesS. iFrame "TV STV". iSplit; eauto. cStepsS. cStep.
     iSplit; eauto.
     iSplitR "EQ"; last iFrame.
@@ -156,7 +155,6 @@ Module SystemIA. Section SystemIA.
     iDestruct "IST" as "[IST EQ]".
     iDestruct "IST" as (tid_cur tids)
       "(TID_SRC & TIDS_SRC & TID_TGT & TIDS_TGT & TA & YS)".
-
     (* v_tid is set to a correct one *)
     iDestruct "TV" as "[TV [TID Y]]".
     iPoseProof (tview_sys_lookup with "TA TV") as "%Hlookup"; first iFrame.
@@ -167,13 +165,12 @@ Module SystemIA. Section SystemIA.
     }
     subst. cStepsS; cStepsT.
     set (tids_any := (((snd <$> tids : gmap Ident.t nat)↑) : Any.t)).
-    cGetS "TIDS_SRC". cGetT "TIDS_TGT". subst tids_any.
+    subst tids_any.
     cStepsS; cStepsT.
     
     destruct _q as [[tid_next stid_next] Hin].
     cForceS (exist _ (tid_next, stid_next) Hin). cStepsS.
 
-    cPutS "TID_SRC". cPutT "TID_TGT".
     rewrite ConcInGlobal. s. cStepsS. cStepsT.
     cForceS stid. cStepsS.
     iAssert (YIELD stid_next ∗
@@ -202,7 +199,7 @@ Module SystemIA. Section SystemIA.
     iDestruct "IST" as "[IST EQ]".
     iDestruct "IST" as (tid_cur2 tids)
       "(TID_SRC & TIDS_SRC & TID_TGT & TIDS_TGT & TA & YS)".
-    cStepsS. cForceS (tt↑). cStepS. iDestruct "ASM" as "[? [? ?]]".
+    cStepsS. cForceS (tt↑). iDestruct "ASM" as "[? [? ?]]".
     iApply wsim_fold; iFrame.
     cForceS. iFrame. iSplit; eauto.
 
@@ -221,7 +218,7 @@ Module SystemIA. Section SystemIA.
     iDestruct "IST" as "[IST EQ]".
     iDestruct "IST" as (tid_cur tids)
       "(TID_SRC & TIDS_SRC & TID_TGT & TIDS_TGT & TA & YS)".
-    cStepsS; cStepsT. cGetS "TID_SRC". cGetT "TID_TGT".
+    cStepsS; cStepsT.
     cStepsS; cStepsT.
 
     (* v_tid is set to a correct one *)

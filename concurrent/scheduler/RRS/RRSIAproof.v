@@ -98,9 +98,7 @@ Module RRSIA. Section RRSIA.
     iDestruct "IST_init" as "(% & RRIA & PubA)"; subst.
     rewrite map_size_empty in INVWF. destruct ths; ss.
 
-    cPutS "SCHS". cPutT "SCHT".
     cStepsT. cStepsS. cSimpl.
-    cGetS "THSS". cGetT "THST".
     cStepsT. cStepsS. cSimpl.
     cForceS. cStepsS.
     cSpawn as (stid_0).
@@ -130,9 +128,7 @@ Module RRSIA. Section RRSIA.
     { iIntros "Y T W". do 5 iExists _. rewrite /Public. unseal RRS. iFrame. iPureIntro; eauto. }
 
     cStepsS.
-    cPutS "THSS". cPutT "THST".
     cStepsS. cStepsT.
-    cPutS "TIDS". cPutT "TIDT".
     cStepsS. cStepsT. rewrite ConcInSp.
     iApply wsim_unfold; iIntros "WI".
     cForcesS. iSplitL "Tsch Y WI"; first iFrame.
@@ -195,9 +191,7 @@ Module RRSIA. Section RRSIA.
     iDestruct "IST_global_in" as "(% & Ys & RRIA & TidF & S' & PubA)". 
     
     cStepsT. cStepsS.
-    cGetS "THSS". cGetT "THST".
     cStepsT. cStepsS.
-    cGetS "TIDS". cGetT "TIDT".
     cStepsT. cStepsS. rewrite H. cStepsT. cStepsS.
     rewrite ConcInSp.
 
@@ -439,7 +433,6 @@ Module RRSIA. Section RRSIA.
     rewrite H in Hmtid0. inv Hmtid0.
 
     cStepsS. cStepsT.
-    cGetS "THSS". cGetT "THST".
     cStepsS. cStepsT. cSimpl.
     set (size rrinvO) as mtid_new.
     cStepsS. cStepsT.
@@ -474,7 +467,6 @@ Module RRSIA. Section RRSIA.
     { subst mtid_new. rewrite -INVWF. iFrame. iIntros "Y T WI". iFrame. iPureIntro. esplits; eauto. eapply insert_non_empty. }
 
     iApply wsim_unfold; iIntros "WI".
-    cPutS "THSS". cPutT "THST".
     cStepsS. cStepsT. cForceS. cStepsS.
     iApply wsim_guarantee_src.
     iSplitL "WI TidF RRI Y T S C PubF"; iFrame; eauto.
@@ -547,12 +539,11 @@ Module RRSIA. Section RRSIA.
 
     iMod (Public_update_private with "PubA PubF") as "[PubA PubF]"; eauto.
 
-    cGetS "THSS". cStepsS. cStepsT.
-    cGetT "THST". cStepsS. cStepsT. cSimpl.
+    cStepsS. cStepsT.
+    cStepsS. cStepsT. cSimpl.
     cStepsS. cStepsT.
     cForcesS. iSplitL "T"; first iFrame.
     cStepsS. cStep. cStepsS. cStepsT. iDestruct "ASM" as "[-> T]". cSimpl.
-    cGetS "TIDS". cGetT "TIDT".
     cStepsS. cStepsT. rewrite H. case_decide; ss. cStepsS. cStepsT.
     eapply lookup_lt_Some in H as LEN.
     generalize (succ_rr_upperbound mtid (length ths) LEN); intro LEN0.
@@ -560,7 +551,6 @@ Module RRSIA. Section RRSIA.
 
     rename x into stidn. set (succ_rr mtid (length ths)) as mtidn.
     cStepsT. cStepsS.
-    cPutS "TIDS". cPutT "TIDT".
     cStepsT. cStepsS. rewrite ConcInSp.
     iAssert (YIELD stidn ∗
         [∗ list] i ↦ e ∈ ths, if decide (i = mtidn) then emp else YIELD e)%I
@@ -692,7 +682,6 @@ Module RRSIA. Section RRSIA.
 
     iMod (Public_update_private with "PubA PubF") as "[PubA PubF]"; eauto.
 
-    cGetS "SCHS". cGetT "SCHT".
     cStepsS. cSimpl. cStepsS. cStepsT. cSimpl. cStepsT.
     iApply wsim_unfold; iIntros "WI".
     cForcesS. iSplitL "T NschY WI"; first iFrame.
@@ -795,7 +784,6 @@ Module RRSIA. Section RRSIA.
       case_decide; clarify. iPoseProof (YieldToken_both with "Y YIELD2") as "%"; ss. }
     rewrite H in Hmtid0. inv Hmtid0.
 
-    cGetS "TIDS". cGetT "TIDT".
     cStepsS. cStepsT. cSimpl. cStepsS. cStepsT.
     cForcesS. iSplitL "TidF Y T S C PubF"; first iFrame; eauto.
     cStep. iSplit; eauto.

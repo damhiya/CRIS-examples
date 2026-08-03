@@ -118,8 +118,7 @@ Module CtrlIA. Section CtrlIA.
     destruct INV as [HDREL LEN]. subst hd. cSimpl.
 
     (* TGT, SRC: take cSteps *)
-    cStepsT. cStepsS. cPutS "QUE". cPutT "HD".
-    cStepsT. cPutT "TL". cStepsT. cStepsS.
+    cStepsT. cStepsS.
     cStep. iSplitL "". { eauto. }
 
     (* Prove the IST *)
@@ -155,8 +154,7 @@ Module CtrlIA. Section CtrlIA.
     destruct INV as [HDREL LEN]. subst hd. cSimpl.
 
     (* TGT, SRC: take cSteps *)
-    cStepsT. cStepsS. cGetS "QUE". cGetT "HD".
-    cStepsT. cGetT "TL". cStepsT. cStepsS.
+    cStepsT. cStepsS.
     cStep. iSplitL "". { rewrite Nat.add_comm Nat.add_sub. eauto. }
 
     (* Prove the IST *)
@@ -177,7 +175,6 @@ Module CtrlIA. Section CtrlIA.
     iDestruct "IST" as "[IST CELLEQ]".
     iDestruct "IST" as (? ? ? ?) "(QUE & HD & TL & %INV & LIVE & FREE)".
     destruct INV as [HDREL LEN]. subst hd.
-    cGetS "QUE". cGetT "HD". cStepsT. cGetT "TL".
     cStepsS. cStepsT.
     rename q into v. rename q' into l.
 
@@ -188,7 +185,7 @@ Module CtrlIA. Section CtrlIA.
       iExists v, l, (tl + List.length v), tl. iFrame. eauto. }
 
     (* SRC: take cSteps *)
-    cPutS "QUE". cStepsS.
+    cStepsS.
 
     apply Nat.ltb_lt in Heq. rewrite length_app in LEN.
     assert (UBND:= Nat.mod_upper_bound (tl + List.length v) max_size).
@@ -208,7 +205,7 @@ Module CtrlIA. Section CtrlIA.
 
     (* TGT: take cSteps using GRT from set_spec *)
     cStepsT. iDestruct "GRT" as "(% & % & CELL)". subst.
-    cStepsT. cPutT "HD". cStepsT. cStep.
+    cStepsT. cStep.
     iSplitL ""; eauto.
 
     (* Prove the IST *)
@@ -242,7 +239,6 @@ Module CtrlIA. Section CtrlIA.
     destruct INV as [HDREL LEN]. subst hd.
 
     (* TGT: check the length of the queue *)
-    cGetS "QUE". cGetT "HD". cStepsT. cGetT "TL".
     cStepsS. cStepsT.
     destruct q; ss.
     { rewrite Nat.add_0_r Nat.sub_diag. s. cStep. cStep. iSplitL ""; eauto.
@@ -252,7 +248,7 @@ Module CtrlIA. Section CtrlIA.
     rewrite !length_app in LEN.
 
     (* SRC: take cSteps *)
-    cPutS "QUE". cStepsS.
+    cStepsS.
     assert (UBND:= Nat.mod_upper_bound tl max_size).
     revert WFS WFT.
     rewrite (@cellgroup_split (tl mod max_size)); try nia.
@@ -265,7 +261,7 @@ Module CtrlIA. Section CtrlIA.
 
     (* TGT: take cSteps using GRT from get_spec *)
     cStepsT. iDestruct "GRT" as "(% & % & CELL)". subst. cSimpl.
-    cStepsT. cPutT "TL". cStepsT. cForcesS. cStep.
+    cStepsT. cForcesS. cStep.
     iSplitL ""; eauto.
 
     (* Prove the IST *)

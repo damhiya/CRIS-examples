@@ -36,7 +36,7 @@ Module MapMA. Section MapMA.
     iSplitL "P0"; [iFrame; eauto|].
 
     (* TGT: handle the postcond of init *)
-    cPutT "SIZE". cStepsT. iDestruct "GRT" as "(% & %)". subst.
+    cStepsT. iDestruct "GRT" as "(% & %)". subst.
     
     (* SRC: prove the postcond of init *)
     iMod (initialize with "INIT") as "(ALLOC & UNALLOC & INIT)".
@@ -58,7 +58,7 @@ Module MapMA. Section MapMA.
     (* SRC: handle the IST of Map and the precond of get *)
     iDestruct "IST" as (f sz) "(MAPS & SIZE & MAPT & [(% & P0 & INIT)|(P' & B & U)])".
     { iExFalso. iApply (initial_map_points_to with "INIT MAP"). }
-    des; subst. cStepsS. cGetS "MAPS". cStepsS.
+    des; subst. cStepsS.
 
     (* TGT: prove the precond of get *)
     cForceT idx. cForceT. cForceT.
@@ -66,11 +66,11 @@ Module MapMA. Section MapMA.
 
     (* TGT : handle the body of get *)
     iPoseProof (auth_unallocated_points_to with "U MAP") as "%".
-    cStepsT. cGetT "SIZE". cStepsT.
+    cStepsT.
     rewrite /assume; unshelve cForceT; eauto.
 
     (* TGT: handle the postcond of get *)
-    cStepsT. cGetT "MAPT". cStepsT. iDestruct "GRT" as "(<- & _)".
+    cStepsT. iDestruct "GRT" as "(<- & _)".
 
     (* SRC: prove the postcond of get *)
     cForceS. cForceS.
@@ -93,17 +93,15 @@ Module MapMA. Section MapMA.
     iDestruct "ASM" as "(-> & (-> & MAP))".
     iDestruct "IST" as (f sz) "(MAPS & SIZE & MAPT & [(% & P0 & INIT)|(P' & B & U)])".
     { iExFalso. iApply (initial_map_points_to with "INIT MAP"). }
-    des; subst. cStepsS. cGetS "MAPS". cStepsS.
-    cPutS "MAPS". cStepsS.
+    des; subst. cStepsS.
 
     (* TGT: prove the precond of set *)
     cForceT (k, v). cForceT. cForceT. iSplitR; first eauto.
 
     (* TGT : handle the body of set *)
-    cStepsT. cGetT "SIZE". cStepsT. rewrite /assume.
+    cStepsT. rewrite /assume.
     iPoseProof (auth_unallocated_points_to with "U MAP") as "%".
-    unshelve cForceT; eauto. cStepsT. cGetT "MAPT". cStepsT.
-    cPutT "MAPT". cStepsT.
+    unshelve cForceT; eauto. cStepsT.
 
     (* TGT: handle the postcond of set *)
     iDestruct "GRT" as "(<- & _)".

@@ -29,7 +29,7 @@ Module LockIA. Section LockIA.
     (* preprocess initial conditions *)
     cStepsS. destruct _q as [[stid mtid] [n P]].
     iDestruct "ASM" as "[TID [-> P]]"; s. destruct Any.downcast; s; [|cStepS; ss].
-    cStepsT. cStepS.
+    cStepsT. cNormS.
 
     (* tgt yield *)
     sYieldIR "IST" "TID".

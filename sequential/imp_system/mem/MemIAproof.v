@@ -248,14 +248,14 @@ Module MemIA. Section MemIA.
     iDestruct "ASM" as "[-> [-> %]]".
 
     iDestruct "IST" as (mem_tgt mem_src) "(MEM & [%Hsim %Hwf] & >B)".
-    cStepsT. cGetT "MEM". case_bool_decide; [|lia]. cStepsT.
+    cStepsT. case_bool_decide; [|lia]. cStepsT.
 
     rename _q into pad.
     set (blk := Mem.nb mem_tgt + pad).
     iPoseProof (own_valid with "B") as "%".
     iPoseProof (mem_ra_alloc with "B") as ">B"; et.
     iDestruct "B" as "[BLK WHT]". iPoseProof (points_to_transform with "WHT") as "WHT".
-    cPutT "MEM".
+    cStepsT.
 
     cForceS ((Vptr (blk, 0%Z)) ↑). cStepsS. cForcesS. iFrame. iSplit; eauto.
     cStep. iFrame.
@@ -292,9 +292,10 @@ Module MemIA. Section MemIA.
     iDestruct "ASM" as "[-> [-> ↦]]".
     iDestruct "IST" as (mem_tgt mem_src) "(MEM & [%Hsim %Hwf] & >B)".
 
-    cStepsS. cStepsT. cGetT "MEM".
+    cStepsS. cStepsT.
 
-    iPoseProof (mem_ra_lookup with "[B ↦]") as "[%HIT ->]"; et; iFrame. cStepsT. cPutT "MEM".
+    iPoseProof (mem_ra_lookup with "[B ↦]") as "[%HIT ->]"; et; iFrame.
+    cStepsT.
 
     cForceS. iMod (mem_ra_free with "[B ↦]") as "H"; et; iFrame.
     cForcesS; iSplit; eauto.
@@ -315,7 +316,7 @@ Module MemIA. Section MemIA.
     iDestruct "ASM" as "[-> [-> ↦]]".
     iDestruct "IST" as (mem_tgt mem_src) "(MEM & [%Hsim %Hwf] & >B)".
 
-    cStepsT. cGetT "MEM".
+    cStepsT.
 
     iPoseProof (mem_ra_lookup with "[B ↦]") as "[%HIT ->]"; et; iFrame. cStepsT.
     cForcesS. iFrame. iSplit; eauto.
@@ -331,11 +332,11 @@ Module MemIA. Section MemIA.
     iDestruct "ASM" as "[-> [-> ↦]]".
     iDestruct "IST" as (mem_tgt mem_src) "(MEM & [%Hsim %Hwf] & >B)".
 
-    cStepsS. cStepsT. cGetT "MEM".
+    cStepsS. cStepsT.
 
     iPoseProof (mem_ra_lookup with "[B ↦]") as "[%HIT %HIT2]"; et; iFrame; rewrite HIT2. cStepsT.
     iMod (mem_ra_update with "[B ↦]") as "[B ↦]"; et; iFrame.
-    cPutT "MEM".
+    cStepsT.
 
     cForcesS. iFrame. iSplit; eauto.
     cStep. iFrame. repeat (iSplit; et).
@@ -354,7 +355,7 @@ Module MemIA. Section MemIA.
     iDestruct "ASM" as "[-> [[-> %Hcmp2] [Cmp Cmp2]]]".
     iDestruct "IST" as (mem_tgt mem_src) "(MEM & %INV & >B)"; destruct INV as [Hsim Hwf].
 
-    cStepsT. cGetT "MEM".
+    cStepsT.
 
     iMod ("Cmp2" with "Cmp") as (????) "[C1 [C2 C3]]".
     iPoseProof (mem_ra_cmp with "[B C1 C2]") as "->"; eauto; iFrame.
@@ -382,16 +383,19 @@ Module MemIA. Section MemIA.
     iMod ("C3" with "[$]").
 
     (* Load *)
-    cInlineT. cStepsT. rewrite /MemI.load. cStepsT. cGetT "MEM". rewrite Hlookup. cStepsT.
+    cInlineT. cStepsT. rewrite /MemI.load. cStepsT.
+    rewrite Hlookup. cStepsT.
 
     (* Cmp *)
-    cInlineT. cStepsT. rewrite /MemI.cmp. cStepsT. cGetT "MEM". rewrite Hcmp3. cStepsT.
+    cInlineT. cStepsT. rewrite /MemI.cmp. cStepsT.
+    rewrite Hcmp3. cStepsT.
 
     repeat case_bool_decide; simplify_eq.
     { (* Store *)
-      cStepsT. cInlineT. cStepsT. rewrite /MemI.store. cStepsT. cGetT "MEM". rewrite Hlookup. cStepsT.
+      cStepsT. cInlineT. cStepsT. rewrite /MemI.store. cStepsT.
+      rewrite Hlookup. cStepsT.
       iMod ((mem_ra_update v_upd) with "[B ↦]") as "[B ↦]"; et; [iFrame|].
-      cPutT "MEM". cStepsT.
+      cStepsT.
 
       cForcesS. iFrame. iSplit; eauto. cStep. iFrame.
 
