@@ -32,7 +32,7 @@ Module KnotMainIA. Section KnotMainIA.
   Local Notation IstFull :=
     (λ STATE, (True ∗ IstEq KnotAMod STATE)%I).
 
-  Lemma simF_fib `{STATE : !stateGS Σ} :
+  Lemma simF_fib :
     ⊢ ISim.sim_fun open KnotMainAMod KnotMainIMod IstFull
         (fid KnotMainHdr.fib).
   Proof using APCInSp GEnvIncl GEnvWF KnotInSp MainInFun PureInGlobal RecInSpPure.
@@ -104,7 +104,7 @@ Module KnotMainIA. Section KnotMainIA.
     Unshelve. all: exact (0↑).
   (*SLOW*)Qed.
 
-  Lemma simF_main `{STATE : !stateGS Σ} :
+  Lemma simF_main :
     ⊢ ISim.sim_fun open KnotMainAMod KnotMainIMod IstFull entry.
   Proof using APCInSp GEnvIncl GEnvWF KnotInSp MainInFun PureInGlobal RecInSpPure.
     cStartFunSim. rewrite /KnotMainI.mainF /main_body.
@@ -187,15 +187,19 @@ Module KnotMainIA. Section KnotMainIA.
   Proof.
     iApply (ISim_reflR open KnotMainA KnotMainI KnotAMod
       (λ _ : stateGS Σ, True%I)).
-    - mod_tac.
-    - set_unfold; naive_solver.
-    - intros. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT". done.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split.
+        - mod_tac.
+        - set_unfold; naive_solver.
+      }
+      iIntros (fn) "%Hfn".
       repeat rewrite Mod.dom_fnsems_add in Hfn.
       set_unfold in Hfn; des; subst.
       + iApply simF_fib; eauto.
       + iApply simF_main; eauto.
-    - iIntros (STATE) "SRC TGT". done.
   Qed.
 
   Lemma ctxr :
@@ -224,10 +228,15 @@ Module KnotMainIA. Section KnotMainIA.
       (KnotMainA.t genv sp_rec false sp)
       (KnotMainA.t genv sp_rec true sp)
       (APCC.t sp) (λ _ : stateGS Σ, True%I)).
-    - mod_tac.
-    - set_unfold; naive_solver.
-    - intros. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT". done.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split.
+        - mod_tac.
+        - set_unfold; naive_solver.
+      }
+      iIntros (fn) "%Hfn".
       repeat rewrite Mod.dom_fnsems_add in Hfn.
       set_unfold in Hfn; des; subst.
       + cStartFunSim. rewrite /pure_body.
@@ -249,7 +258,6 @@ Module KnotMainIA. Section KnotMainIA.
       iDestruct "GRT" as "(% & %)". cSimpl. cForcesT. iSplitR; et.
       cStepsT. cForcesS. iSplit; eauto. cStep.
       iSplit; eauto.
-    - iIntros (STATE) "SRC TGT". done.
   Unshelve. all: et. exact tt.
   (*SLOW*)Qed.
 End KnotMainIA. End KnotMainIA.

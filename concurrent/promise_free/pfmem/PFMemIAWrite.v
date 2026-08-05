@@ -17,7 +17,7 @@ Section write.
   Definition MA := (PFMemA.t sp).
   Definition MI := (PFMemI.t syn size).
 
-  Lemma simF_write `{STATE : !stateGS Σ} :
+  Lemma simF_write :
     ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.write).
   Proof.
     cStartFunSim.

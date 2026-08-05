@@ -19,7 +19,7 @@ Module MapMA. Section MapMA.
   Local Definition MapA := (MapA.t sp_s).
   Local Definition MapM := (MapM.t sp_t).
 
-  Lemma simF_init `{STATE : !stateGS Σ} :
+  Lemma simF_init :
     ⊢ ISim.sim_fun open MapA MapM Ist (fid MapHdr.init).
   Proof using MapInSpS MapInSpT.
     cStartFunSim. rewrite /MapM.init.
@@ -48,7 +48,7 @@ Module MapMA. Section MapMA.
     iExists _, _. iFrame. iRight. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_get `{STATE : !stateGS Σ} :
+  Lemma simF_get :
     ⊢ ISim.sim_fun open MapA MapM Ist (fid MapHdr.get).
   Proof using MapInSpS MapInSpT.
     cStartFunSim. rewrite /MapM.get /get.
@@ -82,7 +82,7 @@ Module MapMA. Section MapMA.
     iExists _, _. iFrame. iRight. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_set `{STATE : !stateGS Σ} :
+  Lemma simF_set :
     ⊢ ISim.sim_fun open MapA MapM Ist (fid MapHdr.set).
   Proof using MapInSpS MapInSpT.
     cStartFunSim. rewrite /MapM.set /set.
@@ -115,7 +115,7 @@ Module MapMA. Section MapMA.
     iExists _, _. iFrame. iRight. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_set_by_user `{STATE : !stateGS Σ} :
+  Lemma simF_set_by_user :
     ⊢ ISim.sim_fun open MapA MapM Ist (fid MapHdr.set_by_user).
   Proof using MapInSpS MapInSpT.
     cStartFunSim. rewrite /MapM.set_by_user /set_by_user. cHideS. cHideT.

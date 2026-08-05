@@ -13,7 +13,7 @@ Module CellioIA. Section CellioIA.
   Local Definition CellioIMod := (CellioI.t).
   Local Definition CellioAMod := (CellioA.t).
 
-  Lemma simF_set `{STATE : !stateGS Σ} :
+  Lemma simF_set :
     ⊢ ISim.sim_fun open CellioAMod CellioIMod Ist (fid CellioHdr.set).
   Proof using.
     cStartFunSim. rewrite /CellioI.set /set.
@@ -42,7 +42,7 @@ Module CellioIA. Section CellioIA.
     iExists v_new. iFrame; cSimpl.
   (*SLOW*)Qed.
   
-  Lemma simF_get `{STATE : !stateGS Σ} :
+  Lemma simF_get :
     ⊢ ISim.sim_fun open CellioAMod CellioIMod Ist (fid CellioHdr.get).
   Proof using.
     cStartFunSim. unfold get, CellioI.get. cHideS. cHideT. cHideR.

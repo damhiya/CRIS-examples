@@ -37,7 +37,7 @@ Section HWQPM.
     (IstHelp (Ist ∗ IstEq (HWQM ★ HelpOn) STATE) ⊤ ∗
      IstEq (MemA ★ ProphA) STATE)%I.
 
-  Lemma simF_dequeue `{STATE : !stateGS Σ} :
+  Lemma simF_dequeue :
     ⊢ ISim.sim_fun open
       ((HWQM ★ HelpOn) ★ MemA ★ ProphA) ((HWQP ★ HelpDummy) ★ MemA ★ ProphA)
       IstFull (fid HWQHdr.dequeue).

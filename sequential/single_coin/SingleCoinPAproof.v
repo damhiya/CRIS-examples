@@ -37,7 +37,7 @@ Module SingleCoinPA. Section SingleCoinPA.
             ∧ (Prophecy.consistent coin_proph ol b)⌝
         )%I.
 
-  Lemma simF_new `{STATE : !stateGS Σ} :
+  Lemma simF_new :
     ⊢ ISim.sim_fun open MA MI Ist (fid SingleCoinHdr.new).
   Proof.
     cStartFunSim. rewrite /new .
@@ -88,7 +88,7 @@ Module SingleCoinPA. Section SingleCoinPA.
     cStep. iFrame. eauto.
   Qed.
 
-  Lemma simF_read `{STATE : !stateGS Σ} :
+  Lemma simF_read :
     ⊢ ISim.sim_fun open MA MI Ist (fid SingleCoinHdr.read).
   Proof.
     cStartFunSim. rewrite /read.

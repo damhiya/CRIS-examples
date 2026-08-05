@@ -40,7 +40,7 @@ Module ClientIA. Section ClientIA.
     solve_base_sl_red; iSplit; done.
   Qed.
 
-  Lemma incr_simF `{STATE : !stateGS Σ} :
+  Lemma incr_simF :
     ⊢ ISim.sim_fun open MA MI IstFull (fid ClientHdr.thread).
   Proof.
     cStartFunSim.
@@ -75,7 +75,7 @@ Module ClientIA. Section ClientIA.
     cStep; iFrame; done.
   Qed.
 
-  Lemma main_simF `{STATE : !stateGS Σ} :
+  Lemma main_simF :
     ⊢ ISim.sim_fun open MA MI IstFull entry.
   Proof.
     cStartFunSim. simpl.
@@ -155,14 +155,15 @@ Module ClientIA. Section ClientIA.
   Proof.
     iApply (ISim_reflR open (ClientA.t N sp) ClientI.t
       (IncrA.t ★ MemA.t sp) (λ _, True%I)).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT". done.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split; mod_tac. }
+      iIntros (fn) "%Hfn".
       set_unfold in Hfn; des; subst.
       + iApply incr_simF.
       + iApply main_simF.
-    - iIntros (STATE) "SRC TGT". done.
   Qed.
 End ClientIA.
 

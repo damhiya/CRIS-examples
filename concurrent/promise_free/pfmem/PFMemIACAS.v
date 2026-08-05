@@ -17,7 +17,7 @@ Section CAS.
   Local Definition MA := (PFMemA.t sp).
   Local Definition MI := (PFMemI.t syn size).
 
-  Lemma simF_cas `{STGS : !stateGS Σ} :
+  Lemma simF_cas :
     ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.cas).
   Proof.
     (* prologue *)
@@ -56,7 +56,7 @@ Section CAS.
     destruct e; inv EV; s; destruct (excluded_middle_informative _); ss; cycle 1.
     { (* racy cas *)
       inv STEP; ss. rename STEP0 into STEP.
-      inv STEP. inv LOCAL. clear STATE. inv LOCAL. rename LOCAL0 into LOCAL.
+      inv STEP. inv LOCAL. inv LOCAL. rename LOCAL0 into LOCAL.
       inv LOCAL. { destruct ordr; ss. } { destruct ordw; ss. }
       inv RACE. { inv PFG. rewrite H /Promises.Promises.bot // in GET. }
       hexploit MSG; eauto; intros ->; clear MSG.
@@ -68,7 +68,7 @@ Section CAS.
       etrans; eauto.
     }
     { (* inaccessible cas *)
-      inv STEP. ss. rename STEP0 into STEP; inv STEP. inv LOCAL. clear STATE EVENT t.
+      inv STEP. ss. rename STEP0 into STEP; inv STEP. inv LOCAL. clear EVENT t.
       inv LOCAL. inv RACE; ss.
       { inv PFG. rewrite H1 in FREEPROMISE.
         hexploit PFL; eauto; intros INV; inv INV; des; rewrite H4 in FREEPROMISE.
@@ -76,7 +76,7 @@ Section CAS.
     }
     { (* inaccessible cmp cas *)
       inv STEP; ss. clear EVENT. rename STEP0 into STEP. inv STEP; inv LOCAL; ss.
-      clear STATE. inv LOCAL0. inv COMPARE.
+      inv LOCAL0. inv COMPARE.
       { (* inaccessible ptr cmp *)
         iPoseProof ("CMP" with "PR") as "> EX". inv CMP.
         { (* read ptr is inaccessible *)
@@ -528,7 +528,7 @@ Section CAS.
       iMod ((tview_auth_update ths (IdentMap.add tid (existT lang st2, lc2) ths)) with "TA TV")
         as "[TA TV]"; ss.
 
-      iAssert (Ist STGS) with "[HA TA HFA CONFIG]" as "IST".
+      iAssert (Ist STATE) with "[HA TA HFA CONFIG]" as "IST".
       { iExists _, (IdentMap.add _ _ _), Vcut. iFrame "HFA HA TA CONFIG".
         iPureIntro.
         split.

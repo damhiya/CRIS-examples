@@ -27,7 +27,7 @@ Section SystemIA.
   Local Definition IstFull (STGS : stateGS Σ) : iProp Σ :=
     (Ist STGS ∗ IstEq (PFMemA.t sp) STGS)%I.
 
-  Lemma simF_alloc `{STGS : !stateGS Σ} :
+  Lemma simF_alloc :
     ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.alloc).
   Proof using.
     cStartFunSim. rewrite /SystemI.alloc.

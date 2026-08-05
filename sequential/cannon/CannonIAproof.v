@@ -15,7 +15,7 @@ Module CannonIA. Section CannonIA.
   Local Definition CannonAMod := (CannonA.t sp).
   Local Definition CannonIMod := (CannonI.t).
 
-  Lemma simF_fire `{STATE : !stateGS Σ} :
+  Lemma simF_fire :
     ⊢ ISim.sim_fun open CannonAMod CannonIMod Ist (fid CannonHdr.fire).
   Proof using.
     cStartFunSim. rewrite /CannonI.fire /fire.

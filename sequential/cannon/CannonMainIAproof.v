@@ -15,7 +15,7 @@ Module CannonMainIA. Section CannonMainIA.
   Local Notation MainAMod := (MainA.t 1 sp).
   Local Notation MainIMod := (MainI.t 1).
   
-  Lemma simF_main `{STATE : !stateGS Σ} :
+  Lemma simF_main :
     ⊢ ISim.sim_fun open MainAMod MainIMod Ist entry.
   Proof using CannonInMain.
     cStartFunSim. rewrite /MainA.main /MainI.main.

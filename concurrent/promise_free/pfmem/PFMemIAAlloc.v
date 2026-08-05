@@ -131,7 +131,7 @@ Section alloc.
     }
   (*SLOW*)Qed.
 
-  Lemma simF_alloc `{STATE : !stateGS Σ} :
+  Lemma simF_alloc :
     ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.alloc).
   Proof using.
     cStartFunSim. rewrite /PFMemI.alloc.

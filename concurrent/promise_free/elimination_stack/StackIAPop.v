@@ -63,7 +63,7 @@ Section StackIM.
     Time.lt from to.
   Proof. inversion ADD; done. Qed.
 
-  Lemma pop_simF `{STATE : !stateGS Σ} :
+  Lemma pop_simF :
     ⊢ ISim.sim_fun open MA MI Ist (fid StackHdr.pop).
   Proof.
     cStartFunSim. rewrite /StackI.pop /StackM.pop /stack_atomic_fun.

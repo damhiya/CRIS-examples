@@ -335,7 +335,7 @@ Section free.
     intros ->; des_ifs.
   Qed.
 
-  Lemma simF_free `{STGS : !stateGS Σ} :
+  Lemma simF_free :
     ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.free).
   Proof.
     cStartFunSim.
@@ -349,7 +349,7 @@ Section free.
     { cStepsT. destruct _q as [[e config'] [TEV STEP]].
       (* inv STEP. inv STEP0; [inv LOCAL|]. *)
       dup STEP; inv STEP0. inv STEP1; [inv LOCAL|].
-      rewrite TEV in STATE. ss. inv LOCAL.
+      rewrite TEV in STATE0. ss. inv LOCAL.
       { (* free_step *)
         des_ifs. cStepsT.
         cForceS. cStepsS. cForceS. cStepsS. cForceS. iSplit; eauto.

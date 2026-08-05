@@ -23,7 +23,7 @@ Module MutMainIA. Section MutMainIA.
   
   (*************)
 
-  Lemma simF_main `{STATE : !stateGS Σ}:
+  Lemma simF_main:
     ⊢ ISim.sim_fun open MutMainAMod MutMainIMod IstFull entry.
   Proof using APCInSp FInPure PureInSp.
     cStartFunSim.
@@ -64,15 +64,16 @@ Module MutMainIA. Section MutMainIA.
   Proof.
     iIntros "C".
     iApply (ISim_reflR open (MutMainA.t true Sp) MutMainI.t
-      (APCA.t SpPure Sp) Ist).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+      (APCA.t SpPure Sp) Ist with "[C] []").
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT". done.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split; mod_tac. }
+      iIntros (fn) "%Hfn".
       repeat rewrite Mod.dom_fnsems_add in Hfn.
       set_unfold in Hfn; des; subst.
       iApply simF_main.
-    - iIntros (STATE) "SRC TGT". done.
   Qed.
 
   Theorem ctxr:
@@ -96,10 +97,15 @@ Module MutMainIA. Section MutMainIA.
       (λ STATE, (True ∗ IstEq (APCC.t Sp) STATE)%I)).
     iApply (ISim_reflR open (MutMainA.t false Sp) (MutMainA.t true Sp)
       (APCC.t Sp) (λ _ : stateGS Σ, True%I)).
-    - mod_tac.
-    - set_unfold; naive_solver.
-    - intros. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT". done.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split.
+        - mod_tac.
+        - set_unfold; naive_solver.
+      }
+      iIntros (fn) "%Hfn".
       repeat rewrite Mod.dom_fnsems_add in Hfn.
       set_unfold in Hfn; des; subst.
       cStartFunSim.
@@ -110,7 +116,6 @@ Module MutMainIA. Section MutMainIA.
       iDestruct "GRT" as "(% & %)". subst. cSimpl. iSplitR; et.
       cStepsT. cForcesT. iSplitR; et.
       cStepsT. cStepsS. cStep. iDestruct "IST" as "[_ IST]". iFrame; eauto.
-    - iIntros (STATE) "SRC TGT". done.
   Unshelve. all: et.
   Qed.
 

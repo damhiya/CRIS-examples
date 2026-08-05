@@ -37,7 +37,7 @@ Module SCHMainIA. Section SCHMainIA.
   Local Definition MI := (SCHMainI.t).
   Local Definition IstFull (_ : stateGS Σ) : iProp Σ := True%I.
 
-  Lemma simF_main `{STATE : !stateGS Σ} :
+  Lemma simF_main :
     ⊢ ISim.sim_fun open MA MI IstFull entry.
   Proof using Hschglob (* Hschrrs Hschnds *) Hsch Hrrs Hnds Hrrsnode Hndsnode.
     cStartFunSim.

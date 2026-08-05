@@ -25,7 +25,7 @@ Section StackIM.
       (IstHelp (IstEq StackHelpM STATE) ⊤ ∗
        IstEq (MemA ★ SchI) STATE)%I).
 
-  Lemma pop_simF `{STATE : !stateGS Σ} :
+  Lemma pop_simF :
     ⊢ ISim.sim_fun open StackM StackI Ist (fid StackHdr.pop).
   Proof.
     cStartFunSim. rewrite /StackI.pop /StackM.pop /yield_iter. cStepsS; cStepsT.

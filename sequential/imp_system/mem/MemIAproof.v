@@ -240,7 +240,7 @@ Module MemIA. Section MemIA.
     | (_,v) => or_else (nth_error v.(agree_car) 0) Vundef
     end.
 
-  Lemma simF_alloc `{STATE : !stateGS Σ} :
+  Lemma simF_alloc :
     ⊢ ISim.sim_fun open MemA MemI IstFull (fid MemHdr.alloc).
   Proof using.
     cStartFunSim. rewrite /MemI.alloc. cStepsS.
@@ -283,7 +283,7 @@ Module MemIA. Section MemIA.
     - done.
   (*SLOW*)Qed.
 
-  Lemma simF_free `{STATE : !stateGS Σ} :
+  Lemma simF_free :
     ⊢ ISim.sim_fun open MemA MemI IstFull (fid MemHdr.free).
   Proof using.
     cStartFunSim. rewrite /MemI.free.
@@ -307,7 +307,7 @@ Module MemIA. Section MemIA.
     - rewrite /update. ii. ss. repeat destruct AList.dec; ss; subst; et.
   (*SLOW*)Qed.
 
-  Lemma simF_load `{STATE : !stateGS Σ} :
+  Lemma simF_load :
     ⊢ ISim.sim_fun open MemA MemI IstFull (fid MemHdr.load).
   Proof using.
     cStartFunSim. rewrite /MemI.load.
@@ -323,7 +323,7 @@ Module MemIA. Section MemIA.
     cStep. iFrame. repeat (iSplit; et).
   (*SLOW*)Qed.
 
-  Lemma simF_store `{STATE : !stateGS Σ} :
+  Lemma simF_store :
     ⊢ ISim.sim_fun open MemA MemI IstFull (fid MemHdr.store).
   Proof using.
     cStartFunSim. rewrite /MemI.store.
@@ -347,7 +347,7 @@ Module MemIA. Section MemIA.
     - ii; ss; repeat destruct AList.dec; ss; subst; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_cmp `{STATE : !stateGS Σ} :
+  Lemma simF_cmp :
     ⊢ ISim.sim_fun open MemA MemI IstFull (fid MemHdr.cmp).
   Proof using.
     cStartFunSim. rewrite /MemI.cmp.
@@ -368,7 +368,7 @@ Module MemIA. Section MemIA.
     iSplit; [iPureIntro; eauto|done].
   (*SLOW*)Qed.
 
-  Lemma simF_cas `{STATE : !stateGS Σ} :
+  Lemma simF_cas :
     ⊢ ISim.sim_fun open MemA MemI IstFull (fid MemHdr.cas).
   Proof using.
     cStartFunSim. rewrite /MemI.cas.

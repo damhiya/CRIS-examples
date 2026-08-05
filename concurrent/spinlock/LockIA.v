@@ -21,7 +21,7 @@ Module LockIA. Section LockIA.
   Local Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
     (True ∗ IstEq MemA STATE)%I.
 
-  Lemma newlock_simF `{STATE : !stateGS Σ} :
+  Lemma newlock_simF :
     ⊢ ISim.sim_fun open MA MI IstFull (fid SpinLockHdr.newlock).
   Proof using SchInSp Hsub.
     cStartFunSim. rewrite /SpinLockI.newlock /newlock.
@@ -59,7 +59,7 @@ Module LockIA. Section LockIA.
     cStep. iFrame. eauto.
   (*SLOW*)Qed.
 
-  Lemma acquire_simF `{STATE : !stateGS Σ} :
+  Lemma acquire_simF :
     ⊢ ISim.sim_fun open MA MI IstFull (fid SpinLockHdr.acquire).
   Proof using SchInSp Hsub.
     cStartFunSim. rewrite /SpinLockI.acquire /acquire.
@@ -117,7 +117,7 @@ Module LockIA. Section LockIA.
   Unshelve. all: try exact 1%Qp. all: try exact Vundef.
   (*SLOW*)Qed.
 
-  Lemma release_simF `{STATE : !stateGS Σ} :
+  Lemma release_simF :
     ⊢ ISim.sim_fun open MA MI IstFull (fid SpinLockHdr.release).
   Proof using SchInSp Hsub.
     cStartFunSim. rewrite /SpinLockI.release /release.
@@ -156,15 +156,16 @@ Module LockIA. Section LockIA.
   Proof.
     iIntros "_".
     iApply (ISim_reflR open SpinLockA SpinLockI MemA (λ _, True%I)).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT". done.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split; mod_tac. }
+      iIntros (fn) "%Hfn".
       set_unfold in Hfn; des; subst.
       + iApply newlock_simF.
       + iApply acquire_simF.
       + iApply release_simF.
-    - iIntros (STATE) "SRC TGT". done.
   Qed.
 
   (* ctxr works as a unit in compositions of module simulations *)

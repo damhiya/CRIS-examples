@@ -27,7 +27,7 @@ Section StackIM.
       (IstHelp (IstEq StackHelpM STATE) ⊤ ∗
        IstEq (MemA ★ SchI) STATE)%I).
 
-  Lemma push_simF `{STATE : !stateGS Σ} :
+  Lemma push_simF :
     ⊢ ISim.sim_fun open StackM StackI Ist (fid StackHdr.push).
   Proof.
     cStartFunSim. rewrite /StackI.push /StackM.push. cStepsS; cStepsT.

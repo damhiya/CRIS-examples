@@ -134,7 +134,7 @@ Module PQueueIA. Section PQueueIA.
   Local Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
     (True ∗ IstEq (StackA.t ★ SchI.t ★ MemA.t sp) STATE)%I.
 
-  Lemma new_simF `{STATE : !stateGS Σ} :
+  Lemma new_simF :
     ⊢ ISim.sim_fun open PQueueA PQueueI IstFull (fid PQueueHdr.new).
   Proof.
     cStartFunSim. rewrite /PQueueI.new /PQueueA.new. cStepsS.
@@ -239,7 +239,7 @@ Module PQueueIA. Section PQueueIA.
     }
   Qed.
 
-  Lemma add_simF `{STATE : !stateGS Σ} :
+  Lemma add_simF :
     ⊢ ISim.sim_fun open PQueueA PQueueI IstFull (fid PQueueHdr.add).
   Proof.
     cStartFunSim. rewrite /PQueueA.add /PQueueI.add. cStepsS; cStepsT.
@@ -275,7 +275,7 @@ Module PQueueIA. Section PQueueIA.
     sYields. sYieldS. cStep; iFrame. auto.
   Qed.
 
-  Lemma remove_min_simF `{STATE : !stateGS Σ} :
+  Lemma remove_min_simF :
     ⊢ ISim.sim_fun open PQueueA PQueueI IstFull
         (fid PQueueHdr.remove_min).
   Proof.
@@ -371,15 +371,16 @@ Module PQueueIA. Section PQueueIA.
   Proof.
     iApply (ISim_reflR open PQueueA.t PQueueI.t
       (StackA.t ★ SchI.t ★ MemA.t sp) (λ _, True%I)).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT". done.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split; mod_tac. }
+      iIntros (fn) "%Hfn".
       set_unfold in Hfn; des; subst.
       + iApply new_simF.
       + iApply add_simF.
       + iApply remove_min_simF.
-    - iIntros (STATE) "SRC TGT". done.
   Qed.
 End PQueueIA.
 Section ctxr.

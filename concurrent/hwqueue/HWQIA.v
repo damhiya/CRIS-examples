@@ -50,20 +50,11 @@ Module HWQPM. Section HWQPM.
     iIntros "[HE F]".
     iApply (ISim_reflR open (HWQM ★ HelpOn) (HWQP ★ HelpDummy)
       (MemA ★ ProphA)
-      (λ STATE, IstHelp (Ist ∗ IstEq (HWQM ★ HelpOn) STATE) ⊤)).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
-      rewrite Mod.dom_fnsems_add in Hfn.
-      unfold HWQM.t, HelpingOn.t in Hfn.
-      cbn in Hfn. set_unfold in Hfn; des; subst.
-      + iApply simF_new_queue.
-      + iApply simF_enqueue.
-      + iApply simF_dequeue.
-      + cStartFunSim. cStepsT; ss.
-      + cStartFunSim. cStepsT; ss.
-    - iIntros (STATE) "SRC TGT".
+      (λ STATE, IstHelp (Ist ∗ IstEq (HWQM ★ HelpOn) STATE) ⊤)
+      with "[HE F] []").
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT".
       rewrite /IstHelp. iFrame "HE".
       iSplitL "F".
       {
@@ -79,6 +70,17 @@ Module HWQPM. Section HWQPM.
       }
       }
       iApply (state_eq_init_same with "SRC TGT").
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split; mod_tac. }
+      iIntros (fn) "%Hfn".
+      rewrite Mod.dom_fnsems_add in Hfn.
+      unfold HWQM.t, HelpingOn.t in Hfn.
+      cbn in Hfn. set_unfold in Hfn; des; subst.
+      + iApply simF_new_queue.
+      + iApply simF_enqueue.
+      + iApply simF_dequeue.
+      + cStartFunSim. cStepsT; ss.
+      + cStartFunSim. cStepsT; ss.
   Qed.
 End HWQPM. End HWQPM.
 

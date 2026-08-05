@@ -18,7 +18,7 @@ Section read.
   Definition MA := (PFMemA.t sp).
   Definition MI := (PFMemI.t syn size).
 
-  Lemma simF_read `{STGS : !stateGS Σ} :
+  Lemma simF_read :
     ⊢ ISim.sim_fun open MA MI PFMemIA.Ist (fid PFMemHdr.read).
   Proof.
     cStartFunSim.
@@ -108,7 +108,7 @@ Section read.
       { rewrite Memory.get_memory_cell in CELL_GET'; des_ifs. }
       destruct EQ as [H2 [H4 [H5 H6]]]; subst.
       
-      iAssert (Ist STGS)%I with "[HA FA TA CONFIG]" as "IST".
+      iAssert (Ist STATE)%I with "[HA FA TA CONFIG]" as "IST".
       { iFrame. iPureIntro; esplits; eauto.
         { hexploit (@PFConfiguration.step_future ThreadEvent.get_machine_event); eauto.
           { econs; eauto. econs; eauto.
@@ -234,7 +234,7 @@ Section read.
 
         iMod ((tview_auth_update ths (IdentMap.add tid (existT lang st2, lc2) ths)) with "TA TV") as "[TA TV]"; eauto.
 
-        iAssert (Ist STGS)%I with "[HA FA TA CONFIG]" as "IST".
+        iAssert (Ist STATE)%I with "[HA FA TA CONFIG]" as "IST".
         { iFrame. iPureIntro; esplits; eauto.
           { hexploit (@PFConfiguration.step_future ThreadEvent.get_machine_event); eauto.
             { econs; eauto. econs; eauto.
@@ -273,7 +273,7 @@ Section read.
       }
       { (* When it reads value from global history, *)
         (* We need to update ζ'. *)
-        dup STATE; dup LOCAL0.
+        dup STATE0; dup LOCAL0.
         inv LOCAL0; ss. inv READABLE.
         remember (Message.message _ _ _) as msg.
 
@@ -384,7 +384,7 @@ Section read.
 
         iMod ((tview_auth_update ths (IdentMap.add tid (existT lang st2, lc2) ths)) with "TA TV") as "[TA TV]"; eauto.
 
-        iAssert (Ist STGS)%I with "[HA FA TA CONFIG]" as "IST".
+        iAssert (Ist STATE)%I with "[HA FA TA CONFIG]" as "IST".
         { iFrame. iPureIntro; esplits; eauto.
           { hexploit (@PFConfiguration.step_future ThreadEvent.get_machine_event); eauto.
             { econs; eauto. econs; eauto.

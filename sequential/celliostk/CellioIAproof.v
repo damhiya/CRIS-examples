@@ -17,7 +17,7 @@ Module CellioIA. Section CellioIA.
   Local Notation IstFull :=
     (λ STATE, (True ∗ IstEq MemA STATE)%I).
 
-  Lemma simF_new `{STATE : !stateGS Σ} :
+  Lemma simF_new :
     ⊢ ISim.sim_fun open CellioAMod CellioIMod IstFull (fid CellioHdr.new).
   Proof using.
     cStartFunSim. rewrite /CellioI.new /new.
@@ -27,7 +27,7 @@ Module CellioIA. Section CellioIA.
     cForceS. iSplit; et. cStepsS. cStep. iFrame. et.
   Qed.
 
-  Lemma simF_push `{STATE : !stateGS Σ} :
+  Lemma simF_push :
     ⊢ ISim.sim_fun open CellioAMod CellioIMod IstFull (fid CellioHdr.push).
   Proof using.
     cStartFunSim. rewrite /CellioI.push /push.
@@ -48,7 +48,7 @@ Module CellioIA. Section CellioIA.
     cStepsS. cStep. iFrame. et.
   (*SLOW*)Qed.
   
-  Lemma simF_pop `{STATE : !stateGS Σ} :
+  Lemma simF_pop :
     ⊢ ISim.sim_fun open CellioAMod CellioIMod IstFull (fid CellioHdr.pop).
   Proof using.
     cStartFunSim. rewrite /pop /CellioI.pop.
@@ -75,16 +75,17 @@ Module CellioIA. Section CellioIA.
   Proof using.
     iIntros "INIT".
     iApply (ISim_reflR open CellioA.t CellioI.t MemA
-      (λ _ : stateGS Σ, True%I)).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+      (λ _ : stateGS Σ, True%I) with "[INIT] []").
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT". rewrite /init_cond /=. done.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split; mod_tac. }
+      iIntros (fn) "%Hfn".
       repeat rewrite Mod.dom_fnsems_add in Hfn.
       set_unfold in Hfn; des; subst.
       + iApply simF_new.
       + iApply simF_push.
       + iApply simF_pop.
-    - iIntros (STATE) "SRC TGT". rewrite /init_cond /=. done.
   Qed.
 End CellioIA. End CellioIA.

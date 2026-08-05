@@ -29,7 +29,7 @@ Module SystemIA. Section SystemIA.
   Local Definition IstFull (STGS : stateGS Σ) : iProp Σ :=
     (Ist STGS ∗ IstEq (PFMemA.t sp) STGS)%I.
 
-  Lemma simF__spawn `{STGS : !stateGS Σ} :
+  Lemma simF__spawn :
     ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr._spawn).
   Proof using Hincl Hsysincl.
     cStartFunSim. rewrite /SystemI._spawn.
@@ -70,7 +70,7 @@ Module SystemIA. Section SystemIA.
     cByCoind CIH; iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_spawn `{STGS : !stateGS Σ} :
+  Lemma simF_spawn :
     ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.spawn).
   Proof using Hincl Hsysincl ConcInGlobal.
     cStartFunSim. rewrite /SystemI.spawn.
@@ -146,7 +146,7 @@ Module SystemIA. Section SystemIA.
   Unshelve. ss.
   (*SLOW*)Qed.
 
-  Lemma simF_yield `{STGS : !stateGS Σ} :
+  Lemma simF_yield :
     ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.yield).
   Proof using Hincl Hsysincl ConcInGlobal.
     cStartFunSim. rewrite /SystemI.yield /yield.
@@ -209,7 +209,7 @@ Module SystemIA. Section SystemIA.
     iExists tid_cur2, tids. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_get_tid `{STGS : !stateGS Σ} :
+  Lemma simF_get_tid :
     ⊢ ISim.sim_fun open SystemA_s SystemI_s IstFull (fid SystemHdr.get_tid).
   Proof using Hincl Hsysincl ConcInGlobal.
     cStartFunSim. rewrite /SystemI.get_tid /get_tid.
@@ -257,21 +257,11 @@ Section ctx_refines.
         (fun STGS => (Ist STGS ∗ IstEq (PFMemA.t sp) STGS)%I)). }
     iIntros "TA".
     iApply (ISim_reflR open
-      (SystemA.t sp_user ⊤ sp) SystemI.t (PFMemA.t sp) Ist).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STGS fn) "%Hfn".
-      set_unfold in Hfn; des; subst.
-      + iApply simF__spawn; eauto.
-      + iApply simF_spawn; eauto.
-      + iApply simF_yield; eauto.
-      + iApply simF_get_tid; eauto.
-      + iApply simF_alloc; eauto.
-      + iApply simF_write; eauto.
-      + iApply simF_read; eauto.
-      + iApply simF_cas; eauto.
-    - iIntros (STGS) "SRC TGT".
+      (SystemA.t sp_user ⊤ sp) SystemI.t (PFMemA.t sp) Ist
+      with "[TA] []").
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STGS) "SRC TGT".
       iEval (rewrite /state_init_src /=) in "SRC".
       iEval (rewrite /state_init_tgt /=) in "TGT".
       assert (SLS : state_slice ({["System"]} : gset string)
@@ -303,7 +293,19 @@ Section ctx_refines.
       iDestruct "TGT" as "[TID_TGT TIDS_TGT]".
       iEval (rewrite big_sepM_singleton) in "TIDS_TGT".
       iExists 1%positive, {[1%positive := (TView.init size, 0)]}.
-      iFrame.
-      rewrite delete_singleton fmap_empty //.
+      iFrame "TID_SRC TIDS_SRC TID_TGT TIDS_TGT".
+      rewrite delete_singleton fmap_empty big_sepM_empty. iFrame "TA".
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split; mod_tac. }
+      iIntros (fn) "%Hfn".
+      set_unfold in Hfn; des; subst.
+      + iApply simF__spawn; eauto.
+      + iApply simF_spawn; eauto.
+      + iApply simF_yield; eauto.
+      + iApply simF_get_tid; eauto.
+      + iApply simF_alloc; eauto.
+      + iApply simF_write; eauto.
+      + iApply simF_read; eauto.
+      + iApply simF_cas; eauto.
   Qed.
 End ctx_refines. End SystemIA.

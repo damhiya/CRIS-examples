@@ -31,7 +31,7 @@ Module RepeatIA. Section RepeatIA.
   Local Notation IstFull :=
     (λ STATE, (Ist STATE ∗ IstEq APCA STATE)%I).
 
-  Lemma simF_repeat `{STATE : !stateGS Σ} :
+  Lemma simF_repeat :
     ⊢ ISim.sim_fun open RepeatAMod RepeatIMod IstFull
         (fid RepeatHdr.repeat).
   Proof using APCInSp SpPureInSp SpPureFunInSpPure repeatInSpPure.
@@ -116,15 +116,16 @@ Module RepeatIA. Section RepeatIA.
     RepeatA.init_cond ⊢ ISim.t open RepeatAMod RepeatIMod IstFull.
   Proof.
     iIntros "INIT".
-    iApply (ISim_reflR open RepeatA RepeatI APCA Ist).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+    iApply (ISim_reflR open RepeatA RepeatI APCA Ist with "[INIT] []").
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT". done.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split; mod_tac. }
+      iIntros (fn) "%Hfn".
       repeat rewrite Mod.dom_fnsems_add in Hfn.
       set_unfold in Hfn; des; subst.
       iApply simF_repeat; eauto.
-    - iIntros (STATE) "SRC TGT". done.
   Qed.
 End RepeatIA. 
 

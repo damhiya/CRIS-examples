@@ -123,19 +123,25 @@ Module HWQIP. Section HWQIP.
     iIntros "_".
     iApply (ISim_reflR open (HWQP.t mn) HWQI.t (ProphecyI.t mn)
       (IstEq (HWQP.t mn))).
-    - unfold HWQP.t, HWQI.t; cbn. set_solver.
-    - set (trans := λ x : option (emask * (option fspec_rel * fbody)),
-          map_snd (SModTr.trans_fnsem ∅) <$> x).
-      change (dom (trans <$> HWQP.fnsems mn) ⊆
-        dom (trans <$> HWQI.fnsems)).
-      intros fn Hfn.
-      rewrite (dom_fmap trans (HWQP.fnsems mn)) in Hfn.
-      rewrite (dom_fmap trans HWQI.fnsems).
-      unfold HWQP.fnsems in Hfn. unfold HWQI.fnsems.
-      rewrite !dom_insert_L !dom_empty_L in Hfn.
-      rewrite !dom_insert_L !dom_empty_L. set_solver.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. unfold HWQP.t, HWQI.t; cbn. set_solver. }
+      iIntros (STATE) "SRC TGT".
+      iApply (state_eq_init_same with "SRC TGT").
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split.
+        - mod_tac.
+        - set (trans := λ x : option (emask * (option fspec_rel * fbody)),
+              map_snd (SModTr.trans_fnsem ∅) <$> x).
+          change (dom (trans <$> HWQP.fnsems mn) ⊆
+            dom (trans <$> HWQI.fnsems)).
+          intros fn Hfn.
+          rewrite (dom_fmap trans (HWQP.fnsems mn)) in Hfn.
+          rewrite (dom_fmap trans HWQI.fnsems).
+          unfold HWQP.fnsems in Hfn. unfold HWQI.fnsems.
+          rewrite !dom_insert_L !dom_empty_L in Hfn.
+          rewrite !dom_insert_L !dom_empty_L. set_solver.
+      }
+      iIntros (fn) "%Hfn".
       unfold HWQP.t in Hfn. cbn in Hfn.
       set_unfold in Hfn; des; subst.
     + cStartFunSim.
@@ -323,7 +329,5 @@ Module HWQIP. Section HWQIP.
         cStep. iFrame. done.
       }
       repeat case_match; clarify; sYieldS; cStepsS; ss.
-    - iIntros (STATE) "SRC TGT".
-      iApply (state_eq_init_same with "SRC TGT").
   (*SLOW*)Qed.
 End HWQIP. End HWQIP.

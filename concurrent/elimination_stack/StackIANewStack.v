@@ -20,8 +20,7 @@ Section StackIM.
   Local Notation StackM := ((StackM.t mn ★ HelpingOn) ★ MemA ★ SchI).
   Local Notation StackI := ((CFilter.filter (Helping.exports mn) StackI.t ★ HelpingDummy) ★ MemA ★ SchI).
 
-  Lemma new_stack_simF (Ist : stateGS Σ → iProp Σ)
-      `{STATE : !stateGS Σ} :
+  Lemma new_stack_simF (Ist : stateGS Σ → iProp Σ) :
     ⊢ ISim.sim_fun open StackM StackI Ist (fid StackHdr.new_stack).
   Proof using.
     cStartFunSim. rewrite /= /StackI.new_stack /StackM.new_stack. cStepS.

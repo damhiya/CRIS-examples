@@ -80,7 +80,7 @@ Module NDSIA. Section sim.
   Local Definition NDSAMod := NDSA.t parent_yield sp sp_nds_user T get_stid PYIP.
   Local Definition NDSIMod := NDSI.t parent_yield.
 
-  Lemma simF_init `{STATE : !stateGS Σ} :
+  Lemma simF_init :
     ⊢ ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.init).
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /NDSI.init /init.
@@ -226,7 +226,7 @@ Module NDSIA. Section sim.
     cByCoind CIH; eauto. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_inner_spawn `{STATE : !stateGS Σ} :
+  Lemma simF_inner_spawn :
     ⊢ ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr._spawn).
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /NDSI.inner_spawn /inner_spawn.
@@ -582,7 +582,7 @@ Module NDSIA. Section sim.
     }
   (*SLOW*)Qed.
 
-  Lemma simF_spawn `{STATE : !stateGS Σ} :
+  Lemma simF_spawn :
     ⊢ ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.spawn).
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /NDSI.spawn /spawn.
@@ -688,7 +688,7 @@ Module NDSIA. Section sim.
     Unshelve. exact (tid_new, None).
   (*SLOW*)Qed.
 
-  Lemma simF_yield `{STATE : !stateGS Σ} :
+  Lemma simF_yield :
     ⊢ ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.yield).
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /NDSI.yield /yield.
@@ -832,7 +832,7 @@ Module NDSIA. Section sim.
     esplits; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_yield_global `{STATE : !stateGS Σ} :
+  Lemma simF_yield_global :
     ⊢ ISim.sim_fun open NDSAMod NDSIMod Ist
         (fid NDSHdr.yield_global).
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
@@ -944,7 +944,7 @@ Module NDSIA. Section sim.
     esplits; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_join `{STATE : !stateGS Σ} :
+  Lemma simF_join :
     ⊢ ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.join).
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /NDSI.join /join.
@@ -1021,7 +1021,7 @@ Module NDSIA. Section sim.
     }
   (*SLOW*)Qed.
 
-  Lemma simF_get_tid `{STATE : !stateGS Σ} :
+  Lemma simF_get_tid :
     ⊢ ISim.sim_fun open NDSAMod NDSIMod Ist (fid NDSHdr.get_tid).
   Proof using SchInSp NDSInSp NdsInSchSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /NDSI.get_tid /get_tid.

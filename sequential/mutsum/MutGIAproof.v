@@ -23,7 +23,7 @@ Module MutGIA. Section MutGIA.
   
   (*************)
 
-  Lemma simF_mutg `{STATE : !stateGS Σ}:
+  Lemma simF_mutg:
     ⊢ ISim.sim_fun open MutGAMod MutGIMod IstFull (fid MutHdr.mutg).
   Proof using _crisG APCInSp FInPure PureInSp.
     cStartFunSim. rewrite /MutGI.gF.
@@ -88,15 +88,16 @@ Module MutGIA. Section MutGIA.
   Proof.
     iIntros "C".
     iApply (ISim_reflR open (MutGA.t Sp) MutGI.t
-      (APCA.t SpPure Sp) Ist).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+      (APCA.t SpPure Sp) Ist with "[C] []").
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT". done.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split; mod_tac. }
+      iIntros (fn) "%Hfn".
       repeat rewrite Mod.dom_fnsems_add in Hfn.
       set_unfold in Hfn; des; subst.
       iApply simF_mutg.
-    - iIntros (STATE) "SRC TGT". done.
   Qed.
 End MutGIA.
 

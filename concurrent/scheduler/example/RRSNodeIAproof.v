@@ -65,7 +65,7 @@ Module RRSNodeIA. Section RRSNodeIA.
     iFrame; eauto.
   Qed.
 
-  Lemma simF_main `{STATE : !stateGS Σ} :
+  Lemma simF_main :
     ⊢ ISim.sim_fun open MA MI IstFull (fid RRSNodeHdr.f_main).
   Proof using Hschrrs Hrrs Hnode.
     cStartFunSim. rewrite /RRSNodeI.f_main /RRSNodeA.f_main.
@@ -161,7 +161,7 @@ Module RRSNodeIA. Section RRSNodeIA.
     subst a b. inv H.
   Qed.
 
-  Lemma simF_f `{STATE : !stateGS Σ} :
+  Lemma simF_f :
     ⊢ ISim.sim_fun open MA MI IstFull (fid RRSNodeHdr.f).
   Proof using Hschrrs Hrrs Hnode.
     cStartFunSim. rewrite /RRSNodeI.f /RRSNodeA.f.
@@ -266,14 +266,15 @@ Module RRSNodeIA. Section RRSNodeIA.
     iIntros "_".
     iApply (ISim_reflR open (RRSNodeA.t sp) RRSNodeI.t
       Ctx (λ _ : stateGS Σ, True%I)).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE0 fn) "%Hfn".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE0) "SRC TGT". done.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split; mod_tac. }
+      iIntros (fn) "%Hfn".
       set_unfold in Hfn; des; subst.
       + iApply simF_main.
       + iApply simF_f.
-    - iIntros (STATE0) "SRC TGT". done.
   Qed.
 
 End RRSNodeIA. End RRSNodeIA.

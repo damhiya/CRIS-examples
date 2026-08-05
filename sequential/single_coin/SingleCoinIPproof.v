@@ -18,7 +18,7 @@ Module SingleCoinIP. Section SingleCoinIP.
   Local Definition IstFull :=
     (λ STATE, (Ist STATE ∗ IstEq (ProphecyI.t mn) STATE)%I).
 
-  Lemma simF_new `{STATE : !stateGS Σ} :
+  Lemma simF_new :
     ⊢ ISim.sim_fun open MA MI IstFull (fid SingleCoinHdr.new).
   Proof.
     cStartFunSim. rewrite /SingleCoinI.new /SingleCoinP.new.
@@ -32,7 +32,7 @@ Module SingleCoinIP. Section SingleCoinIP.
     - iFrame.
   Qed.
 
-  Lemma simF_read `{STATE : !stateGS Σ} :
+  Lemma simF_read :
     ⊢ ISim.sim_fun open MA MI IstFull (fid SingleCoinHdr.read).
   Proof.
     cStartFunSim. rewrite /SingleCoinI.read /SingleCoinP.read.
@@ -56,19 +56,23 @@ Module SingleCoinIP. Section SingleCoinIP.
     iApply (ISim_reflR open (SingleCoinP.t mn)
       (CFilter.filter (Prophecy.exports mn) SingleCoinI.t)
       (ProphecyI.t mn) Ist).
-    - mod_tac.
-    - set_unfold; naive_solver.
-    - intros. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
-      repeat rewrite Mod.dom_fnsems_add in Hfn.
-      set_unfold in Hfn; des; subst.
-      + iApply simF_new.
-      + iApply simF_read.
-    - iIntros (STATE) "SRC TGT".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT".
       iPoseProof (state_init_src_acc _ _ v_coins with "SRC") as
           (ovs) "(%Hsrc & COINSS & _)"; first set_solver.
       iPoseProof (state_init_tgt_acc _ _ v_coins with "TGT") as
           (ovt) "(%Htgt & COINST & _)"; first set_solver.
       simpl_map. subst ovs ovt. iExists []. iFrame.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split.
+        - mod_tac.
+        - mod_tac.
+      }
+      iIntros (fn) "%Hfn".
+      repeat rewrite Mod.dom_fnsems_add in Hfn.
+      set_unfold in Hfn; des; subst.
+      + iApply simF_new.
+      + iApply simF_read.
   Qed.
 End SingleCoinIP. End SingleCoinIP.

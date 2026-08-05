@@ -15,7 +15,7 @@ Module MainIA. Section MainIA.
   Local Definition MainA := (MainA.t sp).
   Local Definition IstFull (_ : stateGS Σ) : iProp Σ := True%I.
 
-  Lemma simF_cb `{STATE : !stateGS Σ} :
+  Lemma simF_cb :
     ⊢ ISim.sim_fun open MainA (MainI.t ★ CellioAMod) IstFull
         (fid MainHdr.input_cb).
   Proof using.
@@ -24,7 +24,7 @@ Module MainIA. Section MainIA.
     cStepsS. cStepsT. cStep. cStep. cStep. iSplit; et.
   Qed. 
 
-  Lemma simF_main `{STATE : !stateGS Σ} :
+  Lemma simF_main :
     ⊢ ISim.sim_fun open MainA (MainI.t ★ CellioAMod) IstFull entry.
   Proof using sp_foo sp_cb.
     cStartFunSim. unfold MainA.main, MainI.main.

@@ -418,7 +418,7 @@ Module MemDH. Section MemDH.
       + exact CMP.
   Qed.
 
-  Lemma simF_alloc `{STATE : !stateGS Σ} :
+  Lemma simF_alloc :
     ⊢ ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.alloc).
   Proof using.
     cStartFunSim. rewrite /HybMem.alloc /DetMem.alloc.
@@ -806,7 +806,7 @@ Module MemDH. Section MemDH.
     split; [exact HRA|]. split; [exact HSRC|exact HTGT].
   (* SLOW *)Qed.
 
-  Lemma simF_free `{STATE : !stateGS Σ} :
+  Lemma simF_free :
     ⊢ ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.free).
   Proof using.
     cStartFunSim. rewrite /HybMem.free /DetMem.free.
@@ -918,7 +918,7 @@ Module MemDH. Section MemDH.
         cbn. rewrite /dec. destruct (Z_Dec loc loc0); [congruence|exact Htgt].
   (*SLOW*)Qed.
 
-  Lemma simF_load `{STATE : !stateGS Σ} :
+  Lemma simF_load :
     ⊢ ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.load).
   Proof using.
     cStartFunSim. rewrite /HybMem.load /DetMem.load.
@@ -978,7 +978,7 @@ Module MemDH. Section MemDH.
     iFrame. iSplit; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_store `{STATE : !stateGS Σ} :
+  Lemma simF_store :
     ⊢ ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.store).
   Proof using.
     cStartFunSim. rewrite /HybMem.store /DetMem.store.
@@ -1110,7 +1110,7 @@ Module MemDH. Section MemDH.
         exists v1. split; [exact Hra|]. split; [exact Hsrc|exact Htgt].
   (*SLOW*)Qed.
 
-  Lemma simF_cmp `{STATE : !stateGS Σ} :
+  Lemma simF_cmp :
     ⊢ ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.cmp).
   Proof using.
     cStartFunSim. rewrite /HybMem.cmp /DetMem.cmp.
@@ -1162,7 +1162,7 @@ Module MemDH. Section MemDH.
     iFrame. iSplit; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_cas `{STATE : !stateGS Σ} :
+  Lemma simF_cas :
     ⊢ ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.cas).
   Proof using.
     cStartFunSim. rewrite /HybMem.cas /DetMem.cas.

@@ -38,7 +38,7 @@ Section StackIM.
     Time.lt from to.
   Proof. inversion ADD; done. Qed.
 
-  Lemma push_simF `{STATE : !stateGS Σ} :
+  Lemma push_simF :
     ⊢ ISim.sim_fun open MA MI Ist (fid StackHdr.push).
   Proof.
     cStartFunSim. rewrite /StackI.push /StackM.push. cStepsS. cStepsT.

@@ -69,7 +69,7 @@ Module RRSIA. Section RRSIA.
   Local Definition RRSAMod := RRSA.t parent_yield sp sp_rrs_user get_stid PYIP.
   Local Definition RRSIMod := RRSI.t parent_yield.
 
-  Lemma simF_init `{STATE : !stateGS Σ} :
+  Lemma simF_init :
     ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.init).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.init /RRSI.init.
@@ -214,7 +214,7 @@ Module RRSIA. Section RRSIA.
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_inner_spawn `{STATE : !stateGS Σ} :
+  Lemma simF_inner_spawn :
     ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr._spawn).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.inner_spawn /RRSI.inner_spawn.
@@ -390,7 +390,7 @@ Module RRSIA. Section RRSIA.
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_spawn `{STATE : !stateGS Σ} :
+  Lemma simF_spawn :
     ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.spawn).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.spawn /RRSI.spawn.
@@ -490,7 +490,7 @@ Module RRSIA. Section RRSIA.
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_yield `{STATE : !stateGS Σ} :
+  Lemma simF_yield :
     ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.yield).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.yield /RRSI.yield.
@@ -629,7 +629,7 @@ Module RRSIA. Section RRSIA.
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_yield_global `{STATE : !stateGS Σ} :
+  Lemma simF_yield_global :
     ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist
         (fid RRSHdr.yield_global).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
@@ -740,7 +740,7 @@ Module RRSIA. Section RRSIA.
     Unshelve. all: ss.
   (*SLOW*)Qed.
 
-  Lemma simF_get_tid `{STATE : !stateGS Σ} :
+  Lemma simF_get_tid :
     ⊢ ISim.sim_fun open RRSAMod RRSIMod Ist (fid RRSHdr.get_tid).
   Proof using (* FunInSchSp *) FunInRrsSp SchInSp RRSInSp YieldSpec ConcInSp.
     cStartFunSim. rewrite /RRSA.get_tid /RRSI.get_tid.

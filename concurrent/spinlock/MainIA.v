@@ -24,7 +24,7 @@ Module MainIA. Section MainIA.
   Local Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
     (True ∗ IstEq (SpinLockA ★ MemA) STATE)%I.
 
-  Lemma incr_simF `{STATE : !stateGS Σ} :
+  Lemma incr_simF :
     ⊢ ISim.sim_fun open MA MI IstFull (fid SpinLockMainHdr.incr).
   Proof using SchInSp_s SchInSp_t MainInSp.
     cStartFunSim. rewrite /SpinLockMainI.incr /incr /sfunN /sfunU.
@@ -76,7 +76,7 @@ Module MainIA. Section MainIA.
     cStep. iFrame. eauto.
   (*SLOW*)Qed.
 
-  Lemma main_simF `{STATE : !stateGS Σ} :
+  Lemma main_simF :
     ⊢ ISim.sim_fun open MA MI IstFull entry.
   Proof using SchInSp_s SchInSp_t MainInSp.
     cStartFunSim. rewrite /SpinLockMainI.main /main /sfunN /sfunU.
@@ -200,14 +200,15 @@ Module MainIA. Section MainIA.
   Proof.
     iApply (ISim_reflR open SpinLockMainA SpinLockMainI
       (SpinLockA ★ MemA) (λ _, True%I)).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT". done.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split; mod_tac. }
+      iIntros (fn) "%Hfn".
       set_unfold in Hfn; des; subst.
       + iApply main_simF.
       + iApply incr_simF.
-    - iIntros (STATE) "SRC TGT". done.
   Qed.
 
   Lemma ctxr :

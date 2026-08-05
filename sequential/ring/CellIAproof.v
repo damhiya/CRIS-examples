@@ -18,7 +18,7 @@ Module CellIA. Section CellIA.
   Local Definition CellAMod := (CellA.t idx sp_s).
   Local Definition CellIMod := (CellI.t idx).
 
-  Lemma simF_get `{STATE : !stateGS Σ} :
+  Lemma simF_get :
     ⊢ ISim.sim_fun open CellAMod CellIMod Ist (fid (CellHdr.get idx)).
   Proof using.
     cStartFunSim. rewrite /CellI.get.
@@ -41,7 +41,7 @@ Module CellIA. Section CellIA.
     iExists _, _. iFrame. iRight. iFrame; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_set `{STATE : !stateGS Σ} :
+  Lemma simF_set :
     ⊢ ISim.sim_fun open CellAMod CellIMod Ist (fid (CellHdr.set idx)).
   Proof using.
     cStartFunSim. rewrite /CellI.set.

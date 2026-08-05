@@ -43,7 +43,7 @@ Module KnotIA. Section KnotIA.
   Local Notation IstFull :=
     (λ STATE, (Ist STATE ∗ IstEq (MemA ★ APCA) STATE)%I).
 
-  Lemma simF_rec `{STATE : !stateGS Σ} :
+  Lemma simF_rec :
     ⊢ ISim.sim_fun open KnotAMod KnotIMod IstFull (fid KnotHdr.rec).
   Proof using GEnvWF GEnvIncl RecInSp APCInSp FunInPure PureInSp.
     cStartFunSim. rewrite /KnotI.recF.
@@ -120,7 +120,7 @@ Module KnotIA. Section KnotIA.
     Unshelve. all: try exact (tt↑).
   (*SLOW*)Qed.
 
-  Lemma simF_knot `{STATE : !stateGS Σ} :
+  Lemma simF_knot :
     ⊢ ISim.sim_fun open KnotAMod KnotIMod IstFull (fid KnotHdr.knot).
   Proof using GEnvWF GEnvIncl RecInSp APCInSp FunInPure PureInSp.
     cStartFunSim. rewrite /KnotI.knotF.
@@ -180,19 +180,21 @@ Module KnotIA. Section KnotIA.
     KnotA.init_cond genv ⊢ ISim.t open KnotAMod KnotIMod IstFull.
   Proof.
     iIntros "INIT".
-    iApply (ISim_reflR open KnotA (KnotI.t genv) (MemA ★ APCA) Ist).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+    iApply (ISim_reflR open KnotA (KnotI.t genv) (MemA ★ APCA) Ist
+      with "[INIT] []").
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT".
+      iDestruct "INIT" as "[VF FL]". iExists None, (Vint 0). iSplit.
+      + iPureIntro. ii. inv EQ.
+      + iFrame.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split; mod_tac. }
+      iIntros (fn) "%Hfn".
       repeat rewrite Mod.dom_fnsems_add in Hfn.
       set_unfold in Hfn; des; subst.
       + iApply simF_rec.
       + iApply simF_knot.
-    - iIntros (STATE) "SRC TGT".
-      iDestruct "INIT" as "[VF FL]". iExists None, (Vint 0). iSplit.
-      + iPureIntro. ii. inv EQ.
-      + iFrame.
   Qed.
 
   Lemma ctxr :

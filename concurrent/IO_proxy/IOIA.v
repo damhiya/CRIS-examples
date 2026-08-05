@@ -59,7 +59,7 @@ Module IOIM. Section IOIM.
   Local Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
     (IstHelp (IstEq IOHelpM STATE) ⊤ ∗ IstEq Ctx STATE)%I.
 
-  Lemma init_simF `{STATE : !stateGS Σ} : ⊢ ISim.sim_fun open
+  Lemma init_simF : ⊢ ISim.sim_fun open
     (IOHelpM ★ Ctx)
     (IOHelpI ★ Ctx)
     IstFull (fid IOHdr.init).
@@ -89,7 +89,7 @@ Module IOIM. Section IOIM.
     iIntros (tid) "IST J". cStep; iFrame "∗#"; eauto.
   Qed.
 
-  Lemma request_simF `{STATE : !stateGS Σ} : ⊢ ISim.sim_fun open
+  Lemma request_simF : ⊢ ISim.sim_fun open
     (IOHelpM ★ Ctx)
     (IOHelpI ★ Ctx)
     IstFull (fid IOHdr.request).
@@ -139,7 +139,7 @@ Module IOIM. Section IOIM.
     cStepsS. cStep; iFrame. eauto.
   Qed.
 
-  Lemma proxy_simF `{STATE : !stateGS Σ} : ⊢ ISim.sim_fun open
+  Lemma proxy_simF : ⊢ ISim.sim_fun open
     (IOHelpM ★ Ctx)
     (IOHelpI ★ Ctx)
     IstFull (fid IOHdr.proxy).
@@ -269,11 +269,18 @@ Module IOIM. Section IOIM.
   Proof.
     iIntros "HE".
     iApply (ISim_reflR open IOHelpM IOHelpI Ctx
-      (λ STATE, IstHelp (IstEq IOHelpM STATE) ⊤)).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+      (λ STATE, IstHelp (IstEq IOHelpM STATE) ⊤) with "[HE] []").
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT".
+      rewrite /IstHelp. iFrame "HE".
+      iApply (state_eq_init_same with "SRC TGT").
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split.
+        - mod_tac.
+        - mod_tac.
+      }
+      iIntros (fn) "%Hfn".
       repeat rewrite Mod.dom_fnsems_add in Hfn.
       unfold IOM.t, ProxyM.t, HelpingOn.t in Hfn.
       cbn in Hfn. set_unfold in Hfn; des; subst.
@@ -282,9 +289,6 @@ Module IOIM. Section IOIM.
       + iApply proxy_simF.
       + cStartFunSim; cStepsT; ss.
       + cStartFunSim; cStepsT; ss.
-    - iIntros (STATE) "SRC TGT".
-      rewrite /IstHelp. iFrame "HE".
-      iApply (state_eq_init_same with "SRC TGT").
   Qed.
 End IOIM. End IOIM.
 
@@ -307,7 +311,7 @@ Module IOIA. Section IOIA.
   Local Notation IOA_mod := (IOACore ★ Ctx).
   Local Notation IOM_mod := (IOMCore ★ Ctx).
 
-  Lemma init_simFA `{STATE : !stateGS Σ} : ⊢ ISim.sim_fun open
+  Lemma init_simFA : ⊢ ISim.sim_fun open
     IOA_mod IOM_mod
     IstMA (fid IOHdr.init).
   Proof.
@@ -328,7 +332,7 @@ Module IOIA. Section IOIA.
     cStep; iFrame "GRT"; iFrame; auto.
   Qed.
 
-  Lemma request_simFA `{STATE : !stateGS Σ} : ⊢ ISim.sim_fun open
+  Lemma request_simFA : ⊢ ISim.sim_fun open
     IOA_mod IOM_mod
     IstMA (fid IOHdr.request).
   Proof.
@@ -371,7 +375,7 @@ Module IOIA. Section IOIA.
     iApply ("IHr" $! (S k) with "[] [] IST"); iPureIntro; lia.
   Qed.
 
-  Lemma proxy_simFA `{STATE : !stateGS Σ} : ⊢ ISim.sim_fun open
+  Lemma proxy_simFA : ⊢ ISim.sim_fun open
     IOA_mod IOM_mod
     IstMA (fid IOHdr.proxy).
   Proof.
@@ -397,18 +401,13 @@ Module IOIA. Section IOIA.
   Proof.
     iApply (ISim_reflR open IOACore IOMCore Ctx
       (λ STATE, state_init_tgt ({[mn]} : gset string) ∅ STATE)).
-    - unfold Mod.add, IOA.t, ProxyA.t, IOM.t, ProxyM.t, HelpingOff.t; cbn.
-      apply submseteq_nil_l.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
-      rewrite Mod.dom_fnsems_add in Hfn.
-      unfold IOA.t, ProxyA.t in Hfn.
-      cbn in Hfn. set_unfold in Hfn; des; subst.
-      + iApply init_simFA.
-      + iApply request_simFA.
-      + iApply proxy_simFA.
-    - iIntros (STATE) "SRC TGT".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro.
+        unfold Mod.add, IOA.t, ProxyA.t, IOM.t, ProxyM.t, HelpingOff.t;
+          cbn.
+        apply submseteq_nil_l.
+      }
+      iIntros (STATE) "SRC TGT".
       assert (Hscopes :
         list_to_set (Mod.scopes IOMCore) = ({[mn]} : gset string)).
       { apply set_eq. intros scope.
@@ -419,6 +418,18 @@ Module IOIA. Section IOIA.
         reflexivity. }
       iEval (rewrite Hscopes Hinit) in "TGT".
       iExact "TGT".
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split.
+        - mod_tac.
+        - mod_tac.
+      }
+      iIntros (fn) "%Hfn".
+      rewrite Mod.dom_fnsems_add in Hfn.
+      unfold IOA.t, ProxyA.t in Hfn.
+      cbn in Hfn. set_unfold in Hfn; des; subst.
+      + iApply init_simFA.
+      + iApply request_simFA.
+      + iApply proxy_simFA.
   Qed.
 End IOIA. End IOIA.
 

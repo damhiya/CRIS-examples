@@ -32,7 +32,7 @@ Module MPIA. Section MPIA.
     iFrame. iSplit; [done|iIntros (??) "[$ [% [-> [% $]]]]"]; eauto.
   Qed.
 
-  Lemma simF_mp `{STATE : !stateGS Σ} :
+  Lemma simF_mp :
     ⊢ ISim.sim_fun open MA MI IstFull entry.
   Proof using SchInSpS HMP.
     cStartFunSim. rewrite /MPI.mp /MPA.mp.
@@ -276,7 +276,7 @@ Module MPIA. Section MPIA.
   Unshelve. all: try exact 1%Qp; try exact ⊤.
   (*SLOW*)Qed.
 
-  Lemma simF_mp2 `{STATE : !stateGS Σ} :
+  Lemma simF_mp2 :
     ⊢ ISim.sim_fun open MA MI IstFull (fid MPHdr.mp2).
   Proof using SchInSpS HMP.
     cStartFunSim. rewrite /sfunU /sfunN /MPI.mp2.
@@ -366,16 +366,16 @@ Module MPIA. Section MPIA.
   Proof.
     rewrite /MA /MI.
     iApply (ISim_reflR open (MPA.t sp_s) MPI.t CommonA Ist).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT". done.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split; mod_tac. }
+      iIntros (fn) "%Hfn".
       unfold MPA.t in Hfn. cbn in Hfn.
       set_unfold in Hfn; des; subst.
       + iApply simF_mp2.
       + iApply simF_mp.
-    - iIntros (STATE) "SRC TGT".
-      done.
   Qed.
 End MPIA.
 Section ctxr.

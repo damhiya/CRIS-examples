@@ -24,7 +24,7 @@ Module NDSNodeIA. Section NDSNodeIA.
   Local Definition MA := (NDSNodeA.t sp ★ HybMem.t).
   Local Definition MI := (NDSNodeI.t ★ HybMem.t).
 
-  Lemma simF_main `{STATE : !stateGS Σ} :
+  Lemma simF_main :
     ⊢ ISim.sim_fun open MA MI IstFull (fid NDSNodeHdr.f_main).
   Proof using Hschnds Hnds Hnode.
     cStartFunSim. rewrite /NDSNodeI.f_main /f_main.
@@ -98,7 +98,7 @@ Module NDSNodeIA. Section NDSNodeIA.
     cStep. iFrame; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_f `{STATE : !stateGS Σ} :
+  Lemma simF_f :
     ⊢ ISim.sim_fun open MA MI IstFull (fid NDSNodeHdr.f).
   Proof using Hschnds Hnds Hnode.
     cStartFunSim. rewrite /NDSNodeI.f /f.
@@ -136,14 +136,15 @@ Module NDSNodeIA. Section NDSNodeIA.
     iIntros "_".
     iApply (ISim_reflR open (NDSNodeA.t sp) NDSNodeI.t
       HybMem.t (λ _ : stateGS Σ, True%I)).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE0 fn) "%Hfn".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE0) "SRC TGT". done.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split; mod_tac. }
+      iIntros (fn) "%Hfn".
       set_unfold in Hfn; des; subst.
       + iApply simF_main.
       + iApply simF_f.
-    - iIntros (STATE0) "SRC TGT". done.
   Qed.
 
 End NDSNodeIA. End NDSNodeIA.

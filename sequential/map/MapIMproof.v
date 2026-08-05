@@ -76,7 +76,7 @@ Module MapIM. Section MapIM.
   Local Notation IstFull :=
     (λ STATE, (Ist STATE ∗ IstEq MemA STATE)%I).
 
-  Lemma simF_init `{STATE : !stateGS Σ} :
+  Lemma simF_init :
     ⊢ ISim.sim_fun open MapMMod MapIMod IstFull (fid MapHdr.init).
   Proof using MapInSp.
     cStartFunSim. rewrite /MapI.init /init.
@@ -155,7 +155,7 @@ Module MapIM. Section MapIM.
     rewrite replicate_S_end; f_equal. rewrite -app_assoc //=.
   (*SLOW*)Qed.
 
-  Lemma simF_get `{STATE : !stateGS Σ} :
+  Lemma simF_get :
     ⊢ ISim.sim_fun open MapMMod MapIMod IstFull (fid MapHdr.get).
   Proof using MapInSp.
     cStartFunSim. rewrite /MapI.get /get.
@@ -190,7 +190,7 @@ Module MapIM. Section MapIM.
     iPoseProof ("M" with "IP") as "M". iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_set `{STATE : !stateGS Σ} :
+  Lemma simF_set :
     ⊢ ISim.sim_fun open MapMMod MapIMod IstFull (fid MapHdr.set).
   Proof using MapInSp.
     cStartFunSim. rewrite /MapI.set /set.
@@ -227,7 +227,7 @@ Module MapIM. Section MapIM.
     rewrite -> fun_to_list_update, Z2Nat.id; try nia. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_set_by_user `{STATE : !stateGS Σ} :
+  Lemma simF_set_by_user :
     ⊢ ISim.sim_fun open MapMMod MapIMod IstFull (fid MapHdr.set_by_user).
   Proof using MapInSp.
     cStartFunSim. rewrite /MapI.set_by_user /set_by_user.
@@ -257,17 +257,9 @@ Module MapIM. Section MapIM.
   Lemma sim : ⊢ ISim.t open MapMMod MapIMod IstFull.
   Proof using MapInSp.
     iApply (ISim_reflR open MapM MapI.t MemA Ist).
-    - mod_tac.
-    - set_unfold; naive_solver.
-    - intros. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
-      repeat rewrite Mod.dom_fnsems_add in Hfn.
-      set_unfold in Hfn; des; subst.
-      + iApply simF_init; eauto.
-      + iApply simF_get; eauto.
-      + iApply simF_set; eauto.
-      + iApply simF_set_by_user; eauto.
-    - iIntros (STATE) "SRC TGT".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT".
       rewrite /state_init_src /state_init_tgt.
       iDestruct "SRC" as "[SRC _]". iDestruct "TGT" as "[TGT _]".
       assert (SRCEQ :
@@ -288,6 +280,18 @@ Module MapIM. Section MapIM.
       iEval (rewrite big_sepM_singleton) in "MAPS".
       iEval (rewrite TGTEQ big_sepM_singleton) in "TGT".
       iLeft. iFrame.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split.
+        - mod_tac.
+        - set_unfold; naive_solver.
+      }
+      iIntros (fn) "%Hfn".
+      repeat rewrite Mod.dom_fnsems_add in Hfn.
+      set_unfold in Hfn; des; subst.
+      + iApply simF_init; eauto.
+      + iApply simF_get; eauto.
+      + iApply simF_set; eauto.
+      + iApply simF_set_by_user; eauto.
   Qed.
 End MapIM.
 

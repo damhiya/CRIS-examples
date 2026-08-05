@@ -104,7 +104,7 @@ Module CtrlIA. Section CtrlIA.
   Notation IstFull :=
     (λ STATE, (Ist STATE ∗ IstEq CellGS STATE)%I).
 
-  Lemma simF_init `{STATE : !stateGS Σ} :
+  Lemma simF_init :
     ⊢ ISim.sim_fun open RingAMod RingIMod IstFull (fid RingHdr.init).
   Proof using.
     cStartFunSim. rewrite /CtrlI.init /RingA.init.
@@ -140,7 +140,7 @@ Module CtrlIA. Section CtrlIA.
       rewrite Nat.Div0.mod_mod; eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_get_size `{STATE : !stateGS Σ} :
+  Lemma simF_get_size :
     ⊢ ISim.sim_fun open RingAMod RingIMod IstFull (fid RingHdr.get_size).
   Proof using.
     cStartFunSim. rewrite /CtrlI.get_size /RingA.get_size.
@@ -162,7 +162,7 @@ Module CtrlIA. Section CtrlIA.
     repeat iExists _. iFrame. eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_enqueue `{STATE : !stateGS Σ} :
+  Lemma simF_enqueue :
     ⊢ ISim.sim_fun open RingAMod RingIMod IstFull (fid RingHdr.enqueue).
   Proof using.
     unfold RingAMod, RingIMod, CellGS.
@@ -224,7 +224,7 @@ Module CtrlIA. Section CtrlIA.
       rewrite <-!Nat.add_assoc. eauto.
   (*SLOW*)Qed.
 
-  Lemma simF_dequeue `{STATE : !stateGS Σ} :
+  Lemma simF_dequeue :
     ⊢ ISim.sim_fun open RingAMod RingIMod IstFull (fid RingHdr.dequeue).
   Proof using.
     unfold RingAMod, RingIMod, CellGS.
@@ -285,18 +285,10 @@ Module CtrlIA. Section CtrlIA.
     RingA.init_cond max_size ⊢ ISim.t open RingAMod RingIMod IstFull.
   Proof using.
     iIntros "INIT".
-    iApply (ISim_reflR open RingA CtrlI CellGS Ist).
-    - mod_tac.
-    - set_unfold; naive_solver.
-    - intros. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
-      repeat rewrite Mod.dom_fnsems_add in Hfn.
-      set_unfold in Hfn; des; subst.
-      + iApply simF_init.
-      + iApply simF_get_size.
-      + iApply simF_enqueue.
-      + iApply simF_dequeue.
-    - iIntros (STATE) "SRC TGT".
+    iApply (ISim_reflR open RingA CtrlI CellGS Ist with "[INIT] []").
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT".
       rewrite /state_init_src /state_init_tgt.
       iDestruct "SRC" as "[SRC _]". iDestruct "TGT" as "[TGT _]".
       assert (SRCEQ :
@@ -322,5 +314,17 @@ Module CtrlIA. Section CtrlIA.
       iModIntro. iIntros (? ? FIND) "P".
       iLeft. rewrite Nat.mod_small; eauto.
       eapply lookup_replicate_1. eauto.
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split.
+        - mod_tac.
+        - set_unfold; naive_solver.
+      }
+      iIntros (fn) "%Hfn".
+      repeat rewrite Mod.dom_fnsems_add in Hfn.
+      set_unfold in Hfn; des; subst.
+      + iApply simF_init.
+      + iApply simF_get_size.
+      + iApply simF_enqueue.
+      + iApply simF_dequeue.
   (*SLOW*)Qed.
 End CtrlIA. End CtrlIA.

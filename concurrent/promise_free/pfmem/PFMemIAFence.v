@@ -17,7 +17,7 @@ Section fence.
   Definition MA := (PFMemA.t sp).
   Definition MI := (PFMemI.t syn size).
 
-  Lemma simF_fence `{STATE : !stateGS Σ} :
+  Lemma simF_fence :
     ⊢ ISim.sim_fun open MA MI Ist (fid PFMemHdr.fence).
   Proof.
     cStartFunSim.

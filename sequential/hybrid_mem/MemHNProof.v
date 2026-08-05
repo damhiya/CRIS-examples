@@ -13,7 +13,7 @@ Module MemHN. Section MemHN.
   Local Definition HybMem := HybMem.t.
   Local Definition IstFull := Ist.
 
-  Lemma simF_alloc `{STATE : !stateGS Σ} :
+  Lemma simF_alloc :
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.alloc).
   Proof using.
     cStartFunSim. rewrite /HybMem.alloc /NonDetMem.alloc.
@@ -30,7 +30,7 @@ Module MemHN. Section MemHN.
     cStep. iSplit; first done. iExists _. iFrame.
   (* SLOW *)Qed.
 
-  Lemma simF_free `{STATE : !stateGS Σ} :
+  Lemma simF_free :
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.free).
   Proof using.
     cStartFunSim. rewrite /HybMem.free /NonDetMem.free.
@@ -48,7 +48,7 @@ Module MemHN. Section MemHN.
     cStep. iSplit; first done. iExists _. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_load `{STATE : !stateGS Σ} :
+  Lemma simF_load :
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.load).
   Proof using.
     cStartFunSim. rewrite /HybMem.load /NonDetMem.load.
@@ -67,7 +67,7 @@ Module MemHN. Section MemHN.
     cStep. iSplit; first done. iExists _. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_store `{STATE : !stateGS Σ} :
+  Lemma simF_store :
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.store).
   Proof using.
     cStartFunSim. rewrite /HybMem.store /NonDetMem.store.
@@ -87,7 +87,7 @@ Module MemHN. Section MemHN.
     cStep. iSplit; first done. iExists _. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_cmp `{STATE : !stateGS Σ} :
+  Lemma simF_cmp :
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.cmp).
   Proof using.
     cStartFunSim. rewrite /HybMem.cmp /NonDetMem.cmp.
@@ -107,7 +107,7 @@ Module MemHN. Section MemHN.
     cStep. iSplit; first done. iExists _. iFrame.
   (*SLOW*)Qed.
 
-  Lemma simF_cas `{STATE : !stateGS Σ} :
+  Lemma simF_cas :
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.cas).
   Proof using.
     cStartFunSim. rewrite /HybMem.cas /NonDetMem.cas.

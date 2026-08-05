@@ -27,7 +27,7 @@ Section StackIM.
     (IstHelp (IstEq StackHelpM STATE) ⊤ ∗
       IstEq (SysF ★ SchF) STATE)%I.
 
-  Lemma new_stack_simF `{STATE : !stateGS Σ} :
+  Lemma new_stack_simF :
     ⊢ ISim.sim_fun open MA MI Ist (fid StackHdr.new_stack).
   Proof.
     cStartFunSim. rewrite /StackI.new_stack /StackM.new_stack.

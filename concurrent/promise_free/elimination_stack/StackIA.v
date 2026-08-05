@@ -48,11 +48,18 @@ Module StackIM. Section StackIM.
       (CFilter.filter (Helping.exports mn) StackI.t ★
         HelpingDummy.t mn)
       (SysF ★ SchF) (fun STATE =>
-        IstHelp (IstEq StackHelpM STATE) ⊤)).
-    - mod_tac.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+        IstHelp (IstEq StackHelpM STATE) ⊤) with "[HE] []").
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro. mod_tac. }
+      iIntros (STATE) "SRC TGT".
+      rewrite /IstHelp. iFrame "HE".
+      iApply (state_eq_init_same with "SRC TGT").
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split.
+        - mod_tac.
+        - mod_tac.
+      }
+      iIntros (fn) "%Hfn".
       rewrite Mod.dom_fnsems_add in Hfn.
       unfold StackM.t, HelpingOn.t in Hfn.
       cbn in Hfn. set_unfold in Hfn; des; subst.
@@ -61,9 +68,6 @@ Module StackIM. Section StackIM.
       + rewrite !assoc. iApply (pop_simF mn sp_user sp).
       + cStartFunSim; cStepsT; ss.
       + cStartFunSim; cStepsT; ss.
-    - iIntros (STATE) "SRC TGT".
-      rewrite /IstHelp. iFrame "HE".
-      iApply (state_eq_init_same with "SRC TGT").
   Qed.
 End StackIM. End StackIM.
 
@@ -159,11 +163,36 @@ Module StackIA. Section StackIA.
           (SystemA.t sp_user (↑stackN) sp) ★
         CFilter.filter (Helping.exports mn) SchI.t)
       (fun STATE => state_init_tgt ({[mn]} : gset string) ∅ STATE)).
-    - unfold StackA.t, StackM.t, HelpingOff.t; cbn.
-      apply submseteq_nil_l.
-    - mod_tac.
-    - intros _. mod_tac.
-    - iIntros (STATE fn) "%Hfn".
+    - rewrite /ISim.init_ist. iIntros (WF). iSplit.
+      { iPureIntro.
+        unfold StackA.t, StackM.t, HelpingOff.t; cbn.
+        apply submseteq_nil_l.
+      }
+      iIntros (STATE) "SRC TGT".
+      assert (Hscopes :
+        list_to_set
+          (Mod.scopes
+            (StackM.t mn (SystemA.sp sp_user (↑stackN)) ★
+              HelpingOff.t mn StackM.jobCode)) =
+        ({[mn]} : gset string)).
+      { apply set_eq. intros scope.
+        unfold Mod.add; cbn.
+        unfold StackM.t, HelpingOff.t; cbn. set_solver. }
+      assert (Hinit :
+        Mod.initial_st
+          (StackM.t mn (SystemA.sp sp_user (↑stackN)) ★
+            HelpingOff.t mn StackM.jobCode) = ∅).
+      { unfold Mod.add, StackM.t, HelpingOff.t; cbn.
+        apply map_eq. intros key. rewrite lookup_union_with.
+        simpl_map. reflexivity. }
+      iEval (rewrite Hscopes Hinit) in "TGT".
+      iExact "TGT".
+    - rewrite /ISim.sim_funs. iIntros (WF). iSplit.
+      { iPureIntro. split.
+        - mod_tac.
+        - mod_tac.
+      }
+      iIntros (fn) "%Hfn".
       unfold StackA.t in Hfn. cbn in Hfn.
       set_unfold in Hfn; des; subst.
     { (* new_stack *)
@@ -252,25 +281,6 @@ Module StackIA. Section StackIA.
       cStepsT. sYieldS. cForcesS; iFrame "GRT".
       cStep. iFrame. auto.
     }
-    - iIntros (STATE) "SRC TGT".
-      assert (Hscopes :
-        list_to_set
-          (Mod.scopes
-            (StackM.t mn (SystemA.sp sp_user (↑stackN)) ★
-              HelpingOff.t mn StackM.jobCode)) =
-        ({[mn]} : gset string)).
-      { apply set_eq. intros scope.
-        unfold Mod.add; cbn.
-        unfold StackM.t, HelpingOff.t; cbn. set_solver. }
-      assert (Hinit :
-        Mod.initial_st
-          (StackM.t mn (SystemA.sp sp_user (↑stackN)) ★
-            HelpingOff.t mn StackM.jobCode) = ∅).
-      { unfold Mod.add, StackM.t, HelpingOff.t; cbn.
-        apply map_eq. intros key. rewrite lookup_union_with.
-        simpl_map. reflexivity. }
-      iEval (rewrite Hscopes Hinit) in "TGT".
-      iExact "TGT".
     }
     jApply "REF".
     jFrame "STACK HELP SYS SCH".

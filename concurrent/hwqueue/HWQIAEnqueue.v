@@ -127,7 +127,7 @@ Section HWQPM.
     rewrite Heq. iFrame. rewrite -app_assoc /= get_values_not_in //; iFrame.
   Qed.
 
-  Lemma simF_enqueue `{STATE : !stateGS Σ} :
+  Lemma simF_enqueue :
     ⊢ ISim.sim_fun open
       ((HWQM ★ HelpOn) ★ MemA ★ ProphA) ((HWQP ★ HelpDummy) ★ MemA ★ ProphA)
       IstFull (fid HWQHdr.enqueue).

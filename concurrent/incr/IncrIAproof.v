@@ -13,7 +13,7 @@ Module IncrIA. Section IncrIA.
   Local Definition IstFull (STATE : stateGS Σ) : iProp Σ :=
     (True ∗ IstEq (MemA.t sp_m) STATE)%I.
 
-  Lemma incr_simF `{STATE : !stateGS Σ} :
+  Lemma incr_simF :
     ⊢ ISim.sim_fun open MA MI IstFull (fid IncrHdr.incr).
   Proof.
     cStartFunSim. rewrite /IncrA.incr /IncrI.incr. cStepsS. cStepsT.
