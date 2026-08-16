@@ -1,4 +1,5 @@
 Require Export CRIS.common.CRIS.
+From CRIS.filter Require Import CallFilter.
 From CRIS.imp_system Require Export imp.ImpPrelude.
 Require Export CRIS.prophecy.ProphecyHeader.
 From CRIS.hwqueue Require Export HWQHeader.

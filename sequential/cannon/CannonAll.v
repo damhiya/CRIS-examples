@@ -23,7 +23,7 @@ Section CannonAux.
     iApply refines_trans. iSplitR.
     { iApply ctxr_refines. iApply Cancel.prepare; et; clarify. }
     iApply Cancel.cancel.
-    { apply SMod.cancellable_add; r; rewrite /=; mod_tac ss. }
+    { apply SMod.cancellable_add; r; rewrite /=; mod_tac. }
     { ss. exists tt. split; refl. }
     { unfoldPrePost. iIntros "% % %"; by des. }
     { iDestruct "H2" as "(X & Y & Z & $ & $)".

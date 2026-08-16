@@ -58,7 +58,7 @@ Section MainAux.
     iApply refines_trans. iSplitR.
     { iApply ctxr_refines. iApply Cancel.prepare; et; clarify. }
     iApply Cancel.cancel.
-    { apply SMod.cancellable_add; r; rewrite /= /MainA.fnsems /SchA.fnsems; mod_tac ss. }
+    { apply SMod.cancellable_add; r; rewrite /= /MainA.fnsems /SchA.fnsems; mod_tac. }
     { ss; exists (0, 0, tt); split; refl. }
     { unfoldPrePost. iIntros "% % [_ [_ $]]". }
     { iDestruct "H2" as "(TID & YIELD & WINV & $ & $)".

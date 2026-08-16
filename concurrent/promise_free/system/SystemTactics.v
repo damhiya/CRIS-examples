@@ -32,8 +32,8 @@ Section wsim.
     cCoind CIH g' Hgg' with p_src p_tgt. iIntros "[IST [TV KTR]] /=".
     rewrite {2 3}unfold_iterC.
 
-    cStepsS. des_if; [cNormS|cStepS; ss].
-    cStepsT. rewrite Hmsk. cStepsT. destruct _q as [[|]|]; cycle 2.
+    cStepsS.
+    cStepsT. cStepsT. destruct _q as [[|]|]; cycle 2.
     { cStepsT.
       cForceS (Some false). cStepsS.
       iApply wsim_mono_knowledge; cycle 1.
@@ -42,9 +42,9 @@ Section wsim.
     }
     { cStepsT. rewrite Hspt. cStepsT. rewrite Hcall. cStepsT.
       cForceS (Some true). cStepsS. rewrite Hsps /=.
-      cNormS. des_if; [cNormS|cStepS; ss]. cForceS (tid, stid, V).
-      cNormS. des_if; [cNormS|cStepS; ss]. cForceS.
-      cNormS. des_if; [cNormS|cStepS; ss]. cForceS.
+      cNormS. cForceS (tid, stid, V).
+      cNormS. cForceS.
+      cNormS. cForceS.
       iFrame "TV". iSplit; eauto.
       cNormS. des_if; [cNormS|cStepS; ss].
       cCall "IST" as (ret) "IST".
@@ -72,6 +72,6 @@ Section wsim.
   Proof.
     iIntros "S"; rewrite /System.yield; unseal "System".
     rewrite unfold_iterC; cStepsS.
-    des_if; cStepsS; ss. cForceS (None); cStepsS; done.
+    cForceS (None); cStepsS; done.
   Qed.
 End wsim.

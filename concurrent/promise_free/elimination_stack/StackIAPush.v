@@ -1,4 +1,5 @@
 From CRIS.common Require Import CRIS.
+From CRIS.filter Require Import CallFilter.
 From CRIS.scheduler Require Import SchHeader SchI SchA SchTactics.
 From CRIS.promise_free.algebra Require Import HistoryRA AtomicRA.
 From CRIS.promise_free.system Require Import SystemHeader SystemA SystemTactics.

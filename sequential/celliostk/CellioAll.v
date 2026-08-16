@@ -1,5 +1,6 @@
 From CRIS.common Require Import CRIS.
 From CRIS.cancellation Require Import Cancel.
+From CRIS.filter Require Import SysFilter.
 From CRIS.lib Require Import BiEnrichedProset.
 From CRIS.imp_system.imp Require Import ImpPrelude.
 From CRIS.imp_system.mem Require Import MemI MemA MemIAproof.
@@ -114,7 +115,7 @@ Section CellioAux.
     rewrite -SMod.to_mod_cancel_add.
     iApply Cancel.cancel.
     { apply SMod.cancellable_add.
-      - r; rewrite /= /MainA.fnsems //; mod_tac ss.
+      - r; rewrite /= /MainA.fnsems //; mod_tac.
       - eapply SFilter.filter_cancellable. et.
     }
     { assert (Ce : SMod.fnsems Ctx !! entry = None).

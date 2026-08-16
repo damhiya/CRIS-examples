@@ -49,7 +49,7 @@ Section MPAux.
     { iApply ctxr_refines. iApply Cancel.prepare; et; clarify. }
     iApply Cancel.cancel.
     { apply SMod.cancellable_add; last apply SMod.cancellable_add; r;
-        rewrite /= /MPA.fnsems /SystemA.fnsems /PFMemA.fnsems; mod_tac ss.
+        rewrite /= /MPA.fnsems /SystemA.fnsems /PFMemA.fnsems; mod_tac.
     }
     { assert (Ht : (SMod.sp_from smod_src).1 !! entry =
                      fsp_some (MPA.main_spec)) by mod_tac.

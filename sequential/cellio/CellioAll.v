@@ -1,5 +1,6 @@
 From CRIS.common Require Import CRIS.
 From CRIS.cancellation Require Import Cancel.
+From CRIS.filter Require Import FilterComm.
 From CRIS.lib Require Import BiEnrichedProset.
 From CRIS.imp_system.imp Require Import ImpPrelude.
 From CRIS.cellio Require Import CellioHeader CellioA CellioI MainA MainI
@@ -117,7 +118,7 @@ Section CellioAux.
       { et. }
       {
         i.
-        rewrite /Ctx_filtered SFilter.cfilter_comm in H0.
+        rewrite /Ctx_filtered cfilter_comm in H0.
         eapply SFilter.filter_masked; et.
       }
       jFrame.
@@ -126,7 +127,7 @@ Section CellioAux.
     rewrite -SMod.to_mod_cancel_add.
     iApply Cancel.cancel.
     { apply SMod.cancellable_add.
-      - r; rewrite /= /MainA.fnsems //; mod_tac ss.
+      - r; rewrite /= /MainA.fnsems //; mod_tac.
       - eapply CFilter.filter_cancellable, SFilter.filter_cancellable. et.
     }
     { assert (Ce : SMod.fnsems Ctx !! entry = None).

@@ -72,12 +72,12 @@ Section HWQPM.
     intros Hf. revert p. iIntros (p).
     iInduction p as [|e p] "IH" forall (ps pt slots ls);
       iIntros (HNoDup Ha) "#Hinv Hist Hs● Hbig He●".
-    { aUnfoldS. cNormS. case_match; cStepsS; ss.
+    { aUnfoldS. cNormS.
       cForceS false. cStep.
       rewrite /= app_nil_r map_imap_helped_nil. iFrame.
     }
-    aUnfoldS. cNormS. case_match; cStepsS; ss. cForceS true. cStepsS.
-    destruct orb; ss. destruct msks; cStepsS; ss.
+    aUnfoldS. cNormS. cForceS true. cStepsS.
+    cNormS. des_if; cStepsS; ss.
     cInlineS. cStepsS.
     assert (∀ i : nat, i ∈ p → was_committed <$> slots !! i = Some false) as Ha1.
     { intros i Hi. apply Ha. apply elem_of_list_further, Hi. }

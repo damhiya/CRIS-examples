@@ -36,7 +36,7 @@ Section mem.
     cStepsT; rewrite Ht; cForceT _. cStepsT; rewrite Ha; cForceT.
     iSplit; eauto.
     { rewrite Z2Nat.id //; try lia. iSplit; eauto. iSplit; eauto. iPureIntro; lia. }
-    cStepsT; rewrite Hc; cStepsT. rewrite Hc; cStepsT. rewrite Hg; cStepsT.
+    cStepsT. cStepsT. cStepsT. cStepsT.
     iDestruct "GRT" as "[-> [% [-> ↦]]]". iApply "K".
     iApply (big_sepL_impl with "↦").
     iIntros "!> % % %"; rewrite Z.add_0_l; iIntros "$".
@@ -57,7 +57,7 @@ Section mem.
     iIntros "↦ K".
     cInlineT. cStepsT; rewrite Ht. cForceT (b, ofs, v'); cStepsT; rewrite Ht.
     cForcesT; cStepsT; rewrite Ha; cForcesT. iFrame "↦"; iSplit; eauto.
-    cStepsT. rewrite Hc; cStepsT. rewrite Hc; cStepsT. rewrite Hg; cStepsT.
+    cStepsT. cStepsT. cStepsT. cStepsT.
     iDestruct "GRT" as "[-> ->]". iApply "K"; iFrame.
   Qed.
 
@@ -77,7 +77,7 @@ Section mem.
     iIntros "↦ K".
     cInlineT. cStepsT; rewrite Ht. cForceT (b, ofs, v', v); cStepsT; rewrite Ht.
     cForcesT; cStepsT; rewrite Ha; cForcesT. iFrame "↦"; iSplit; eauto.
-    cStepsT. rewrite Hc; cStepsT. rewrite Hc; cStepsT. rewrite Hg; cStepsT.
+    cStepsT. cStepsT. cStepsT. cStepsT.
     iDestruct "GRT" as "[-> [↦ ->]]". iApply "K"; iFrame.
   Qed.
 
@@ -97,7 +97,7 @@ Section mem.
     iIntros "↦ K".
     cInlineT. cStepsT; rewrite Ht. cForceT (b, ofs, q, v); cStepsT; rewrite Ht.
     cForcesT; cStepsT; rewrite Ha; cForceT; iFrame "↦"; iSplit; eauto.
-    cStepsT; rewrite Hc; cStepsT. rewrite Hc; cStepsT. rewrite Hg; cStepsT.
+    cStepsT. cStepsT. cStepsT. cStepsT.
     iDestruct "GRT" as "[-> [↦ ->]]". iApply "K"; iFrame.
   Qed.
 
@@ -123,8 +123,8 @@ Section mem.
     cInlineT. cStepsT. rewrite Ht; cForceT (b, ofs, v, v_old, v_new, succ, E); cNormT.
     rewrite Ht; cForcesT; cNormT. rewrite Ha; cForcesT.
     iFrame "↦ E HE"; iSplit; eauto.
-    cStepsT. rewrite Hc; cStepsT. rewrite Hc; cStepsT.
-    rewrite Hg; cStepsT. iDestruct "GRT" as "[-> [-> [↦ E]]]". iApply ("K" with "↦ E"); iFrame.
+    cStepsT. cStepsT. cStepsT. cStepsT.
+    iDestruct "GRT" as "[-> [-> [↦ E]]]". iApply ("K" with "↦ E"); iFrame.
   Qed.
 
   Lemma wsim_mem_cmp v1 v2 succ E (msk : emask) k_s k_t E1 E2 g :
@@ -149,7 +149,7 @@ Section mem.
     cInlineT. cStepsT. rewrite Ht. cForceT (v1, v2, succ, E). cStepsT.
     rewrite Ht. cForcesT. cStepsT. rewrite Ha. cForceT.
     iFrame "E HE"; iSplit; eauto.
-    cStepsT. rewrite Hc. cStepsT. rewrite Hc. cStepsT. rewrite Hg. cStepsT.
+    cStepsT. cStepsT. cStepsT. cStepsT.
     iDestruct "GRT" as "[-> [-> E]]". iApply ("K" with "E"); iFrame.
   Qed.
 
@@ -174,7 +174,7 @@ Section mem.
       { case_decide; case_bool_decide; case_match; ss. }
       iIntros "_ !>"; iExists 1%Qp, 1%Qp, Vundef, Vundef; repeat iSplit; eauto.
     }
-    cStepsT. rewrite Hc. cStepsT. rewrite Hc. cStepsT. rewrite Hg. cStepsT.
+    cStepsT. cStepsT. cStepsT. cStepsT.
     iDestruct "GRT" as "[-> [-> _]]". iFrame.
   Qed.
 End mem.

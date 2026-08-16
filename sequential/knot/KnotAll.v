@@ -38,7 +38,7 @@ Section KnotAux.
     iApply refines_trans. iSplitR "Hknot Hinit".
     { iApply ctxr_refines. iApply Cancel.prepare; et; clarify. }
     iApply Cancel.cancel.
-    { repeat apply SMod.cancellable_add; r; mod_tac ss. }
+    { repeat apply SMod.cancellable_add; r; mod_tac. }
     { assert (Ht : (SMod.sp_from smod_src).1 !! entry =
                      fsp_some (KnotMainA.main_spec)) by mod_tac.
       rewrite Ht; clear Ht. ss; exists tt; split; refl.

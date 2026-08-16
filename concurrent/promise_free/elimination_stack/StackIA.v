@@ -1,4 +1,5 @@
 From CRIS.common Require Import CRIS.
+From CRIS.filter Require Import CallFilter.
 From CRIS.lib Require Import BiEnrichedProset.
 From CRIS.scheduler Require Import SchHeader SchI SchA SchTactics.
 From CRIS.promise_free.algebra Require Import HistoryRA AtomicRA.
@@ -100,7 +101,7 @@ Module StackIA. Section StackIA.
     cNormS. case_match; cStepsS; ss. case_match; cStepsS; ss.
     iPoseProof ("SIM" with "ASM") as "SIM".
     appendRetT. wbind _ "SIM" as ([ret_s x2_s] ret_t) ">[W [Q RR]]".
-    cNormS; case_match; cStepsS; ss. iApply wsim_fold; iFrame.
+    iApply wsim_fold; iFrame.
     cForceS. iFrame. cStep; iFrame.
   Qed.
 

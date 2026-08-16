@@ -54,11 +54,11 @@ Section SCHMainAux.
   Ltac ctac :=
     rewrite /=;
     match goal with
-    | [ |- map_Forall _ (?X _) ] => rewrite /X; mod_tac ss
-    | [ |- map_Forall _ (?X _ _) ] => rewrite /X; mod_tac ss
-    | [ |- map_Forall _ (?X _ _ _) ] => rewrite /X; mod_tac ss
-    | [ |- map_Forall _ (?X _ _ _ _) ] => rewrite /X; mod_tac ss
-    | [ |- map_Forall _ (?X _ _ _ _ _) ] => rewrite /X; mod_tac ss
+    | [ |- map_Forall _ (?X _) ] => rewrite /X; mod_tac
+    | [ |- map_Forall _ (?X _ _) ] => rewrite /X; mod_tac
+    | [ |- map_Forall _ (?X _ _ _) ] => rewrite /X; mod_tac
+    | [ |- map_Forall _ (?X _ _ _ _) ] => rewrite /X; mod_tac
+    | [ |- map_Forall _ (?X _ _ _ _ _) ] => rewrite /X; mod_tac
     end.
 
   Local Transparent SCH.
