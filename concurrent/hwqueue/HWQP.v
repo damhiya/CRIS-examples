@@ -1,4 +1,5 @@
 Require Export CRIS.common.CRIS.
+From CRIS.proofmode Require Import HNormClasses.
 From CRIS.imp_system Require Export imp.ImpPrelude.
 From CRIS.hwqueue Require Export HWQHeader.
 Require Export CRIS.scheduler.SchHeader.
@@ -106,6 +107,13 @@ Module HWQP. Section HWQP.
   Lemma real_mod : Mod.real_mod t.
   Proof. real_mod_solver. Qed.
 End HWQP. End HWQP.
+
+#[global] Hint Extern 0 (HNormBool (HWQP.msk _ _ _) _) =>
+  simpl;
+  let a := fresh in
+  case_bool_decide as a;
+  [tc_solve|exfalso; set_solver+a]
+    : typeclass_instances.
 
 Module HWQIP. Section HWQIP.
   Context `{!crisG Γ Σ α β τ Hinv Hsub, !concGS}.

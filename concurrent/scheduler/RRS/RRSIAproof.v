@@ -544,7 +544,8 @@ Module RRSIA. Section RRSIA.
     cStepsS. cStepsT.
     cForcesS. iSplitL "T"; first iFrame.
     cStepsS. cStep. cStepsS. cStepsT. iDestruct "ASM" as "[-> T]". cSimpl.
-    cStepsS. cStepsT. rewrite H. case_decide; ss. cStepsS. cStepsT.
+    cStepsS. cStepsT. rewrite H. cNormS. cNormT.
+    case_decide; ss. cStepsS. cStepsT.
     eapply lookup_lt_Some in H as LEN.
     generalize (succ_rr_upperbound mtid (length ths) LEN); intro LEN0.
     eapply lookup_lt_is_Some in LEN0. rewrite /is_Some in LEN0. des. rewrite LEN0.

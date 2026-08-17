@@ -40,13 +40,14 @@ Module KnotMainIA. Section KnotMainIA.
 
     cStepsS. destruct _q as [n I]; s. iDestruct "ASM" as "[[[%fb [-> [% %Hspec]]] I] [%vo [-> %LEvo]]]".
     cStepsT. inv Hspec. rewrite FBLOCK. cStepsT.
-    unfold assume. unshelve cForceT; eauto. cStepsT.
+    unfold assume. unshelve cForceT; eauto.
     des_ifs.
     { (* base case *)
-      rewrite /APC.pure_body. cStepsS. cSimpl. cForcesS. iSplitR; et. cStepsS.
+      rewrite /APC.pure_body. iSplit; first done.
+      cStepsS. cSimpl. cForcesS. iSplitR; et. cStepsS.
       cInlineS. cStepsS.
       iDestruct "ASM" as "[-> <-]". cStepsS.
-      unfold APC. cForceS 0. cStepsS.
+      rewrite /APCA.apc_body /APC. cForceS 0. cStepsS.
 
       (* SRC: change to skip *)
       iApply wsim_apc_src. cStepsS. cForcesS. iSplitR; et. cStepsS.
@@ -56,9 +57,10 @@ Module KnotMainIA. Section KnotMainIA.
       rewrite Hn. cStep. iSplit; et.
     }
     { (* recursive cCall *)
-      cStepsT. rewrite /pure_body. cStepsS. cSimpl. cForcesS. iSplitR; et. cStepsS.
+      iSplit; first done. cStepsT.
+      rewrite /pure_body. cStepsS. cSimpl. cForcesS. iSplitR; et. cStepsS.
       cInlineS. cStepsS.
-      iDestruct "ASM" as "[-> <-]". cStepsS. unfold APC.
+      iDestruct "ASM" as "[-> <-]". cStepsS. rewrite /APCA.apc_body /APC.
       cForceS 2. cStepsS.
 
       (* first cCall - rec(n - 1) *)
@@ -164,7 +166,7 @@ Module KnotMainIA. Section KnotMainIA.
 
     (* SRC: inlining APC *)
     cInlineS. cStepsS. iDestruct "ASM" as "%"; des; subst. cStepsS.
-    unfold APC. cForceS 1. cStepsS. 
+    rewrite /APCA.apc_body /APC. cForceS 1. cStepsS.
     inv SPEC.
     (* SRC, TGT: cCall "fib" using APC tactic *)
     apcCallWeak "IST FG" as (ret) "IST"; et.

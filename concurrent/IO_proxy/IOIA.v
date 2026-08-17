@@ -360,14 +360,12 @@ Module IOIA. Section IOIA.
       aUnfoldS. aUnfoldT. sYields.
       case_decide as Hcase; last lia.
       rewrite /jobCode. cStepsT.
-      case_decide as Hcase2; last lia.
       cStepsT. sYields. sYieldS. cStepsS. sYieldS. cStep; iFrame; auto.
     }
     (* step: k < num *)
     aUnfoldS; aUnfoldT. sYields.
     case_decide as Hcase; first lia.
     rewrite /jobCode. cStepsT.
-    case_decide as Hcase2; first lia.
     sYieldS.
     cStepsS. cForceT _q. cForcesT; iFrame "ASM". cStepsT.
     cForcesS; iFrame "GRT". aUnfoldT. sYields. sYieldS.

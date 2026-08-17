@@ -47,7 +47,7 @@ Module RepeatIA. Section RepeatIA.
     cSimpl.
 
     (* TGT: handle input *)
-    cStepsT. unfold assume. cForceT. cStepsT.
+    cStepsT. unfold assume. cForceT.
 
     (* case analysis: n *)
     destruct n as [|n'].
@@ -55,12 +55,12 @@ Module RepeatIA. Section RepeatIA.
     (* CASE: n is 0 *)
     {
       (* TGT: cSteps tgt *)
-      cStepsT.
+      iSplit; first done. cStepsT.
 
       (* SRC: unfold APC *)
       cForcesS. iSplit; eauto.
       cStepsS. cInlineS. cStepsS. iDestruct "ASM" as "%". cSimpl.
-      cStepsS. unfold APC. cForceS. cStepsS.
+      cStepsS. rewrite /APCA.apc_body /APC. cForceS. cStepsS.
 
       (* SRC: change to skip *)
       apcS. cStepsS. cForcesS. iSplit; et. cStepsS. cForcesS. iSplit; et.
@@ -73,12 +73,12 @@ Module RepeatIA. Section RepeatIA.
     {
       (* TGT: load fn from function pointer *)
       destruct (Z_lt_le_dec (S n') 1) eqn:E; try lia.
-      rewrite H2. cStepsT.
+      rewrite H2. iSplit; first done. cStepsT.
 
       (* SRC: unfold APC *)
       cForcesS. iSplit; eauto. cStepsS. 
       cInlineS. cStepsS. iDestruct "ASM" as "%". cSimpl.
-      cStepsS. unfold APC. cForceS 2.
+      cStepsS. rewrite /APCA.apc_body /APC. cForceS 2.
 
       (* cCall apc with fn *)
       apcCallWeak "IST" as (?) "ISTPOST"; et.

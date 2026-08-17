@@ -32,18 +32,19 @@ Module MutFIA. Section MutFIA.
     cStepsS. iDestruct "ASM" as "((%Y & %B) & %Q)". subst; cSimpl.
 
     (* TGT: take cSteps *)
-    cStepsT. unfold assume. cForceT. cStepsT.
+    cStepsT. unfold assume. cForceT.
     
     (* destruct cases of the number of recursive cCall *)
     destruct _q; s.
     { (* f(0) *)
       rewrite /pure_body /cfunN.
-      cStepsT. cStepsS. cSimpl.
+      iSplit; first (iPureIntro; eapply mut_max_intrange; eauto).
+      cStepsS. cSimpl.
       cForcesS. iSplitR; et. cStepsS. 
 
       (* SRC: inlining APC *)
       cInlineS. cStepsS. iDestruct "ASM" as "[-> <-]"; cSimpl. cStepsS.
-      rewrite /APC. cForceS _q. cStepsS.
+      rewrite /APCA.apc_body /APC. cForceS _q. cStepsS.
       
       (* SRC: jump APC *)
       apcS. cStepsS. cForcesS. iSplitR; eauto. cStepsS.
@@ -55,12 +56,14 @@ Module MutFIA. Section MutFIA.
 
     (* f(S n) *)
     replace (S _q - 1)%Z with (Z.of_nat _q) by nia.
-    rewrite /pure_body /cfunN. cStepsS. cSimpl.
+    rewrite /pure_body /cfunN.
+    iSplit; first (iPureIntro; eapply mut_max_intrange; eauto).
+    cStepsS. cSimpl.
     cForceS vo. cStepsS. cForcesS. iSplitR; eauto.
 
     (* SRC: inlining APC in order to cCall mutg *)
     cInlineS. cStepsS. iDestruct "ASM" as "[-> <-]"; cSimpl. cStepsS.
-    rewrite /APC. cForceS 1. cStepsS.
+    rewrite /APCA.apc_body /APC. cForceS 1. cStepsS.
 
     (* SRC, TGT : cCall mutg using APC tactic *)
     cStepsT. apcCall "IST" as (?) "ISTPOST"; eauto.
@@ -78,7 +81,6 @@ Module MutFIA. Section MutFIA.
 
     (* prove shelved goals *)
     Unshelve. all: ss.
-    { eapply mut_max_intrange; eauto. }
     { exact (0↑). }
     { exact (0↑). }
   (*SLOW*)Qed.

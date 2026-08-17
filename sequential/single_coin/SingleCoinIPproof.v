@@ -39,7 +39,8 @@ Module SingleCoinIP. Section SingleCoinIP.
     iDestruct "IST" as "[IST EQ]".
     iDestruct "IST" as (l) "[COINSS COINST]".
     cStepsS. cStepsT. destruct (Any.downcast arg); cStepsS; last case_match; cStepsS; ss.
-    cStepsS. cStepsT. des_ifs.
+    cStepsS. cStepsT. destruct (l !! n) as [[b|]|] eqn:Hlookup;
+      cNormS; cNormT.
     { cStep; eauto. iSplit; eauto.
       iSplitR "EQ"; last iFrame. iExists l. iFrame.
     }

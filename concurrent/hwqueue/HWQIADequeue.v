@@ -82,7 +82,7 @@ Section HWQPM.
     iMod ("Close" with "[//] [$] IST") as "> > IST".
     iEval (rewrite -IstHelp_nested_equiv) in "IST".
     clear pref rest slots deqs pvs.
-    sYields. rewrite /HWQP.dequeue_aux. sYields.
+    sYields.
     set (tgt_in := λ _ : nat, _).
 
     (* The range is the min between [q.back - 1] and [q.size - 1]. *)

@@ -38,7 +38,7 @@ Module CellioIA. Section CellioIA.
     cStepsS. cStepsT.
     destruct Any.downcast; cStepsS; des_ifs. cStepsT. rename z into v_new.
 
-    mAllocT as (?) "[P0 [P1 _]]". rewrite /scale_int; case_match; ss. cStepsT.
+    mAllocT as (?) "[P0 [P1 _]]". rewrite /scale_int; ss. cStepsT.
     mStoreT "P0".
     mStoreT "P1".
 
@@ -62,7 +62,7 @@ Module CellioIA. Section CellioIA.
 
     destruct _q. { iDestruct "ASM" as "%"; ss. }
     iDestruct "ASM" as ([b o]?) "[-> [[P0 [P1 _]] PT]]". rewrite right_id.
-    cStepsT. rewrite /scale_int; case_match; ss. cStepsT.
+    cStepsT. rewrite /scale_int; ss. cStepsT.
 
     mLoadT "P0". mLoadT "P1". mFreeT "P0". mFreeT "P1".
 

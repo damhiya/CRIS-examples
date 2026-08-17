@@ -33,14 +33,12 @@ Section read.
       subst config_any. cStepsT.
       rewrite /PFMemI.check_ident.
       des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
-      cStepsT. destruct _q as [[[e val'] config'] [EVREAD STEP]].
+      rewrite F. cStepsT. destruct _q as [[[e val'] config'] [EVREAD STEP]].
       destruct e; inv EVREAD; inv STEP; clear EVENT; rename STEP0 into STEP; s in STEP; cycle 1.
       { (* RACY READ *)
         inv STEP; inv LOCAL. inv LOCAL0. inv RACE.
         { inv PFG; rewrite H in GET; ss. }
-        iPoseProof (tview_both_valid with "TA TV") as "%IN".
-        destruct IN as [l [lc [FOUND LCEQ]]].
-        s; rewrite FOUND in Heq; inv Heq.
+        rewrite F in HTID; inv HTID.
         rewrite own_loc_na_eq /own_loc_na_def /view_at.
         iDestruct "PT" as "[%f [%t [%LT [%V' [%na' [[%ALLOC_LOCAL HIST] %LC]]]]]]".
         iPoseProof (hist_own_hist_cut with "HA HIST") as "[%tcut [<- [%CELL_CUT %ACC]]]".
@@ -75,8 +73,7 @@ Section read.
       (* VALID READ *)
       inv STEP; inv LOCAL. des_ifs. clear n.
       cStepsT.
-      iPoseProof (tview_both_valid with "TA TV") as "%F"; des; subst.
-      rewrite F in Heq; inv Heq.
+      rewrite F in HTID; inv HTID.
 
       rewrite own_loc_na_eq /own_loc_na_def /view_at.
       iDestruct "PT" as "[%f [%t [%LT [%V' [%na' [[%ALLOC_LOCAL HIST] %LC]]]]]]".
@@ -88,7 +85,7 @@ Section read.
       rewrite CELL_CUT Cell.cut_spec in CELL_GET'; des_ifs.
 
       assert (TEQ: t = ts).
-      { inv LOCAL0. 
+      { inv LOCAL0.
         assert (LECUT: Time.le (View.rlx Vcut loc) ts).
         { inv READABLE. inv SEEN_LOCAL.
           { etrans. eapply l. rewrite Time.le_lteq; left; tet; eauto. }
@@ -101,7 +98,7 @@ Section read.
       }
       subst.
 
-      iMod ((tview_auth_update ths (IdentMap.add tid (existT lang st2, lc2) ths)) with "TA TV") as "[TA TV]"; eauto.
+      iMod ((tview_auth_update ths (IdentMap.add tid (existT _ st2, lc2) ths)) with "TA TV") as "[TA TV]"; eauto.
 
       inv LOCAL0.
       assert (EQ: val'0 = val ∧ V' = released ∧ na' = na ∧ from' = from).
@@ -154,14 +151,16 @@ Section read.
       subst config_any. cStepsT.
       rewrite /PFMemI.check_ident.
       des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
-      cStepsT. destruct _q as [[[e v] config'] [EVREAD STEP]].
+      rewrite F. cStepsT. destruct _q as [[[e v] config'] [EVREAD STEP]].
       destruct e; inv EVREAD; inv STEP; clear EVENT; rename STEP0 into STEP; s in STEP; cycle 1.
       { (* RACY READ *)
         inv STEP; inv LOCAL. inv LOCAL0.
+        rewrite F in HTID; inv HTID.
         iExFalso. iApply atomic_is_racy_impossible; eauto; iFrame.
       }
       { (* INACCESSIBLIE READ *)
         inv STEP; inv LOCAL.
+        rewrite F in HTID; inv HTID.
         iExFalso. iApply atomic_is_inaccessible_impossible; eauto; iFrame.
       }
       (* VALID READ *)
@@ -170,8 +169,7 @@ Section read.
       (* 1. we don't need to update hist and points to *)
       (* 2. we do need to udpate seen *)
       (* 3. we do need to update 𝓥 *)
-      iPoseProof (tview_both_valid with "TA TV") as "%F"; des; subst.
-      rewrite F in Heq; inv Heq.
+      rewrite F in HTID; inv HTID.
 
       iPoseProof (AtomicPtsToX_AtomicSeen_latest with "PT SEEN") as "%LE".
 
@@ -232,7 +230,7 @@ Section read.
           { inv LOCAL0; ss. etrans; eauto. etrans; eapply View.join_l. }
         }
 
-        iMod ((tview_auth_update ths (IdentMap.add tid (existT lang st2, lc2) ths)) with "TA TV") as "[TA TV]"; eauto.
+        iMod ((tview_auth_update ths (IdentMap.add tid (existT _ st2, lc2) ths)) with "TA TV") as "[TA TV]"; eauto.
 
         iAssert (Ist STATE)%I with "[HA FA TA CONFIG]" as "IST".
         { iFrame. iPureIntro; esplits; eauto.
@@ -382,7 +380,7 @@ Section read.
           destruct SEENLOCAL; eauto. timetac.
         }
 
-        iMod ((tview_auth_update ths (IdentMap.add tid (existT lang st2, lc2) ths)) with "TA TV") as "[TA TV]"; eauto.
+        iMod ((tview_auth_update ths (IdentMap.add tid (existT _ st2, lc2) ths)) with "TA TV") as "[TA TV]"; eauto.
 
         iAssert (Ist STATE)%I with "[HA FA TA CONFIG]" as "IST".
         { iFrame. iPureIntro; esplits; eauto.

@@ -28,9 +28,10 @@ Section fence.
     cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
     subst config_any. cStepsT. rewrite /PFMemI.check_ident.
     des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
-    cStepsT. destruct _q as [config' STEP].
+    rewrite F. cStepsT. destruct _q as [config' STEP].
     inv STEP. s in STEP0. inv STEP0; [inv LOCAL|].
     s in STATE. inv LOCAL. inv LOCAL0.
+    rewrite F in HTID; inv HTID.
     
     set (TView.write_fence_sc _ _ ordw) as glsc.
     assert (GL: glsc = Global.sc gl).
@@ -39,13 +40,17 @@ Section fence.
 
     set (gl2:=_: Global.t) at 5.
     assert (gl2 = gl) by (subst gl2; destruct gl; ss).
-    rewrite H0. clear H0. set (lc2:=_: Local.t).
+    rewrite H0. clear H0.
+    set (lc2 := Local.mk
+      (TView.write_fence_tview
+        (TView.read_fence_tview (Local.tview lc1) ordr)
+        (Global.sc gl) ordw)
+      (Local.promises lc1) (Local.reserves lc1)
+      (Local.free_promises lc1) (Local.tid lc1)).
 
     cStepsT.
 
-    iPoseProof (tview_both_valid with "TA TV") as "%IN". des. subst V.
-
-    iMod ((tview_auth_update ths (IdentMap.add tid (existT lang st2, lc2) ths)) with "TA TV") as "[TA TV]"; eauto.
+    iMod ((tview_auth_update ths (IdentMap.add tid (existT _ st2, lc2) ths)) with "TA TV") as "[TA TV]"; eauto.
 
     cStepsT.
     iAssert (Ist STATE)%I with "[HA FA TA CONFIG]" as "IST".
@@ -70,13 +75,13 @@ Section fence.
 
     cForceS (Val.zero↑). cStepsS. cForcesS. iSplitL "TV".
     { iFrame. iSplit; eauto. iPureIntro. esplits; eauto.
-      { subst lc2; ss. rewrite IN in Heq. inv Heq.
-        rewrite /TView.write_fence_sc /TView.read_fence_tview /=. destruct ordw; ss. }
-      { subst lc2; ss. rewrite IN in Heq. inv Heq.
-        rewrite /TView.write_fence_sc /TView.read_fence_tview /=. destruct ordw; ss. }
-      { subst lc2; ss. rewrite IN in Heq. inv Heq.
-        rewrite /TView.write_fence_sc /TView.read_fence_tview /=.
-        destruct ordw; ss; rewrite View.join_bot_r; ss. }
+      { subst lc2. rewrite /TView.write_fence_tview /=.
+        destruct (Ordering.le Ordering.seqcst ordw) eqn:SEQ; last done.
+        exfalso; viewtac. }
+      { subst lc2. rewrite /TView.write_fence_tview /=.
+        destruct (Ordering.le Ordering.seqcst ordw) eqn:SEQ;
+          last (rewrite View.join_bot_r; done).
+        exfalso; viewtac. }
     }
     cStep. iSplit; eauto.
   (*SLOW*)Qed.

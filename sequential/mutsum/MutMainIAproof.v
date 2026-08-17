@@ -38,7 +38,7 @@ Module MutMainIA. Section MutMainIA.
     
     (* SRC: inlining APC *)
     cInlineS. cStepsS. iDestruct "ASM" as "[-> <-]".
-    cStepsS. rewrite /APC. cForceS 1. cStepsS.
+    cStepsS. rewrite /APCA.apc_body /APC. cForceS 1. cStepsS.
 
     (* SRC, TGT: cCall mutg using APC tactic *)
     cStepsT. apcCall "IST" as (?) "ISTPOST"; eauto.

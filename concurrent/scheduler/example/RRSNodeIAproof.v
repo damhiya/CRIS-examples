@@ -207,11 +207,10 @@ Module RRSNodeIA. Section RRSNodeIA.
       { iSplit; first done. iApply ("CLOSEEQ" with "[$TIDS $TIDT]"). }
       s. cNormT. cHideT. rewrite /mjoin /option_join.
       destruct (@Any.downcast nat tt↑) eqn:A; cStepsT; ss.
-      all: cShowT; cNormT; rewrite !bind_ret_l.
-      all: rewrite A; cStepsT.
+      all: cShowT; cNormT.
+      all: cStepsT.
       - iDestruct "GRT" as "[<- [-> tid]]"; cSimpl.
-        exfalso. eapply unit_nat_neq; eauto.
-      - destruct _q. }
+        exfalso. eapply unit_nat_neq; eauto. }
 
     iEval (rewrite /state_cell_src /state_cell_tgt /=) in "TIDS TIDT".
     cStepsT.

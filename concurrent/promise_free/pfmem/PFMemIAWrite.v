@@ -31,14 +31,12 @@ Section write.
       subst config_any. cStepsT.
       rewrite /PFMemI.check_ident.
       des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
-      cStepsT. destruct _q as [[e config'] [EVWRITE STEP]].
+      rewrite F. cStepsT. destruct _q as [[e config'] [EVWRITE STEP]].
       destruct e; inv EVWRITE; inv STEP; clear EVENT; rename STEP0 into STEP; s in STEP; cycle 1.
       { (* RACY WRITE *)
         inv STEP; inv LOCAL. inv LOCAL0. inv RACE.
         { inv PFG; rewrite H in GET; ss. }
-        iPoseProof (tview_both_valid with "TA TV") as "%IN".
-        destruct IN as [l [lc [FOUND LCEQ]]].
-        s; rewrite FOUND in Heq; inv Heq.
+        rewrite F in HTID; inv HTID.
         rewrite own_loc_eq /own_loc_def.
         iDestruct "PT" as "[%f [%t [%LT [%msg [%ALLOC_LOCAL HIST]]]]]".
         iPoseProof (hist_own_hist_cut with "HA HIST") as "[%tcut [<- [%CELL_CUT %ACC]]]".
@@ -73,8 +71,7 @@ Section write.
       (* VALID WRITE *)
       inv STEP; inv LOCAL. des_ifs. clear n.
       cStepsT.
-      iPoseProof (tview_both_valid with "TA TV") as "%F"; des; subst.
-      rewrite F in Heq; inv Heq.
+      rewrite F in HTID; inv HTID.
       rewrite own_loc_eq /own_loc_def.
       iDestruct "PT" as "[%f [%t [%LT [%msg [%ALLOC_LOCAL HIST]]]]]".
       destruct ALLOC_LOCAL as [ALLOC_VIEW [t' [(from', msg') [CELL_GET SEEN_LOCAL]]]].
@@ -216,15 +213,13 @@ Section write.
       subst config_any. cStepsT.
       rewrite /PFMemI.check_ident.
       des_ifs; last (iPoseProof (tview_both_valid with "TA TV") as "%F"; des; ss; clarify).
-      cStepsT. destruct _q as [[e config'] [EVWRITE STEP]].
+      rewrite F. cStepsT. destruct _q as [[e config'] [EVWRITE STEP]].
       destruct e; inv EVWRITE; inv STEP; clear EVENT; rename STEP0 into STEP; s in STEP; cycle 1.
       { (* RACY WRITE *)
         inv STEP; inv LOCAL. inv LOCAL0. inv RACE.
         { inv PFG; rewrite H in GET; ss. }
         hexploit MSG; eauto; intros ->; clear MSG.
-        iPoseProof (tview_both_valid with "TA TV") as "%IN".
-        destruct IN as [l [lc [FOUND LCEQ]]].
-        s; rewrite FOUND in Heq; inv Heq.
+        rewrite F in HTID; inv HTID.
         rewrite AtomicPtsToX_eq /AtomicPtsToX_def /view_at.
         iDestruct "PT" as "[%ζhist [%Vna [-> [SYNC [HIST [AA AF]]]]]]".
         rewrite AtomicSeen_eq /AtomicSeen_def.
@@ -267,9 +262,8 @@ Section write.
       iPoseProof (AtomicPtsToX_AtomicSeen_latest with "PT SEEN") as "%LE".
       rewrite AtomicPtsToX_eq /AtomicPtsToX_def {2}/view_at.
       iDestruct "PT" as "[% [% [-> [[%SYNC %SYNC2] [HIST [AA AW]]]]]]". ss.
-      iPoseProof (tview_both_valid with "TA TV") as "[% [% [%EQ <-]]]".
       iPoseProof (hist_own_hist_cut with "HA HIST") as "[%loccut %FACTS]".
-      rewrite EQ in Heq; inv Heq.
+      rewrite F in HTID; inv HTID.
       rewrite /view_at AtomicSeen_eq /AtomicSeen_def.
       iDestruct "SEEN" as "[[%SEENALLOC %SEEN] [AR [%GOODHIST [%Vna' [%VNATV #NA]]]]]".
       assert (LECUT : Time.le (View.rlx Vcut loc) to).
@@ -395,7 +389,7 @@ Section write.
           }
           { intros tid' ?? LC; destruct (decide (tid' = tid)); try subst tid'.
             { subst ths2; rewrite IdentMap.gss in LC; inv LC.
-              hexploit (PFL tid); eauto using EQ.
+              hexploit (PFL tid); eauto using F.
               intros PFL'; inv PFL'; inv LOCAL0; econs; ss.
               inv FULFILL; ss.
               hexploit (Promises.Promises.remove_le); first apply REMOVE. rewrite H0.

@@ -345,7 +345,7 @@ Section free.
     cStepsT. set (config_any := ((Configuration.mk ths gl)↑ : Any.t)).
     subst config_any. cStepsT.
     rewrite /PFMemI.check_ident.
-    cStepsT. des_ifs.
+    destruct (IdentMap.find tid ths) as [[lang0 lc0]|] eqn:Heq.
     { cStepsT. destruct _q as [[e config'] [TEV STEP]].
       (* inv STEP. inv STEP0; [inv LOCAL|]. *)
       dup STEP; inv STEP0. inv STEP1; [inv LOCAL|].
@@ -423,7 +423,7 @@ Section free.
         { rewrite CELL_CUT Cell.cut_spec; des_ifs; timetac. }
         rewrite Cell.singleton_get in CUT_GET. ss.
         exfalso.
-        eapply (TimeFacts.le_not_lt to (View.rlx (TView.TView.cur (Local.tview lc2)) loc')); eauto; des_ifs.
+        eapply (TimeFacts.le_not_lt to (View.rlx (TView.TView.cur (Local.tview lc0)) loc')); eauto; des_ifs.
       }
       (* inaccessible free *)
       inv LOCAL0.

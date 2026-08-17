@@ -1,6 +1,16 @@
 From CRIS.common Require Import CRIS.
 From CRIS.imp_system.imp Require Import ImpPrelude.
+From CRIS.proofmode Require Import HNormClasses.
 From CRIS.ring Require Import CellHeader CellI CellA.
+
+#[local] Hint Extern 0
+  (HNormBool
+    (msk_real (msk_scp (CellI.scopes _) msk_true) _ _) _) =>
+  simpl;
+  let a := fresh in
+  case_bool_decide as a;
+  [tc_solve|exfalso; set_solver+a]
+    : typeclass_instances.
 
 (* Simulation Proof *)
 Module CellIA. Section CellIA.

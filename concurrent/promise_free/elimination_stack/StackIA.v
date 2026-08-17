@@ -75,6 +75,8 @@ End StackIM. End StackIM.
 From CRIS.helping Require Export HelpingFacts.
 
 Module StackIA. Section StackIA.
+  #[local] Typeclasses Opaque stack_atomic_fun.
+
   Context `{!crisG Γ Σ α β τ _S _I,
     _HIST : !histGS, _ATOMIC : !atomicG, _SYS : !sysGS,
     _STACK : !stackG, _HELP : !helpingGS, _SCH : !schGS}.

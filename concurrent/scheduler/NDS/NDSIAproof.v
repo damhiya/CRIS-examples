@@ -733,7 +733,7 @@ Module NDSIA. Section sim.
     eapply elem_of_list_to_map_2 in Hmtid; rewrite elem_of_lookup_imap in Hmtid.
     destruct Hmtid as [? [? [EQ Hmtid]]]; symmetry in EQ; inv EQ.
 
-    rewrite ?list_lookup_fmap H /=; case_decide; subst; clarify.
+    rewrite ?list_lookup_fmap H /=; cNormS. cNormT. case_decide; subst; clarify.
 
     (* Choose the next tid *)
     cStepsT. cStepsS.

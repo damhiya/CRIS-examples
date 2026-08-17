@@ -70,6 +70,7 @@ Module MapMA. Section MapMA.
     rewrite /assume; unshelve cForceT; eauto.
 
     (* TGT: handle the postcond of get *)
+    iSplit; first eauto.
     cStepsT. iDestruct "GRT" as "(<- & _)".
 
     (* SRC: prove the postcond of get *)
@@ -101,7 +102,7 @@ Module MapMA. Section MapMA.
     (* TGT : handle the body of set *)
     cStepsT. rewrite /assume.
     iPoseProof (auth_unallocated_points_to with "U MAP") as "%".
-    unshelve cForceT; eauto. cStepsT.
+    unshelve cForceT; eauto. iSplit; first eauto. cStepsT.
 
     (* TGT: handle the postcond of set *)
     iDestruct "GRT" as "(<- & _)".
