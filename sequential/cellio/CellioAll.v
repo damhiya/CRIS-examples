@@ -1,7 +1,7 @@
 From CRIS.common Require Import CRIS.
 From CRIS.cancellation Require Import Cancel.
 From CRIS.filter Require Import FilterComm.
-From CRIS.lib Require Import BiEnrichedProset.
+From CRIS.proofmode Require Import BiEnrichedProset.
 From CRIS.imp_system.imp Require Import ImpPrelude.
 From CRIS.cellio Require Import CellioHeader CellioA CellioI MainA MainI
   CellioIAproof MainIAproof CtxHeader.

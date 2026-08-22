@@ -1,6 +1,6 @@
 From CRIS.common Require Import CRIS.
 From CRIS.cancellation Require Import Cancel.
-From CRIS.lib Require Import BiEnrichedProset.
+From CRIS.proofmode Require Import BiEnrichedProset.
 From CRIS.imp_system.imp Require Import ImpPrelude.
 From CRIS.cannon Require Import CannonHeader CannonI CannonMainI.
 From CRIS.cannon Require Import CannonA CannonMainA.

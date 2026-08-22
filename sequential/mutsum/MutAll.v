@@ -1,5 +1,5 @@
 From CRIS.common Require Import CRIS.
-From CRIS.lib Require Import BiEnrichedProset.
+From CRIS.proofmode Require Import BiEnrichedProset.
 From CRIS.cancellation Require Import Cancel.
 From CRIS.mutsum Require Import MutHeader MutFA MutGA MutMainA.
 From CRIS.mutsum Require Import MutFI MutGI MutMainI.

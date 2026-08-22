@@ -1,6 +1,6 @@
 Require Import CRIS.common.CRIS.
 From CRIS.filter Require Import CallFilter.
-From CRIS.lib Require Import BiEnrichedProset.
+From CRIS.proofmode Require Import BiEnrichedProset.
 From CRIS.imp_system Require Import imp.ImpPrelude.
 From CRIS.imp_system Require Import mem.MemTactics mem.MemA.
 From CRIS.scheduler Require Import SchHeader SchI SchA SchTactics.

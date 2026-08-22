@@ -1,6 +1,6 @@
 From CRIS.common Require Import CRIS.
 From CRIS.filter Require Import CallFilter.
-From CRIS.lib Require Import BiEnrichedProset.
+From CRIS.proofmode Require Import BiEnrichedProset.
 From CRIS.scheduler Require Import SchHeader SchI SchA SchTactics.
 From CRIS.promise_free.algebra Require Import HistoryRA AtomicRA.
 From CRIS.promise_free.system

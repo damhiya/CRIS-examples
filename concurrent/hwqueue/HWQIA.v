@@ -1,5 +1,5 @@
 Require Export CRIS.common.CRIS.
-From CRIS.lib Require Import BiEnrichedProset.
+From CRIS.proofmode Require Import BiEnrichedProset.
 From CRIS.imp_system Require Export imp.ImpPrelude.
 From CRIS.hwqueue Require Export HWQHeader.
 Require Export CRIS.scheduler.SchHeader.
@@ -38,7 +38,7 @@ Module HWQPM. Section HWQPM.
      IstEq (MemA ★ ProphA) STATE)%I.
 
   Lemma ctxr :
-    hinv_ownE ⊤ ∗ free_id top1 ⊢
+    hinv_ownE ⊤ ∗ free_id (fun _ => True%type) ⊢
       ctx_refines
         ((HWQP ★ HelpDummy) ★ MemA ★ ProphA)
         ((HWQM ★ HelpOn) ★ MemA ★ ProphA).
@@ -164,7 +164,7 @@ Module HWQIA. Section HWQIA.
 
   Lemma ctxr (ctx : Mod.t) (sp_mem : specmap) genv :
     real_mod ctx →
-    MemA.init_cond genv ∗ ProphecyA.initial_cond ∗ help_init_cond ∗ free_id top1 ⊢
+    MemA.init_cond genv ∗ ProphecyA.initial_cond ∗ help_init_cond ∗ free_id (fun _ => True%type) ⊢
       refines
         (HWQI.t ★ MemI.t genv ★ SchI.t ★ ctx)
         (HWQA.t ★ MemA.t sp_mem ★ SchI.t ★ ctx).

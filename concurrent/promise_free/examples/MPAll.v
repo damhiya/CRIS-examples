@@ -1,5 +1,5 @@
 Require Import CRIS.common.CRIS CRIS.cancellation.Cancel.
-From CRIS.lib Require Import BiEnrichedProset.
+From CRIS.proofmode Require Import BiEnrichedProset.
 From CRIS.promise_free.pfmem Require Import PFMemHeader PFMemA.
 From CRIS.promise_free.gpfsl Require Import base.
 From CRIS.promise_free.algebra Require Import HistoryRA AtomicRA.

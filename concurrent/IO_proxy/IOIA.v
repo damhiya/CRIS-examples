@@ -1,6 +1,6 @@
 Require Import CRIS.common.CRIS.
 From CRIS.filter Require Import CallFilter.
-From CRIS.lib Require Import BiEnrichedProset.
+From CRIS.proofmode Require Import BiEnrichedProset.
 From CRIS.imp_system Require Import imp.ImpPrelude.
 From CRIS.IO_proxy Require Import IOHeader IOI IOA.
 From CRIS.imp_system Require Import mem.MemHeader.

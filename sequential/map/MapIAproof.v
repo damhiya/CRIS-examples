@@ -1,5 +1,5 @@
 From CRIS.common Require Import CRIS.
-From CRIS.lib Require Import BiEnrichedProset.
+From CRIS.proofmode Require Import BiEnrichedProset.
 From CRIS.imp_system.mem Require Import MemA.
 From CRIS.map Require Export MapHeader MapA MapM MapI MapIMproof MapMAproof.
 

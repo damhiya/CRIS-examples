@@ -1,5 +1,5 @@
 From CRIS.common Require Import CRIS.
-From CRIS.lib Require Import BiEnrichedProset.
+From CRIS.proofmode Require Import BiEnrichedProset.
 From CRIS.cancellation Require Import Cancel.
 From CRIS.filter Require Import CallFilter.
 From CRIS.imp_system.mem Require Import MemHeader MemI MemA MemIAproof.

@@ -1,5 +1,5 @@
 Require Import CRIS.common.CRIS CRIS.cancellation.Cancel.
-From CRIS.lib Require Import BiEnrichedProset.
+From CRIS.proofmode Require Import BiEnrichedProset.
 From CRIS.imp_system Require Import imp.ImpPrelude.
 From CRIS.scheduler Require Import SchI SchA SchIAproof.
 From CRIS.scheduler Require Import RRS.RRSI RRS.RRSA RRS.RRSIAproof.

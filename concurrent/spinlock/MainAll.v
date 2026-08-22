@@ -1,5 +1,5 @@
 Require Import CRIS.common.CRIS.
-From CRIS.lib Require Import BiEnrichedProset.
+From CRIS.proofmode Require Import BiEnrichedProset.
 From CRIS.spinlock Require Import LockHeader LockI LockA LockIA MainI MainA.
 From CRIS.spinlock Require Import MainIA.
 From CRIS.imp_system Require Import imp.ImpPrelude mem.MemI mem.MemA.
