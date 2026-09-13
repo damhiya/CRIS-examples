@@ -153,7 +153,7 @@ Module HWQIP. Section HWQIP.
       unfold HWQP.t in Hfn. cbn in Hfn.
       set_unfold in Hfn; des; subst.
     + cStartFunSim.
-      cStepsS. destruct Any.downcast as [sz|]; cStepsS; ss. cStepsT.
+      cStepsS. cStepsT. destruct Any.downcast as [sz|]; cStepsS; ss. cStepsT.
       rewrite /HWQP.new_queue /HWQI.new_queue.
       cStepsS. cStepsT. sYieldRR "IST".
       sYieldS. cStepsS.
@@ -243,7 +243,7 @@ Module HWQIP. Section HWQIP.
       sYieldS. cStepsS.
       cStep. iFrame. done.
     + cStartFunSim.
-      cStepsS. destruct Any.downcast as [q|]; cStepsS; ss. cStepsT.
+      cStepsS. cStepsT. destruct Any.downcast as [q|]; cStepsS; ss. cStepsT.
       rewrite /HWQI.dequeue /HWQP.dequeue.
       cStepsS; cStepsT.
       sYieldRR "IST".

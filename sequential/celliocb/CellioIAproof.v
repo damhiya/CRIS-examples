@@ -19,7 +19,7 @@ Module CellioIA. Section CellioIA.
     cStartFunSim. rewrite /CellioI.set /set.
   
     (* Take (x:Z) & cell(x) *)
-    cStepsS. destruct Any.downcast; cStepsS; des_ifs.
+    cStepsS. cStepsT. destruct Any.downcast; cStepsS; des_ifs.
 
     (* Call cb() simultaneously *)
     cStepsT. 

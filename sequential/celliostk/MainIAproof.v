@@ -20,8 +20,8 @@ Module MainIA. Section MainIA.
         (fid MainHdr.input_cb).
   Proof using.
     cStartFunSim. unfold MainA.input_cb, MainI.input_cb.
-    cStepS. destruct Any.downcast; cStepsS; des_ifs.
-    cStepsS. cStepsT. cStep. cStep. cStep. iSplit; et.
+    cStepS. cStepsT. destruct Any.downcast; cStepsS; des_ifs.
+    cStepsT. cStep. cStep. cStep. iSplit; et.
   Qed. 
 
   Lemma simF_main :

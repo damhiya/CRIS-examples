@@ -32,7 +32,7 @@ Module CellioIA. Section CellioIA.
   Proof using.
     cStartFunSim. rewrite /CellioI.push /push.
 
-    cStepsS. destruct Any.downcast; cStepsS; des_ifs. cStepsS. cStepsT. 
+    cStepsS. cStepsT. destruct Any.downcast; cStepsS; des_ifs. cStepsS. cStepsT. 
 
     cCall "IST" as (?) "IST".
     cStepsS. cStepsT.

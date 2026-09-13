@@ -17,7 +17,7 @@ Module MemHN. Section MemHN.
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.alloc).
   Proof using.
     cStartFunSim. rewrite /HybMem.alloc /NonDetMem.alloc.
-    cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
+    cStepsS; cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
     cStepsS. cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
@@ -34,7 +34,8 @@ Module MemHN. Section MemHN.
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.free).
   Proof using.
     cStartFunSim. rewrite /HybMem.free /NonDetMem.free.
-    cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
+    cStepsS; cStepsT.
+    rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
     cStepsS; cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
@@ -52,7 +53,7 @@ Module MemHN. Section MemHN.
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.load).
   Proof using.
     cStartFunSim. rewrite /HybMem.load /NonDetMem.load.
-    cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
+    cStepsS; cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
     cStepsS; cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
@@ -71,7 +72,7 @@ Module MemHN. Section MemHN.
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.store).
   Proof using.
     cStartFunSim. rewrite /HybMem.store /NonDetMem.store.
-    cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
+    cStepsS; cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
     cStepsS; cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
@@ -91,7 +92,7 @@ Module MemHN. Section MemHN.
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.cmp).
   Proof using.
     cStartFunSim. rewrite /HybMem.cmp /NonDetMem.cmp.
-    cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
+    cStepsS; cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
     cStepsS; cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
@@ -111,7 +112,7 @@ Module MemHN. Section MemHN.
     ⊢ ISim.sim_fun open NonDetMem HybMem IstFull (fid MemHdr.cas).
   Proof using.
     cStartFunSim. rewrite /HybMem.cas /NonDetMem.cas.
-    cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
+    cStepsS; cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }
     cStepsS; cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. ss. }

@@ -111,7 +111,7 @@ Module CtrlIA. Section CtrlIA.
 
     (* Simulation Starts Here *)
     (* SRC: precondition *)
-    cStepsS. destruct Any.downcast; last (cStepsS; case_match; cStepsS; ss).
+    cStepsS. cStepsT. destruct Any.downcast; last (cStepsS; case_match; cStepsS; ss).
     cStepsS; cStepsT.
     iDestruct "IST" as "[IST CELLEQ]".
     iDestruct "IST" as (? ? ? ?) "(QUE & HD & TL & %INV & LIVE & FREE)".
@@ -147,7 +147,7 @@ Module CtrlIA. Section CtrlIA.
 
     (* Simulation Starts Here *)
     (* SRC: precondition *)
-    cStepsS. destruct Any.downcast; last (cStepsS; case_match; cStepsS; ss).
+    cStepsS. cStepsT. destruct Any.downcast; last (cStepsS; case_match; cStepsS; ss).
     cStepsS; cStepsT.
     iDestruct "IST" as "[IST CELLEQ]".
     iDestruct "IST" as (? ? ? ?) "(QUE & HD & TL & %INV & LIVE & FREE)".
@@ -170,7 +170,7 @@ Module CtrlIA. Section CtrlIA.
 
     (* Simulation Starts Here *)
     (* SRC: precondition *)
-    cStepsS. destruct Any.downcast; last (cStepsS; case_match; cStepsS; ss).
+    cStepsS. cStepsT. destruct Any.downcast; last (cStepsS; case_match; cStepsS; ss).
     cStepsS; cStepsT.
     iDestruct "IST" as "[IST CELLEQ]".
     iDestruct "IST" as (? ? ? ?) "(QUE & HD & TL & %INV & LIVE & FREE)".
@@ -232,7 +232,7 @@ Module CtrlIA. Section CtrlIA.
 
     (* Simulation Starts Here *)
     (* SRC: precondition *)
-    cStepsS. destruct Any.downcast; last (cStepsS; case_match; cStepsS; ss).
+    cStepsS. cStepsT. destruct Any.downcast; last (cStepsS; case_match; cStepsS; ss).
     cStepsS; cStepsT.
     iDestruct "IST" as "[IST CELLEQ]".
     iDestruct "IST" as (? ? ? ?) "(QUE & HD & TL & %INV & LIVE & FREE)".

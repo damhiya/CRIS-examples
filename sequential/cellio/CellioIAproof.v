@@ -21,7 +21,7 @@ Module CellioIA. Section CellioIA.
     cStartFunSim. unfold CellioI.set, CellioA.set.
 
     (* Take (x:Z) & cell(x) *)
-    cStepsS. destruct Any.downcast; cStepsS; des_ifs.
+    cStepsS. cStepsT. destruct Any.downcast; cStepsS; des_ifs.
     rename _q into v. iRename "ASM" into "CELL".
 
     (* Call Input() simultaneously *)
@@ -49,7 +49,7 @@ Module CellioIA. Section CellioIA.
     cStartFunSim. unfold CellioI.get, CellioA.get.
 
     (* Take (x:Z) & cell(x) *)
-    cStepsS. destruct Any.downcast; cStepsS; des_ifs.
+    cStepsS. cStepsT. destruct Any.downcast; cStepsS; des_ifs.
     rename _q into v. iRename "ASM" into "CELL".
     iDestruct "IST" as (v') "(CV & AUTH)".
 

@@ -1166,7 +1166,7 @@ Module MemDH. Section MemDH.
     ⊢ ISim.sim_fun open HybMem DetMem IstFull (fid MemHdr.cas).
   Proof using.
     cStartFunSim. rewrite /HybMem.cas /DetMem.cas.
-    cStepsS. rewrite {1}/unwrapU. des_ifs; cycle 1.
+    cStepsS. cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. des_ifs. }
     cStepsS. cStepsT. rewrite {1}/unwrapU. des_ifs; cycle 1.
     { cStepsS. des_ifs. }
